@@ -1,16 +1,23 @@
 package BlackJack.Entity
 
 
-import BlackJack.Deportment.ClassicBank
-import BlackJack.Deportment.ClassicPlayer
+import BlackJack.Behavior.ClassicBank
+import BlackJack.Behavior.ClassicPlayer
+import BlackJack.Input.ConsoleInputHandler
+import BlackJack.Input.InputHandler
+import BlackJack.Observer.PlayerObserver
+import BlackJack.Type.ActionType
 
 
 abstract class Participant(
         var amountOfMoney: Double,
-        val dealer: Dealer) {
+        val dealer: Dealer,
+        val inputHandler: InputHandler,
+        val observer: PlayerObserver) {
 
+    abstract fun play()
     abstract fun hit()
-    abstract fun stand()
+    abstract fun stand() : Boolean
     abstract fun split()
     abstract fun double()
     abstract fun receiveFirstCards()
@@ -22,9 +29,10 @@ abstract class Participant(
 class Player(
         basicAmountOfMoney: Double,
         dealer: Dealer,
-        private val behavior: ClassicPlayer)
-    : Participant(basicAmountOfMoney, dealer){
-
+        private val behavior: ClassicPlayer,
+        inputHandler: InputHandler,
+        observer: PlayerObserver)
+    : Participant(basicAmountOfMoney, dealer, inputHandler, observer){
 
     private var decks = ArrayList<Deck>()
 
@@ -48,6 +56,35 @@ class Player(
         currentDeckIndex = 0
     }
 
+    override fun play() {
+
+        decks.forEach {
+
+            if(it.cards.isNotEmpty()){
+
+                var done = false
+                while (!done) {
+
+                    when (inputHandler.readKey()) {
+
+                        ActionType.HIT -> hit()
+                        ActionType.STAND -> done = stand()
+                        ActionType.DOUBLE -> double()
+                        ActionType.SPLIT -> split()
+                        ActionType.END -> observer.noticeEndGame()
+                        ActionType.NEW -> observer.noticeNewGane()
+                        ActionType.ERROR -> {}
+
+                    }
+                }
+
+            }
+
+        }
+
+    }
+
+
 
     override fun hit() {
         if(behavior.hit(decks[currentDeckIndex].cards)){
@@ -58,14 +95,8 @@ class Player(
 
     }
 
-    override fun stand() {
-        if(behavior.stand(decks[currentDeckIndex].cards)){
+    override fun stand() : Boolean = behavior.stand(decks[currentDeckIndex].cards)
 
-            //TODO PlayerObserver.noticeStand()
-
-        }
-
-    }
 
     override fun split() {
         if(behavior.split(decks[currentDeckIndex].cards, numberOfUsedDecks)){
@@ -113,8 +144,12 @@ class Player(
 
 }
 
-class Bank (basicAmountOfMoney: Double, dealer: Dealer, behavior: ClassicBank)
-    : Participant(basicAmountOfMoney, dealer){
+class Bank (basicAmountOfMoney: Double, dealer: Dealer, behavior: ClassicBank, inputHandler: InputHandler, observer: PlayerObserver)
+    : Participant(basicAmountOfMoney, dealer, inputHandler, observer){
+    override fun play() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     override fun preparation() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
@@ -123,7 +158,7 @@ class Bank (basicAmountOfMoney: Double, dealer: Dealer, behavior: ClassicBank)
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun stand() {
+    override fun stand() : Boolean {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -147,6 +182,12 @@ class Bank (basicAmountOfMoney: Double, dealer: Dealer, behavior: ClassicBank)
 
 fun main(args: Array<String>) {
 
-    val p = Player(100.0, Dealer(3, Table()), ClassicPlayer())
+    val t = Table()
+    val ih = ConsoleInputHandler()
+    val p = Player(100.0, Dealer(3, t), ClassicPlayer(), ih, t)
     p.split()
+
+    val asd = readLine()
+
+    println(asd)
 }

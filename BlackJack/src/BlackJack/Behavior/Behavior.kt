@@ -1,4 +1,4 @@
-package BlackJack.Deportment
+package BlackJack.Behavior
 
 import BlackJack.Entity.Card
 
