@@ -4,7 +4,7 @@ import BlackJack.Color.CardColor
 import BlackJack.Entity.Card
 import BlackJack.Type.CardType
 
-fun Char.or(other: Char?) : Char = this.toInt().or(other?.toInt()!!).toChar()
+fun Char.or(other: Char?): Char = this.toInt().or(other?.toInt()!!).toChar()
 
 object UnicodeMaker {
 
