@@ -2,9 +2,9 @@ package BlackJack.Observer
 
 interface PlayerObserver {
 
-    fun noticeStand()
-    fun noticeSplit()
-    fun noticeNewGane()
+    fun noticeNewGame()
     fun noticeEndGame()
+    fun noticeUpdate()
+    fun noticePause()
 
 }
