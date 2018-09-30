@@ -3,11 +3,11 @@ package BlackJack.Behavior
 import BlackJack.Entity.Calculator
 import BlackJack.Entity.Card
 
-open class Classic : Behavior{
+abstract class Classic : Behavior{
+
+    override fun getMaximumNumberOfDecks(): Int = 1
 
     override fun hit(cards: ArrayList<Card>): Boolean = true
-
-    override fun stand(cards: ArrayList<Card>): Boolean = true
 
     override fun double(cards: ArrayList<Card>): Boolean = true
 
@@ -17,22 +17,21 @@ open class Classic : Behavior{
 
 class ClassicPlayer : Classic() {
 
-    val maximumNumberOfDecks = 3
+    override fun getMaximumNumberOfDecks(): Int = 3
 
     override fun hit(cards: ArrayList<Card>): Boolean = Calculator.evaluate(cards) <= 21
 
     override fun split(cards: ArrayList<Card>, numberOfDecks: Int): Boolean {
 
-        if(numberOfDecks == 3)
-            return false
+        println(cards.count())
 
-        if(cards.count() != 2)
-            return false
+        return when {
+            numberOfDecks == 3 -> false
+            cards.count() != 2 -> false
+            cards[0].value != cards[1].value -> false
+            else -> true
+        }
 
-        if(cards[0].value != cards[1].value)
-            return false
-
-        return true
     }
 
 }
