@@ -1,6 +1,6 @@
 package BlackJack.Type
 
-enum class CardTypes {
+enum class CardType {
     TWO,
     THREE,
     FOUR,
@@ -19,5 +19,4 @@ enum class CardTypes {
             in JACK.ordinal..ACE.ordinal -> 11
             else -> ordinal + 2
         }
-
 }

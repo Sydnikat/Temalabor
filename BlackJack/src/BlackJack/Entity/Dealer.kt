@@ -2,7 +2,7 @@ package BlackJack.Entity
 
 import BlackJack.Color.CardColor
 import BlackJack.Observer.DealerObserver
-import BlackJack.Type.CardTypes
+import BlackJack.Type.CardType
 import kotlin.collections.ArrayList
 
 
@@ -20,7 +20,7 @@ class Dealer(val numberOfDecksUsed: Int, val observer: DealerObserver) {
             for (i in 0 until numberOfDecksUsed) {
                 for(color in CardColor.values())
                 {
-                    for(value in CardTypes.values()){
+                    for(value in CardType.values()){
                         this.add(Card(value, color))
                     }
                 }

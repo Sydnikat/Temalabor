@@ -1,6 +1,6 @@
 package BlackJack.Entity
 
-import BlackJack.Type.CardTypes
+import BlackJack.Type.CardType
 import BlackJack.Type.ResultType
 
 object Calculator {
@@ -10,9 +10,9 @@ object Calculator {
         var sum = 0
         cards.forEach { sum += it.value.number() }
 
-        if(cards.any { it.value == CardTypes.ACE }) {
+        if(cards.any { it.value == CardType.ACE }) {
 
-            var numberOfAces = cards.count { it.value == CardTypes.ACE }
+            var numberOfAces = cards.count { it.value == CardType.ACE }
 
             while(sum > 21 && numberOfAces > 0) {
                 sum -= 10
@@ -28,10 +28,10 @@ object Calculator {
         val bankValue = evaluate(bank.cards)
 
         if (playerValue == 21 && player.cards.count() == 2)
-            if (player.cards.any { it.value == CardTypes.JACK } && player.cards.any { it.value == CardTypes.TEN }) return ResultType.WINBYJACK
+            if (player.cards.any { it.value == CardType.JACK } && player.cards.any { it.value == CardType.TEN }) return ResultType.WINBYJACK
 
         if (bankValue == 21 && bank.cards.count() == 2)
-            if (bank.cards.any { it.value == CardTypes.JACK } && bank.cards.any { it.value == CardTypes.TEN }) return ResultType.LOSEBYJACK
+            if (bank.cards.any { it.value == CardType.JACK } && bank.cards.any { it.value == CardType.TEN }) return ResultType.LOSEBYJACK
 
 
         when {
