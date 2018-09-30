@@ -1,49 +1,47 @@
 package BlackJack.Entity
 
 
-import BlackJack.Behavior.ClassicBank
-import BlackJack.Behavior.ClassicPlayer
-import BlackJack.Input.ConsoleInputHandler
+import BlackJack.Behavior.Behavior
 import BlackJack.Input.InputHandler
+import BlackJack.Input.NoInputHandler
 import BlackJack.Observer.PlayerObserver
 import BlackJack.Type.ActionType
 
 
 abstract class Participant(
-        var amountOfMoney: Double,
+        protected var amountOfMoney: Double,
         val dealer: Dealer,
+        val behavior: Behavior,
         val inputHandler: InputHandler,
         val observer: PlayerObserver) {
 
     abstract fun play()
-    abstract fun hit()
-    abstract fun stand() : Boolean
-    abstract fun split()
-    abstract fun double()
     abstract fun receiveFirstCards()
-    abstract fun showCards() : ArrayList<Card>
+    abstract fun showDeck() : Deck
     fun takeMoney(money: Double) { amountOfMoney += money }
+    fun setBasicMoney(newAmount: Double) { amountOfMoney = newAmount }
+    fun showMoney() : Double = amountOfMoney
     abstract fun preparation()
 }
 
 class Player(
         basicAmountOfMoney: Double,
         dealer: Dealer,
-        private val behavior: ClassicPlayer,
+        behavior: Behavior,
         inputHandler: InputHandler,
         observer: PlayerObserver)
-    : Participant(basicAmountOfMoney, dealer, inputHandler, observer){
+    : Participant(basicAmountOfMoney, dealer, behavior, inputHandler, observer){
 
     private var decks = ArrayList<Deck>()
 
-    var currentDeckIndex = 0
-    private  set
+    private var currentDeckIndex = 0
 
-    private var numberOfUsedDecks = 1
+    var numberOfUsedDecks = 1
+    private set
 
     init{
 
-        (1..behavior.maximumNumberOfDecks).forEach { _ -> decks.add(Deck(ArrayList(), 0.0)) }
+        (1..behavior.getMaximumNumberOfDecks()).forEach { _ -> decks.add(Deck(ArrayList(), 0.0)) }
 
     }
 
@@ -54,6 +52,7 @@ class Player(
             decks[it].money = 0.0
         }
         currentDeckIndex = 0
+        numberOfUsedDecks = 1
     }
 
     override fun play() {
@@ -62,19 +61,28 @@ class Player(
 
             if(it.cards.isNotEmpty()){
 
+                observer.noticeUpdate()
+
                 var done = false
                 while (!done) {
 
+                    //if(Calculator.evaluate(decks[currentDeckIndex].cards) >= 21) break
+
                     when (inputHandler.readKey()) {
 
-                        ActionType.HIT -> hit()
-                        ActionType.STAND -> done = stand()
-                        ActionType.DOUBLE -> double()
-                        ActionType.SPLIT -> split()
-                        ActionType.END -> observer.noticeEndGame()
-                        ActionType.NEW -> observer.noticeNewGane()
+                        ActionType.HIT -> hit(it)
+                        ActionType.STAND -> done = true
+                        ActionType.DOUBLE -> double(it)
+                        ActionType.SPLIT -> split(it)
+                        ActionType.END -> {
+                            observer.noticeEndGame()
+                            done = true
+                        }
+                        ActionType.NEW ->{
+                            observer.noticeNewGame()
+                            done = true
+                        }
                         ActionType.ERROR -> {}
-
                     }
                 }
 
@@ -84,52 +92,92 @@ class Player(
 
     }
 
+    fun hit(deck: Deck) {
+        if(behavior.hit(deck.cards)){
 
+            deck.cards.add(dealer.giveCard())
 
-    override fun hit() {
-        if(behavior.hit(decks[currentDeckIndex].cards)){
-
-            decks[currentDeckIndex].cards.add(dealer.giveCard())
-
+            observer.noticeUpdate()
         }
 
     }
 
-    override fun stand() : Boolean = behavior.stand(decks[currentDeckIndex].cards)
 
-
-    override fun split() {
-        if(behavior.split(decks[currentDeckIndex].cards, numberOfUsedDecks)){
+    fun split(deck: Deck) {
+        if(behavior.split(deck.cards, numberOfUsedDecks)){
 
             numberOfUsedDecks++
-            //TODO PlayerObserver.noticeSplit()
 
-            val card = decks[currentDeckIndex].cards.removeAt(0)
+            val card = deck.cards.removeAt(0)
 
-            decks[currentDeckIndex + 1].cards.add(card)
-            decks[currentDeckIndex + 1].money = decks[currentDeckIndex].money / 2
-            decks[currentDeckIndex].money /= 2
+            var idx = 0
+            for(d in decks){
+                if(d.cards.isEmpty()){
+                    idx = decks.indexOf(d)
+                    break
+                }
+            }
 
+            println(idx)
+
+            decks[idx].cards.add(card)
+            decks[idx].money = deck.money / 2
+            deck.money /= 2
+
+            observer.noticeUpdate()
         }
     }
 
     fun changeDeck(index: Int) {
 
-        if(index >= 0 && index < behavior.maximumNumberOfDecks){
+        if(index >= 0 && index < behavior.getMaximumNumberOfDecks()){
 
             currentDeckIndex = index
 
         }
     }
 
-    override fun double() {
-        if(behavior.double(decks[currentDeckIndex].cards)){
+    fun double(deck: Deck) {
+        if(behavior.double(deck.cards)){
 
-            val currentMoney = decks[currentDeckIndex].money
-            amountOfMoney -= currentMoney
-            decks[currentDeckIndex].money *= 2
+            val currentMoney = deck.money
+
+            if(amountOfMoney >= currentMoney) {
+
+                amountOfMoney -= currentMoney
+                deck.money *= 2
+            }
+            else if(amountOfMoney > 0.0){
+
+                deck.money += amountOfMoney
+                amountOfMoney = 0.0
+            }
+
+            observer.noticeUpdate()
         }
+    }
 
+    fun raise(){
+
+        var valid = false
+
+        println("\nKérem emeljen!")
+
+        while (!valid){
+
+            val newAmount = inputHandler.readNumber()
+
+            if(newAmount != null){
+
+                if(newAmount <= amountOfMoney){
+
+                    decks[currentDeckIndex].money = newAmount
+                    amountOfMoney -= newAmount
+                    valid = true
+                }
+            }
+        }
+        print("\n\n")
     }
 
     override fun receiveFirstCards() {
@@ -138,56 +186,57 @@ class Player(
 
     }
 
-    override fun showCards(): ArrayList<Card> = decks[currentDeckIndex].cards
+    override fun showDeck(): Deck = decks[currentDeckIndex]
 
 
 
 }
 
-class Bank (basicAmountOfMoney: Double, dealer: Dealer, behavior: ClassicBank, inputHandler: InputHandler, observer: PlayerObserver)
-    : Participant(basicAmountOfMoney, dealer, inputHandler, observer){
+class Bank (
+        basicAmountOfMoney: Double,
+        dealer: Dealer,
+        behavior: Behavior,
+        inputHandler: InputHandler,
+        observer: PlayerObserver)
+    : Participant(basicAmountOfMoney, dealer, behavior, inputHandler, observer){
+
+    constructor( basicAmountOfMoney: Double,
+                 dealer: Dealer,
+                 behavior: Behavior,
+                 observer: PlayerObserver)
+            : this(basicAmountOfMoney, dealer, behavior, NoInputHandler(), observer)
+
+    private var deck = Deck(ArrayList(), 0.0)
+
     override fun play() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
+        deck.cards.forEach { it.hidden = false }
+
+        while (behavior.hit(deck.cards)){
+
+            deck.cards.add(dealer.giveCard())
+
+            observer.noticeUpdate()
+        }
+
+        if(!behavior.hit(deck.cards) && deck.cards.count() == 2)
+            observer.noticeUpdate()
     }
 
     override fun preparation() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
 
-    override fun hit() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+        deck.cards.clear()
 
-    override fun stand() : Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun split() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun double() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun receiveFirstCards() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
+        val card = dealer.giveCard()
+        card.hidden = true
+        deck.cards.addAll(arrayListOf(dealer.giveCard(), card))
+
     }
 
-    override fun showCards(): ArrayList<Card> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun showDeck(): Deck = deck
 
-}
-
-fun main(args: Array<String>) {
-
-    val t = Table()
-    val ih = ConsoleInputHandler()
-    val p = Player(100.0, Dealer(3, t), ClassicPlayer(), ih, t)
-    p.split()
-
-    val asd = readLine()
-
-    println(asd)
 }
