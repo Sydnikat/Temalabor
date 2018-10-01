@@ -171,7 +171,7 @@ class Player(
 
                 if(newAmount <= amountOfMoney){
 
-                    decks[currentDeckIndex].money = newAmount
+                    decks[0].money = newAmount
                     amountOfMoney -= newAmount
                     valid = true
                 }
@@ -231,9 +231,11 @@ class Bank (
 
     override fun receiveFirstCards() {
 
+        deck.cards.add(dealer.giveCard())
+
         val card = dealer.giveCard()
         card.hidden = true
-        deck.cards.addAll(arrayListOf(dealer.giveCard(), card))
+        deck.cards.add(card)
 
     }
 
