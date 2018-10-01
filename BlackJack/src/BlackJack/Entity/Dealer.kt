@@ -6,10 +6,10 @@ import BlackJack.Type.CardType
 import kotlin.collections.ArrayList
 
 
-class Dealer(val numberOfDecksUsed: Int, val observer: DealerObserver) {
+open class Dealer(val numberOfDecksUsed: Int, val observer: DealerObserver) {
 
     private val maxCardNumber = 52 * numberOfDecksUsed
-    private var deckPool: ArrayList<Card> = createDeck()
+    protected var deckPool: ArrayList<Card> = createDeck()
 
     init{
         deckPool.shuffle()
@@ -36,4 +36,10 @@ class Dealer(val numberOfDecksUsed: Int, val observer: DealerObserver) {
         return deckPool.removeAt(0)
     }
 
+}
+
+class TesterDealer(numberOfDecksUsed: Int, observer: DealerObserver)
+    : Dealer(numberOfDecksUsed, observer){
+
+      fun createNewDeck(cards: ArrayList<Card>) { deckPool = cards }
 }
