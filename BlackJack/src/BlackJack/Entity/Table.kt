@@ -10,9 +10,9 @@ import BlackJack.Type.GameState
 import BlackJack.Type.ResultType
 import BlackJack.gfx.ClassicTableView
 
-class Table(numberOfDecks: Int, private val inputHandler: InputHandler) : DealerObserver, PlayerObserver {
+class Table(numberOfDecks: Int, private val inputHandler: InputHandler, testing: Boolean = false) : DealerObserver, PlayerObserver {
 
-    private val dealer = Dealer(numberOfDecks, this)
+    val dealer = if(!testing) Dealer(numberOfDecks, this) else TesterDealer(numberOfDecks, this)
 
     private val player = Player(0.0, dealer, ClassicPlayer(), inputHandler, this)
 
