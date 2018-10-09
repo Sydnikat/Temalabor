@@ -1,7 +1,7 @@
-package BlackJack.Entity
+package BlackJack.entity
 
-import BlackJack.Color.CardColor
-import BlackJack.Type.CardType
+import BlackJack.color.CardColor
+import BlackJack.type.CardType
 
 
 data class Card(val value: CardType, val color: CardColor, var hidden: Boolean = false)

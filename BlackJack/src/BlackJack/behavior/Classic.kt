@@ -1,7 +1,7 @@
-package BlackJack.Behavior
+package BlackJack.behavior
 
-import BlackJack.Entity.Calculator
-import BlackJack.Entity.Card
+import BlackJack.entity.Calculator
+import BlackJack.entity.Card
 
 abstract class Classic : Behavior{
 

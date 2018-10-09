@@ -1,11 +1,11 @@
-package BlackJack.Entity
+package BlackJack.entity
 
 
-import BlackJack.Behavior.Behavior
-import BlackJack.Input.InputHandler
-import BlackJack.Input.NoInputHandler
-import BlackJack.Observer.PlayerObserver
-import BlackJack.Type.ActionType
+import BlackJack.behavior.Behavior
+import BlackJack.input.InputHandler
+import BlackJack.input.NoInputHandler
+import BlackJack.observer.PlayerObserver
+import BlackJack.type.ActionType
 
 
 abstract class Participant(

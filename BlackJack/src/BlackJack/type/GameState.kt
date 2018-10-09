@@ -1,4 +1,4 @@
-package BlackJack.Type
+package BlackJack.type
 
 enum class GameState {
     NEW,

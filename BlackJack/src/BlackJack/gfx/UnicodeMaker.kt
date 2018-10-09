@@ -1,8 +1,8 @@
 package BlackJack.gfx
 
-import BlackJack.Color.CardColor
-import BlackJack.Entity.Card
-import BlackJack.Type.CardType
+import BlackJack.color.CardColor
+import BlackJack.entity.Card
+import BlackJack.type.CardType
 
 fun Char.or(other: Char?): Char = this.toInt().or(other?.toInt()!!).toChar()
 

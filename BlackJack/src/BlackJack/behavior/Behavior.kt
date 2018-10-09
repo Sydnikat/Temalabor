@@ -1,6 +1,7 @@
-package BlackJack.Behavior
+package BlackJack.behavior
 
-import BlackJack.Entity.Card
+import BlackJack.entity.Card
+import java.util.*
 
 interface Behavior {
     fun hit(cards: ArrayList<Card>) : Boolean

@@ -1,4 +1,4 @@
-package BlackJack.Observer
+package BlackJack.observer
 
 interface PlayerObserver {
 

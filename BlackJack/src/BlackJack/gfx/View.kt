@@ -1,7 +1,7 @@
 package BlackJack.gfx
 
-import BlackJack.Entity.Bank
-import BlackJack.Entity.Player
+import BlackJack.entity.Bank
+import BlackJack.entity.Player
 
 
 abstract class ClassicView : Updatable

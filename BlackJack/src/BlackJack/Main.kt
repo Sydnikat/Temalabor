@@ -1,7 +1,7 @@
 package BlackJack
 
-import BlackJack.Entity.Table
-import BlackJack.Input.ConsoleInputHandler
+import BlackJack.entity.Table
+import BlackJack.input.ConsoleInputHandler
 
 fun main(args: Array<String>) {
 

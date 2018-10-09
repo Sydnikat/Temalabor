@@ -1,6 +1,6 @@
-package BlackJack.Input
+package BlackJack.input
 
-import BlackJack.Type.ActionType
+import BlackJack.type.ActionType
 
 interface InputHandler{
     fun readKey() : ActionType

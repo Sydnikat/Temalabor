@@ -1,13 +1,13 @@
-package BlackJack.Entity
+package BlackJack.entity
 
-import BlackJack.Behavior.ClassicBank
-import BlackJack.Behavior.ClassicPlayer
-import BlackJack.Input.InputHandler
-import BlackJack.Observer.DealerObserver
-import BlackJack.Observer.PlayerObserver
-import BlackJack.Type.ActionType
-import BlackJack.Type.GameState
-import BlackJack.Type.ResultType
+import BlackJack.behavior.ClassicBank
+import BlackJack.behavior.ClassicPlayer
+import BlackJack.input.InputHandler
+import BlackJack.observer.DealerObserver
+import BlackJack.observer.PlayerObserver
+import BlackJack.type.ActionType
+import BlackJack.type.GameState
+import BlackJack.type.ResultType
 import BlackJack.gfx.ClassicTableView
 
 class Table(numberOfDecks: Int, private val inputHandler: InputHandler, testing: Boolean = false) : DealerObserver, PlayerObserver {

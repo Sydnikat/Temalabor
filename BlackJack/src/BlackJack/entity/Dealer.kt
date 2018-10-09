@@ -1,8 +1,8 @@
-package BlackJack.Entity
+package BlackJack.entity
 
-import BlackJack.Color.CardColor
-import BlackJack.Observer.DealerObserver
-import BlackJack.Type.CardType
+import BlackJack.color.CardColor
+import BlackJack.observer.DealerObserver
+import BlackJack.type.CardType
 import kotlin.collections.ArrayList
 
 

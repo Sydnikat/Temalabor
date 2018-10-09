@@ -1,7 +1,7 @@
-package BlackJack.Entity
+package BlackJack.entity
 
-import BlackJack.Type.CardType
-import BlackJack.Type.ResultType
+import BlackJack.type.CardType
+import BlackJack.type.ResultType
 
 object Calculator {
 

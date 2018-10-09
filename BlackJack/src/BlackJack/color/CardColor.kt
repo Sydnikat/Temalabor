@@ -1,4 +1,4 @@
-package BlackJack.Color
+package BlackJack.color
 
 enum class CardColor {
     SPADES,
