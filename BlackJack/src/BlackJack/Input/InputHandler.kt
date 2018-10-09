@@ -36,13 +36,13 @@ class ConsoleInputHandler : InputHandler{
     override fun readKey(): ActionType =
 
 
-        when (System.`in`.read().toChar()){
-            's' ->  ActionType.SPLIT
-            'd' -> ActionType.DOUBLE
-            'q' -> ActionType.END
-            'h' -> ActionType.HIT
-            'e' -> ActionType.STAND
-            'n', 'i' -> ActionType.NEW
+        when (readLine()){
+            "s" ->  ActionType.SPLIT
+            "d" -> ActionType.DOUBLE
+            "q" -> ActionType.END
+            "h" -> ActionType.HIT
+            "e" -> ActionType.STAND
+            "n", "i" -> ActionType.NEW
             else -> ActionType.ERROR
     }
 

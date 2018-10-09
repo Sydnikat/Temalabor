@@ -54,8 +54,6 @@ class ClassicBankView(private val bank: Bank) : ClassicView() {
 
         val deck =  bank.showDeck()
 
-        //if( prevCardNumber > 2 && prevCardNumber != deck.cards.count() ) Thread.sleep(2000)
-
         bank.showDeck().cards.forEach { print(UnicodeMaker.cardToUnicode(it)) }
 
         prevCardNumber = deck.cards.count()
