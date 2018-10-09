@@ -1,8 +1,8 @@
-package GameOfLife.Entity
+package gameOfLife.entity
 
-import GameOfLife.Observer.GameObserver
-import GameOfLife.Type.GameState
-import GameOfLife.Type.StateType
+import gameOfLife.observer.GameObserver
+import gameOfLife.type.GameState
+import gameOfLife.type.StateType
 import java.util.*
 import kotlin.collections.ArrayList
 

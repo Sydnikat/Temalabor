@@ -1,8 +1,8 @@
-package GameOfLife
+package gameOfLife
 
-import GameOfLife.Entity.Frame
-import GameOfLife.Input.FileInputHandler
-import GameOfLife.Input.InputReader
+import gameOfLife.entity.Frame
+import gameOfLife.input.FileInputHandler
+import gameOfLife.input.InputReader
 
 object FrameMaker {
 

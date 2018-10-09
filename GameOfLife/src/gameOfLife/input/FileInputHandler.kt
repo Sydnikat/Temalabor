@@ -1,7 +1,7 @@
-package GameOfLife.Input
+package gameOfLife.input
 
-import GameOfLife.Entity.Frame
-import GameOfLife.Type.StateType
+import gameOfLife.entity.Frame
+import gameOfLife.type.StateType
 import java.io.File
 
 object FileInputHandler {

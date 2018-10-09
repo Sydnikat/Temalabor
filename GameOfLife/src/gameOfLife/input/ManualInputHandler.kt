@@ -1,6 +1,6 @@
-package GameOfLife.Input
+package gameOfLife.input
 
-import GameOfLife.Observer.GameObserver
+import gameOfLife.observer.GameObserver
 
 class ManualInputHandler(private val observer: GameObserver) : Runnable {
     

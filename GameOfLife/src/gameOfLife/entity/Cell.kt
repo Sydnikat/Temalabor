@@ -1,7 +1,7 @@
-package GameOfLife.Entity
+package gameOfLife.entity
 
-import GameOfLife.Type.ChangeType
-import GameOfLife.Type.StateType
+import gameOfLife.type.ChangeType
+import gameOfLife.type.StateType
 
 class Cell(var state: StateType){
 

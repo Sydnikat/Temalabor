@@ -1,7 +1,7 @@
-package GameOfLife
+package gameOfLife
 
-import GameOfLife.Entity.Frame
-import GameOfLife.Input.ManualInputHandler
+import gameOfLife.entity.Frame
+import gameOfLife.input.ManualInputHandler
 
 class Game(private val frame: Frame) {
 

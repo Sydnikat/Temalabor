@@ -1,4 +1,4 @@
-package GameOfLife.Input
+package gameOfLife.input
 
 object InputReader {
 

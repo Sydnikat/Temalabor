@@ -1,4 +1,4 @@
-package GameOfLife.Observer
+package gameOfLife.observer
 
 interface GameObserver {
     fun noticeStop()

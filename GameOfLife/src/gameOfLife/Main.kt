@@ -1,6 +1,4 @@
-package GameOfLife
-
-import GameOfLife.Entity.Frame
+package gameOfLife
 
 
 fun main(args: Array<String>) {

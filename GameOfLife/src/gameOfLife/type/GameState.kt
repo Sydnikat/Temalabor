@@ -1,4 +1,4 @@
-package GameOfLife.Type
+package gameOfLife.type
 
 enum class GameState {
     RUNNING,
