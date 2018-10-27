@@ -1,13 +1,16 @@
 
-local StateType = require "type.StateType"
-local ChangeType = require "type.ChangeType"
+StateType = require "type.StateType"
+ChangeType = require "type.ChangeType"
 
 local Cell = {
-    state = 0,
+    state = "",
     changeState = 0,
-    neighbors = {}
 }
 Cell.__index = Cell
+
+Cell.__tostring = function(self)
+    return string.format("Cell")
+end
 
 setmetatable(Cell, {
     __call = function(class, ...)
@@ -18,6 +21,7 @@ setmetatable(Cell, {
 function Cell.CreateCell(state)
     local self = setmetatable({}, Cell)
     self.state = state
+    self.neighbors = {}
     return self
 end
 
