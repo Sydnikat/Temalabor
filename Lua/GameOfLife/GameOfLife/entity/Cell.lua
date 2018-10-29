@@ -8,7 +8,7 @@ local Cell = {
 }
 Cell.__index = Cell
 
-Cell.__tostring = function(self)
+Cell.__tostring = function(self)  --> TODO: Kivenni
     return string.format("Cell")
 end
 

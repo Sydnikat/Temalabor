@@ -1,8 +1,8 @@
 
-
 Frame = require "entity.Frame"
+FileInputHandler = require("input.FileInputHandler").getInstance()
 
-frame = Frame(5,5)
+frame = FileInputHandler.createFrameFromFile("blinker", true)
 
 frame:printResult()
 frame:createNextGen()
