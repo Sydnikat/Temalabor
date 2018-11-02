@@ -1,8 +1,8 @@
 
-Frame = require "entity.Frame"
+--Frame = require "entity.Frame"
 
-getmetatable('').__index = function(str,i) return string.sub(str,i,i) end --> Elkérem a string metatable-jét és felülírom az index operátort, így tudok string-et indexelni lua-ban
-getmetatable('').__len = function(str) return string.len(str) end --> Elkérem a srting metatable-jét és felülírom a hossz operátorját, így egyszerűbben meg tudom mondani a hosszát (mint egy tábla számossága)
+--getmetatable('').__index = function(str,i) return string.sub(str,i,i) end --> Elkérem a string metatable-jét és felülírom az index operátort, így tudok string-et indexelni lua-ban
+--getmetatable('').__len = function(str) return string.len(str) end --> Elkérem a srting metatable-jét és felülírom a hossz operátorját, így egyszerűbben meg tudom mondani a hosszát (mint egy tábla számossága)
 
 local FileInputHandler = {}
 
@@ -14,7 +14,7 @@ function FileInputHandler:getInstance()
     local createFrameFromFile = function(fileName, relative)
 
         instance.fileName = fileName
-        instance.relative = relative
+        instance.relative = relative or true
         instance.lines = {}
 
         if(instance.file_exists() == false) then return {} end
@@ -22,11 +22,7 @@ function FileInputHandler:getInstance()
         instance.lines = instance.getLines()
 
 
-        local firstLine = {}
-        for str in string.gmatch(instance.lines[1], "%S")
-        do
-            firstLine[#firstLine + 1] = str
-        end
+        local firstLine = instance.split(instance.lines[1], " ")
 
         local error = assert( #firstLine == 3, "Nem megfelelő a fájl tartalma! A mátrix megadása helytelen!")
         if(type(error) == string)
@@ -62,8 +58,8 @@ function FileInputHandler:getInstance()
             do
                 local state = StateType.DEAD
 
-                --if(string.sub(instance.lines[i],j,j) == aliveCellType)
-                if(instance.lines[i + 1][j] == aliveCellType)
+                if(string.sub(instance.lines[i + 1],j,j) == aliveCellType)
+                --if(instance.lines[i + 1][j] == aliveCellType)
                 then
                     state = StateType.ALIVE
                 end
@@ -73,6 +69,14 @@ function FileInputHandler:getInstance()
         end
 
         return frame
+    end
+
+    instance.split = function(s, delimiter)
+        local result = {};
+        for match in (s..delimiter):gmatch("(.-)"..delimiter) do
+            table.insert(result, match);
+        end
+        return result;
     end
 
     instance.getLines = function()

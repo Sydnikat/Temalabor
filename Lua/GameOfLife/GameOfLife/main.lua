@@ -1,9 +1,8 @@
 
-Frame = require "entity.Frame"
-FileInputHandler = require("input.FileInputHandler").getInstance()
+--Frame = require "entity.Frame"
+FrameMaker = require("FrameMaker").getInstance()
 
-frame = FileInputHandler.createFrameFromFile("blinker", true)
+frame = FrameMaker.createFrame()
 
-frame:printResult()
-frame:createNextGen()
+frame:simulate()
 

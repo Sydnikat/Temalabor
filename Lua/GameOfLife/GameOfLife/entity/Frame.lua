@@ -1,11 +1,10 @@
 
 Cell = require "entity.Cell"
 StateType = require "type.StateType"
-GameSate = require "type.GameState"
 
 local Frame = {
-    state = GameSate.PAUSED,
     generationCounter = 0,
+    duration = 100,
     cells  = {}
 }
 Frame.__index = Frame
@@ -92,6 +91,17 @@ function Frame:createNeighbors()
     end
 end
 
+function Frame:simulate()
+
+    self:printResult()
+
+    while(self.generationCounter < self.duration) do
+        self:wait(self.timeBetweenGens / 1000)
+        self:createNextGen()
+    end
+
+end
+
 function Frame:createNextGen()
 
     self:markToDie()
@@ -101,11 +111,6 @@ function Frame:createNextGen()
     self.generationCounter = self.generationCounter + 1
 
     self:printResult()
-
-    if(self.state == GameSate.RUNNING)
-    then
-        self.wait(timeBetweenGens / 1000)
-    end
 end
 
 function Frame:getLivingCount()
@@ -156,7 +161,7 @@ function Frame:cellsBirth()
 end
 
 function Frame:printResult()
-    --os.execute("cls")
+    os.execute("cls")
     print("Generation:".. self.generationCounter .."\tNumber of living cells: ".. self:getLivingCount() .."\n")
     for i = 1, self.height, 1
     do
