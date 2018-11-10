@@ -11,11 +11,11 @@ Frame.__index = Frame
 
 setmetatable(Frame, {
     __call = function(class, ...)
-        return class.CreateFrame(...)
+        return class:CreateFrame(...)
     end
 })
 
-function Frame.CreateFrame(height, width, timeBetweenGens, chance)
+function Frame:CreateFrame(height, width, timeBetweenGens, chance)
     local self = setmetatable({}, Frame)
     self.height = height or 20
     self.width = width or 20
@@ -172,7 +172,7 @@ function Frame:printResult()
             then
                 io.write("#")
             else
-                io.write(".")
+                io.write(" ")
             end
         end
         print()

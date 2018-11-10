@@ -14,11 +14,11 @@ end
 
 setmetatable(Cell, {
     __call = function(class, ...)
-        return class.CreateCell(...)
+        return class:CreateCell(...)
     end
 })
 
-function Cell.CreateCell(state)
+function Cell:CreateCell(state)
     local self = setmetatable({}, Cell)
     self.state = state
     self.neighbors = {}
