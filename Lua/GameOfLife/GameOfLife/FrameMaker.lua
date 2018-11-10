@@ -13,36 +13,36 @@ function FrameMaker:getInstance()
 
         local frame = {}
 
-        print("Fájlból akarod betölteni? I - igen\t N - nem")
+        print("Do you want to load the map from a file? Y - Yes\t N - No")
 
-        if(string.upper(read()) == "I" )
+        if(string.upper(read()) == "Y" )
         then
             frame = instance.loadFromFile(frame)
         else
             frame = instance.createIndividual(frame)
         end
 
-        local maxGeneration = instance.getValue("Hány generációt szeretne szimulálni?")
+        local maxGeneration = instance.getValue("How many generations do you want to simulate?")
         frame.duration = maxGeneration
 
         return frame
     end
 
     instance.createIndividual = function(frame)
-        print("\nE - Egyéni beállítások\t A - Általános")
+        print("\nI - Individual settings\t G - General settings")
 
-        if(string.upper(read()) == "A")
+        if(string.upper(read()) == "G")
         then
             frame = Frame(
-                instance.getValue("Kérem adja meg a váz magasságát (egész érték):"),
-                instance.getValue("Kérem adja meg a váz szélességét (egész érték):")
+                instance.getValue("Please enter the width of the testframe (integer value):"),
+                instance.getValue("Please enter the height of the testframe (integer value):")
             )
         else
             frame = Frame(
-                instance.getValue("Kérem adja meg a váz magasságát (egész érték):"),
-                instance.getValue("Kérem adja meg a váz szélességét (egész érték):"),
-                instance.getValue("Kérem adja meg, hogy milyen gyorsan jöjjön létre az új generáció (milisec-ben)!"),
-                instance.getValue("Kérem adja meg, hogy kb. minden hányadik sejt éljen (az érték egész és legalább 2 legyen)")
+                instance.getValue("Please enter the width of the testframe (integer value):"),
+                instance.getValue("Please enter the height of the testframe (integer value):"),
+                instance.getValue("Please enter the elapsed time between two generations (in millisec)!"),
+                instance.getValue("Please enter the rate of the living cells - (1 / rate) will be the chance - (choose at least 2)!")
             )
         end
 
@@ -57,11 +57,11 @@ function FrameMaker:getInstance()
 
             print("\n"..msg.."\t")
             value = tonumber(read())
-            if(type(value) == nil)
+            if(type(value) == type(0))
             then
-                print("Típushiba! Kérem adjon meg egy egész értéket!")
-            else
                 correct = true
+            else
+                print("Type error! Please use integer value!")
             end
         end
 
@@ -70,17 +70,17 @@ function FrameMaker:getInstance()
 
     instance.loadFromFile = function(frame)
 
-        print("\nA tesztpályák közül szeretné betölteni? I - igen\t N - nem")
-        print("*megjegyzés: Amennyiben parancsorból futtatja csak akkor válassza a tesztpályákat, ha a játék könyvtárából futtatja!*")
+        print("\nDo you want to load a pre-defined map? Y - Yes\t N - No")
+        print("*Note: If you run this app in command promt please make sure that you are in the root directory of the game!*")
 
-        if(string.upper(read()) == "I")
+        if(string.upper(read()) == "Y")
         then
-            print("\nKérem adja meg a teszpálya nevét (csak a nevet)!")
+            print("\nPlease enter the name of the pre-defined map (only the name - no extension - !")
 
             frame = FileInputHandler.createFrameFromFile(read())
 
         else
-            print("\nKérem adja meg a fájl abszolút elérési útját!")
+            print("\nPlease enter the absolute path of the test map!")
             frame = FileInputHandler.createFrameFromFile(read(), false)
         end
 

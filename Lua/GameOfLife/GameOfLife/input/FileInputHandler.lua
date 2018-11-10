@@ -24,14 +24,14 @@ function FileInputHandler:getInstance()
 
         local firstLine = instance.split(instance.lines[1], " ")
 
-        local error = assert( #firstLine == 3, "Nem megfelelő a fájl tartalma! A mátrix megadása helytelen!")
+        local error = assert( #firstLine == 3, "The context of the file is incorrect! PLease make sure to give a correct matrix definition!")
         if(type(error) == string)
         then
             print(error)
             return {}
         end
 
-        error = assert( #instance.lines - 1 == tonumber(firstLine[1]), "Nem megfelelő a fájl tartalma! A mátrix megadása helytelen!")
+        error = assert( #instance.lines - 1 == tonumber(firstLine[1]), "The context of the file is incorrect! PLease make sure that the number of rows is correct!")
         if(type(error) == string)
         then
             print(error)
@@ -40,7 +40,7 @@ function FileInputHandler:getInstance()
 
         for i = 2, #instance.lines, 1
         do
-            error = assert(#instance.lines[i] == tonumber(firstLine[2]), "Nem megfelelő a fájl tartalma! A mátrix megadása helytelen!")
+            error = assert(#instance.lines[i] == tonumber(firstLine[2]), "The context of the file is incorrect! PLease make sure that the number of columns is correct!")
             if(type(error) == string)
             then
                 print(error)
@@ -99,9 +99,9 @@ function FileInputHandler:getInstance()
         local result
         if(instance.relative)
         then
-            result = assert(io.open("testMaps/".. instance.fileName ..".txt", "r"), "Nem találja a fájl")
+            result = assert(io.open("testMaps/".. instance.fileName ..".txt", "r"), "File not found!")
         else
-            result = assert(io.open(instance.fileName , "r"), "Nem találja a fájl")
+            result = assert(io.open(instance.fileName , "r"), "File not found!")
         end
 
         if( type(result) == string)
