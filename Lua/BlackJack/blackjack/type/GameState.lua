@@ -1,8 +1,10 @@
---
--- Created by IntelliJ IDEA.
--- User: Szalai Dávid
--- Date: 2018. 11. 11.
--- Time: 18:29
--- To change this template use File | Settings | File Templates.
---
 
+local GameState = {
+    NEW = 1,
+    RUNNING = 2,
+    PAUSED = 3,
+    END = 4,
+    QUIT = 5
+}
+
+return GameState

@@ -1,8 +1,11 @@
---
--- Created by IntelliJ IDEA.
--- User: Szalai Dávid
--- Date: 2018. 11. 11.
--- Time: 18:28
--- To change this template use File | Settings | File Templates.
---
 
+local ResultType =  {
+
+    WIN = 1,
+    WINBYJACK = 2,
+    TIE = 3,
+    LOSE = 4,
+    LOSEBYJACK = 5
+}
+
+return ResultType

@@ -1,8 +1,14 @@
---
--- Created by IntelliJ IDEA.
--- User: Szalai Dávid
--- Date: 2018. 11. 11.
--- Time: 18:30
--- To change this template use File | Settings | File Templates.
---
 
+local ActionType = {
+
+    HIT = 1,
+    STAND = 2,
+    DOUBLE = 3,
+    SPLIT = 4,
+    END = 5,
+    NEW = 6,
+    ERROR = 7
+
+}
+
+return ActionType
