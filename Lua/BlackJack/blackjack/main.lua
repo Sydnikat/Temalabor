@@ -7,4 +7,5 @@ local d = Dealer()
 
 d:createNewDeck()
 
+
 --print(d.deckPool[1].value, d.deckPool[1].color)
