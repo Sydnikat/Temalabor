@@ -1,10 +1,20 @@
 
-local Card = {
+local Card = {}
 
-    value = "none",
-    color = "none",
-    hidden = false
+Card.__index = Card
 
-}
+setmetatable(Card, {
+    __call = function(class,...)
+        return class:new(...)
+    end
+})
+
+function Card:new(value, color, hidden)
+    local newCard = setmetatable({}, Card)
+    newCard.value = value
+    newCard.color = color
+    newCard.hidden = hidden
+    return newCard
+end
 
 return Card
