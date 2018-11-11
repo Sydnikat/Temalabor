@@ -127,7 +127,7 @@ end
 function Player:raise()
     local valid = false
 
-    println("\nPleae raise!")
+    println("\nPlease raise!")
 
     while (valid == false) do
 

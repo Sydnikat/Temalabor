@@ -28,7 +28,7 @@ function Bank:play()
         self.observer:noticeUpdate()
     end
 
-    if(self.behavior:hit(deck.cards) == false and #slef.deck.cards == 2)
+    if(self.behavior:hit(self.deck.cards) == false and #self.deck.cards == 2)
     then
         observer.noticeUpdate()
     end
