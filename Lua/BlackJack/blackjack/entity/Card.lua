@@ -13,7 +13,7 @@ function Card:new(value, color, hidden)
     local newCard = setmetatable({}, Card)
     newCard.value = value
     newCard.color = color
-    newCard.hidden = hidden
+    newCard.hidden = hidden or false
     return newCard
 end
 
