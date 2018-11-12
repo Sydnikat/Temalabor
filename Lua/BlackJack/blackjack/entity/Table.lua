@@ -2,13 +2,14 @@
 local Player = require "entity.Player"
 local Bank = require "entity.Bank"
 local Dealer = require "entity.Dealer"
-local inputHandler = require "input.ConsoleInputHandler"
+local inputHandler = require("input.ConsoleInputHandler"):getInstance()
 local ActionType = require "type.ActionType"
 local GameState = require "type.GameState"
 local ResultType = require "type.ResultType"
 local ClassicTableView = require "gfx.ClassicTableView"
 local ClassicPlayer = require "behavior.ClassicPlayer"
 local ClassicBank = require "behavior.ClassicBank"
+local Calculator = require("entity.Calculator"):getInstance()
 
 
 local Table = {}
@@ -76,7 +77,7 @@ function Table:settings()
             self.state = GameState.RUNNING
             valid = true
         elseif(key ==  ActionType.END) then
-            seld.state = GameState.QUIT
+            self.state = GameState.QUIT
             valid = true
         else
             valid = false
@@ -85,6 +86,24 @@ function Table:settings()
 end
 
 function Table:showStatistics()                                 --TODO: implementálni
+
+    print("\nResults:\n \tYou won "..self.winCount.." times\n\tYou lost "..self.loseCount.." times\n\tYour profit: "..self.bank:showMoney() * -1)
+
+    print("n - Start new game\tq - Quit")
+    local valid = false
+    while(valid == false) do
+
+        local key = inputHandler.readKey()
+        if( key == ActionType.NEW)then
+            self.state = GameState.NEW
+            valid = true
+        elseif(key ==  ActionType.END) then
+            self.state = GameState.QUIT
+            valid = true
+        else
+            valid = false
+        end
+    end
 
 end
 
@@ -120,7 +139,74 @@ function Table:play()
 
 end
 
-function Table:calculateResult()                                 --TODO: implementálni
+function Table:calculateResult()
+
+    local playerOdds
+    local bankOdds
+
+    for i = 1, self.player.numberOfUsedDecks, 1 do
+
+        self.player:changeDeck(i)
+
+        local result = Calculator:calculateResult(self.player:showDeck(), self.bank:showDeck())
+        local playerMoney = self.player:showDeck().money
+
+        if(result == ResultType.WIN) then
+            print("You win!")
+            playerOdds = 2
+            bankOdds = -1
+            self.winCount = self.winCount + 1
+        elseif(result == ResultType.WINBYJACK) then
+            print("BlackJack! You win!")
+            playerOdds = 2.5
+            bankOdds = -1.5
+            self.winCount = self.winCount + 1
+        elseif(result == ResultType.LOSEBYJACK) then
+            print("You lost!")
+            playerOdds = 0
+            bankOdds = 1.5
+            self.loseCount = self.loseCount + 1
+        elseif(result == ResultType.TIE) then
+            print("It's tie!")
+            playerOdds = 1
+            bankOdds = 1
+        elseif(result == ResultType.LOSE) then
+            print("You lost!")
+            playerOdds = 0
+            bankOdds = 1
+            self.loseCount = self.loseCount + 1
+        else print("error")
+        end
+
+        self.player:takeMoney(playerMoney * playerOdds)
+
+        self.bank:takeMoney(playerMoney * bankOdds)
+
+    end
+
+    print("\nCurrent account: "..self.player:showMoney())
+
+    local canPlay = true
+    if(self.player:showMoney() <= 0) then canPlay = false end
+
+    print("Continue? i - Yes \tq - No")
+    local valid = false
+    while(valid == false) do
+
+        local key = inputHandler.readKey()
+        if( key == ActionType.NEW)then
+            if(canPlay) then
+                self.state = GameState.RUNNING
+                valid = true
+            end
+        elseif(key ==  ActionType.END) then
+            self.state = GameState.END
+            valid = true
+        else
+            valid = false
+        end
+    end
+
 
 end
 
