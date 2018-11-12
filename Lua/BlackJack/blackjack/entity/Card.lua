@@ -9,10 +9,11 @@ setmetatable(Card, {
     end
 })
 
-function Card:new(value, color, hidden)
+function Card:new(value, color, number, hidden)
     local newCard = setmetatable({}, Card)
     newCard.value = value
     newCard.color = color
+    newCard.number = number
     newCard.hidden = hidden or false
     return newCard
 end

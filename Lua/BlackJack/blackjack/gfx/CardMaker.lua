@@ -16,30 +16,30 @@ function CardMaker:getInstance()
         else
             local type
 
-            if(card.color == ColorTye.SPADE) then type = "A"
-            elseif(card.color == ColorTye.HEARTS) then type = "B"
-            elseif(card.color == ColorTye.DIAMONDS) then type = "C"
+            if(card.color == "SPADE") then type = "A"
+            elseif(card.color == "HEARTS") then type = "B"
+            elseif(card.color == "DIAMONDS") then type = "C"
             else type = "D"
             end
 
             local value
 
-            if(card.value == CardType.ACE) then value = 1
-            elseif(card.value == CardType.TWO) then value = 2
-            elseif(card.value == CardType.THREE) then value = 3
-            elseif(card.value == CardType.FOUR) then value = 4
-            elseif(card.value == CardType.FIVE) then value = 5
-            elseif(card.value == CardType.SIX) then value = 6
-            elseif(card.value == CardType.SEVEN) then value = 7
-            elseif(card.value == CardType.EIGHT) then value = 8
-            elseif(card.value == CardType.NINE) then value = 9
-            elseif(card.value == CardType.TEN) then value = "A"
-            elseif(card.value == CardType.JACK) then value = "B"
-            elseif(card.value == CardType.QUEEN) then value = "D"
+            if(card.value == "ACE") then value = 1
+            elseif(card.value == "TWO") then value = 2
+            elseif(card.value == "THREE") then value = 3
+            elseif(card.value == "FOUR") then value = 4
+            elseif(card.value == "FIVE") then value = 5
+            elseif(card.value == "SIX") then value = 6
+            elseif(card.value == "SEVEN") then value = 7
+            elseif(card.value == "EIGHT") then value = 8
+            elseif(card.value == "NINE") then value = 9
+            elseif(card.value == "TEN") then value = "A"
+            elseif(card.value == "JACK") then value = "B"
+            elseif(card.value == "QUEEN") then value = "D"
             else value = "E"
             end
 
-            cardString = "1A0"..type..value
+            cardString = "1F0"..type..value
         end
 
         io.write(utf8.char(tonumber(cardString,16)))

@@ -3,9 +3,9 @@ local CardMaker = require("gfx.CardMaker"):getInstance()
 
 local ClassicBankView = {}
 
-setmetatable({}, {
+setmetatable(ClassicBankView, {
     __call = function(class, ...)
-        class:new(...)
+        return class:new(...)
     end
 })
 
@@ -18,9 +18,10 @@ end
 
 function ClassicBankView:update()
 
-    for _, card in ipairs(self.bank:showDeck()) do
-        CardMaker:printCard(card)
+    for _, card in ipairs(self.bank:showDeck().cards) do
+        CardMaker.printCard(card)
     end
+    print("\n")
 
 end
 

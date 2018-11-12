@@ -20,7 +20,7 @@ function Dealer:new(numberOfUsedDecks, observer)
     newDealer.observer = observer
     newDealer.maxCardNumber = newDealer.numberOfUsedDecks * 52
     newDealer.deckPool = self:createDeck(newDealer)
-
+    self:shuffle(newDealer.deckPool)
     return newDealer
 end
 
@@ -32,8 +32,8 @@ function Dealer:createDeck(dealer)
 
     for i = 1, usedDecks, 1 do
         for color, _ in pairs(ColorType) do
-            for value, _ in pairs(CardType) do
-                table.insert(deck, Card(value, color))
+            for value, number in pairs(CardType) do
+                table.insert(deck, Card(value, color, number))
             end
         end
     end
@@ -52,8 +52,16 @@ function Dealer:giveCard()
         self.observer:noticeLowDeck()
     end
 
-    return table.remove(self.deckPool, math.random(1, #self.deckPool))
+    return table.remove(self.deckPool, 1)
 
+end
+
+function Dealer:shuffle(deck)
+    local size = #deck
+    for i = size, 1, -1 do
+        local rand = math.random(size)
+        deck[i],deck[rand] = deck[rand], deck[i]
+    end
 end
 
 return Dealer

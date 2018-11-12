@@ -2,7 +2,6 @@
 local Player = require "entity.Player"
 local Bank = require "entity.Bank"
 local Dealer = require "entity.Dealer"
-local inputHandler = require("input.ConsoleInputHandler"):getInstance()
 local ActionType = require "type.ActionType"
 local GameState = require "type.GameState"
 local ResultType = require "type.ResultType"
@@ -21,19 +20,19 @@ setmetatable(Table, {
 })
 
 function Table:new(numberOfDecks, inputHandler)
-
     local newTable = setmetatable({}, self)
     self.__index = self
 
     newTable.inputHandler = inputHandler
     newTable.dealer = Dealer(numberOfDecks, self)
-    newTable.player = Player(0, newTable.dealer, ClassicPlayer(), inputHandler, self)
-    newTable.bank = Bank(0, newTable.dealer, ClassicBank(), nil, self)
+    newTable.player = Player(0, newTable.dealer, ClassicPlayer(), inputHandler, newTable)
+    newTable.bank = Bank(0, newTable.dealer, ClassicBank(), nil, newTable)
     newTable.state = GameState.NEW
     newTable.isLowDeck = false
     newTable.tableView = ClassicTableView(newTable.player, newTable.bank)
     newTable.wincount = 0
     newTable.loseCount = 0
+
 
     return newTable
 end
@@ -56,14 +55,14 @@ end
 function Table:settings()
     print("Please enter the amount of money you want to have!")
 
-    local newAmount = self.inputHandler:readNumber()
+    local newAmount = self.inputHandler.readNumber()
 
-    while(type(newAmount) ~= type(0)) do
+    while(type(newAmount) ~= "number") do
         print("Incorrect value!")
-        newAmount = self.inputHandler:readNumber()
+        newAmount = self.inputHandler.readNumber()
     end
 
-    self.player = newAmount
+    self.player:setBasicMoney(newAmount)
 
     self.winCount = 0
     self.loseCount = 0
@@ -72,7 +71,7 @@ function Table:settings()
     local valid = false
     while(valid == false) do
 
-        local key = inputHandler.readKey()
+        local key = self.inputHandler.readKey()
         if( key == ActionType.NEW)then
             self.state = GameState.RUNNING
             valid = true
@@ -93,7 +92,7 @@ function Table:showStatistics()                                 --TODO: implemen
     local valid = false
     while(valid == false) do
 
-        local key = inputHandler.readKey()
+        local key = self.inputHandler.readKey()
         if( key == ActionType.NEW)then
             self.state = GameState.NEW
             valid = true
@@ -127,7 +126,6 @@ function Table:play()
     self.player:receiveFirstCards()
     self.bank:receiveFirstCards()
 
-
     self.player:play()
 
     if( self.state ~= GameState.RUNNING ) then return
@@ -148,7 +146,7 @@ function Table:calculateResult()
 
         self.player:changeDeck(i)
 
-        local result = Calculator:calculateResult(self.player:showDeck(), self.bank:showDeck())
+        local result = Calculator.calculateResult(self.player:showDeck(), self.bank:showDeck())
         local playerMoney = self.player:showDeck().money
 
         if(result == ResultType.WIN) then
@@ -193,7 +191,7 @@ function Table:calculateResult()
     local valid = false
     while(valid == false) do
 
-        local key = inputHandler.readKey()
+        local key = self.inputHandler.readKey()
         if( key == ActionType.NEW)then
             if(canPlay) then
                 self.state = GameState.RUNNING

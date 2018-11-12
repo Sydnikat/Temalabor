@@ -2,7 +2,9 @@
 local ClassicBehavior = require "behavior.ClassicBehavior"
 local Calculator = require("entity.Calculator"):getInstance()
 
-local ClassicBank = setmetatable({}, {
+local ClassicBank = {}
+
+setmetatable(ClassicBank, {
     __index = ClassicBehavior,
     __call = function(class, ...)
         return class:new(...)
@@ -14,7 +16,7 @@ function ClassicBank:getMaximumNumberOfDecks()
 end
 
 function ClassicBank:hit(cards)
-    return Calculator:evaluate(cards) <= 16
+    return Calculator.evaluate(cards) <= 16
 end
 
 function ClassicBank:double(cards)

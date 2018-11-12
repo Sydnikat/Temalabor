@@ -11,13 +11,13 @@ function Calculator:getInstance()
         local sum = 0
 
         for _, card in ipairs(cards) do
-            sum = sum + card.value
+            sum = sum + card.number
         end
 
         local numberOfAces = 0
 
         for _, card in ipairs(cards) do
-            if(card.value == CardType.ACE)
+            if(card.value == "ACE")
             then
                 numberOfAces = numberOfAces + 1
             end
@@ -38,15 +38,15 @@ function Calculator:getInstance()
         local bankValue = evaluate(bankDeck.cards)
 
         if(playerValue == 21 and #playerDeck.cards == 2) then
-            if((playerDeck.cards[1] == CardType.JACK or playerDeck.cards[2] == CardType.JACK) and
-               (playerDeck.cards[1] == CardType.TEN or playerDeck.cards[2] == CardType.TEN)) then
+            if((playerDeck.cards[1].value == "JACK" or playerDeck.cards[2].value == "JACK") and
+               (playerDeck.cards[1].value == "TEN" or playerDeck.cards[2].value == "TEN")) then
                 return ResultType.WINBYJACK
             end
         end
 
         if(bankValue == 21 and #bankDeck.cards == 2) then
-            if((bankDeck.cards[1] == CardType.JACK or bankDeck.cards[2] == CardType.JACK) and
-               (bankDeck.cards[1] == CardType.TEN or bankDeck.cards[2] == CardType.TEN)) then
+            if((bankDeck.cards[1].value == "JACK" or bankDeck.cards[2].value == "JACK") and
+               (bankDeck.cards[1].value == "TEN" or bankDeck.cards[2].value == "TEN")) then
                 return ResultType.LOSEBYJACK
             end
         end

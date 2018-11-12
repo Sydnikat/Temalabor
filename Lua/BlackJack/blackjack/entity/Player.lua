@@ -6,17 +6,16 @@ local ActionType = require "type.ActionType"
 
 local Player = {}
 
-setmetatable({}, {
-    __index = Participant,
+setmetatable(Player, {
     __call = function(class,...)
         local newPlayer = class:new(...)
-
-        newPlayer.currentDeckIndex = 0
+        newPlayer.currentDeckIndex = 1
         newPlayer.numberOfUsedDecks = 1
-        newPlayer.decks = Player:createDecks(newPlayer)
+        newPlayer.decks = class:createDecks(newPlayer)
 
         return newPlayer
-    end
+    end,
+    __index = Participant
 })
 
 
@@ -25,6 +24,7 @@ function Player:createDecks(player)
     for i = 1, player.behavior.getMaximumNumberOfDecks(), 1 do
         table.insert(decks, Deck({}, 0))
     end
+    return decks
 end
 
 function Player:preparation()
@@ -38,6 +38,7 @@ function Player:preparation()
 end
 
 function Player:play()
+
     for _, deck in ipairs(self.decks) do
 
         if(#deck.cards ~= 0) then
@@ -58,7 +59,7 @@ function Player:play()
                     self.observer:noticeEndGame()
                     done = true
                 elseif(key == ActionType.NEW) then
-                    self.observer:noticeUpdate()
+                    self.observer:noticeNewGame()
                     done = true
                 else
                 end
@@ -80,7 +81,7 @@ function Player:split(deck)
 
         self.numberOfUsedDecks = self.numberOfUsedDecks + 1
 
-        local card = table.remove(deck.cards, 0)
+        local card = table.remove(deck.cards, 1)
 
         local idx = 0
         for i, d in ipairs(self.decks) do
@@ -99,7 +100,7 @@ function Player:split(deck)
 end
 
 function Player:changeDeck(index)
-    if(index >= 1 and index <= self.observer:getMaximumNumberOfDecks()) then
+    if(index >= 1 and index <= self.behavior:getMaximumNumberOfDecks()) then
         self.currentDeckIndex = index
     end
 end
@@ -111,7 +112,7 @@ function Player:double(deck)
 
         if(self.amountOfMoney >= currentMoney) then
 
-            self.amountOfMoney = self.amountMOney - currentMoney
+            self.amountOfMoney = self.amountOfMoney - currentMoney
             deck.money = 2 * deck.money
 
         elseif(self.amountOfMoney > 0.0) then
@@ -120,20 +121,20 @@ function Player:double(deck)
             self.amountOfMoney = 0.0
         end
 
-        observer.noticeUpdate()
+        self.observer:noticeUpdate()
     end
 end
 
 function Player:raise()
     local valid = false
 
-    println("\nPlease raise!")
+    print("\nPlease raise!")
 
     while (valid == false) do
 
         local newAmount = ConsoleInputHandler.readNumber()
 
-        if(newAmount == tonumber(0)) then
+        if(type(newAmount) == "number") then
 
             if(newAmount <= self.amountOfMoney) then
 
@@ -141,16 +142,16 @@ function Player:raise()
                 self.amountOfMoney = self.amountOfMoney - newAmount
                 valid = true
             end
-
         end
+
 
     end
     print("\n\n")
 end
 
 function Player:receiveFirstCards()
-    table.insert(self.decks[1], self.dealer:giveCard())
-    table.insert(self.decks[1], self.dealer:giveCard())
+    table.insert(self.decks[1].cards, self.dealer:giveCard())
+    table.insert(self.decks[1].cards, self.dealer:giveCard())
 end
 
 function Player:showDeck()

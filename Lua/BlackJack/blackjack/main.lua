@@ -1,13 +1,9 @@
 
+local InputHandler = require("input.ConsoleInputHandler"):getInstance()
+local Table = require "entity.Table"
+local Player = require "entity.Player"
 local Dealer = require "entity.Dealer"
-local CardType = require "type.CardType"
-
-local card = {}
 
 
+Table(6, InputHandler):startGame()
 
---print(d.deckPool[1].value, d.deckPool[1].color)
-
-
-
---print(d.deckPool[1].value, d.deckPool[1].color)

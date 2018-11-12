@@ -4,7 +4,7 @@ local Deck = require "entity.Deck"
 
 local Bank = {}
 
-setmetatable({}, {
+setmetatable(Bank, {
     __index = Participant,
     __call = function(class,...)
         local newBank = class:new(...)
@@ -25,13 +25,14 @@ function Bank:play()
 
         table.insert(self.deck.cards, self.dealer:giveCard())
 
-        self.observer:noticeUpdate()
     end
 
-    if(self.behavior:hit(self.deck.cards) == false and #self.deck.cards == 2)
-    then
-        self.observer.noticeUpdate()
-    end
+    self.observer:noticeUpdate()
+
+    --if(self.behavior:hit(self.deck.cards) == false and #self.deck.cards == 2)
+   -- then
+     --   self.observer:noticeUpdate()
+   -- end
 end
 
 function Bank:preparation()

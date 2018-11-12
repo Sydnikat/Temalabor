@@ -3,9 +3,9 @@ local CardMaker = require("gfx.CardMaker"):getInstance()
 
 local ClassicPlayerView = {}
 
-setmetatable({}, {
+setmetatable(ClassicPlayerView, {
     __call = function(class, ...)
-        class:new(...)
+        return class:new(...)
     end
 })
 
@@ -17,23 +17,26 @@ function ClassicPlayerView:new(player)
 end
 
 function ClassicPlayerView:update()
-    for i = 1, self.numberOfUsedDecks, 1 do
 
-        self.player:changeDeck(1)
+    for i = 1, self.player.numberOfUsedDecks, 1 do
+
+        self.player:changeDeck(i)
 
         local deck = self.player:showDeck()
 
+        io.flush()
         io.write( i..": "..deck.money.." ")
 
-        for _, card in ipairs(deck) do
-            CardMaker:printCard(card)
+
+        for _, card in ipairs(deck.cards) do
+            CardMaker.printCard(card)
         end
 
         io.write("\t")
-
     end
 
-    io.write(self.player.showMoney().."\n")
+    io.write(self.player:showMoney())
+    print()
 
 end
 

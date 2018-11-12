@@ -11,7 +11,7 @@ function ConsoleInputHandler:getInstance()
     end
 
     local readKey = function()
-        local line = string.upper(lread())
+        local line = string.upper(read())
         local result
 
         if(line == "S") then result = ActionType.SPLIT

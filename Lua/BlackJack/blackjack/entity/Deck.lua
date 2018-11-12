@@ -11,8 +11,8 @@ setmetatable(Deck, {
 
 function Deck:new(cards, money)
     local newDeck = setmetatable({}, Deck)
-    newDeck.value = cards
-    newDeck.color = money
+    newDeck.cards = cards
+    newDeck.money = money
     return newDeck
 end
 
