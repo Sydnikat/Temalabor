@@ -1,11 +1,13 @@
 
 local Dealer = require "entity.Dealer"
+local CardType = require "type.CardType"
 
-local d = Dealer()
+local card = {}
+
+
 
 --print(d.deckPool[1].value, d.deckPool[1].color)
 
-d:createNewDeck()
 
 
 --print(d.deckPool[1].value, d.deckPool[1].color)

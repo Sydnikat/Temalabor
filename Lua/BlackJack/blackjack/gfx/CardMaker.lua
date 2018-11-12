@@ -42,7 +42,7 @@ function CardMaker:getInstance()
             cardString = "1A0"..type..value
         end
 
-        print(utf8.char(tonumber(cardString,16)))
+        io.write(utf8.char(tonumber(cardString,16)))
     end
 
     return{

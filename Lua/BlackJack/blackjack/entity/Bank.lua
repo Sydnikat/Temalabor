@@ -30,7 +30,7 @@ function Bank:play()
 
     if(self.behavior:hit(self.deck.cards) == false and #self.deck.cards == 2)
     then
-        observer.noticeUpdate()
+        self.observer.noticeUpdate()
     end
 end
 

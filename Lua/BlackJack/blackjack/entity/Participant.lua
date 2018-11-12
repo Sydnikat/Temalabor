@@ -1,6 +1,4 @@
 
-
-
 local Participant = {}
 
 setmetatable(Participant, {
@@ -9,7 +7,7 @@ setmetatable(Participant, {
     end
 })
 
-function Participant:new(amountOfMoney, dealer, behavior, inputHandler,observer)
+function Participant:new(amountOfMoney, dealer, behavior, inputHandler, observer)
     local newParticipnat = setmetatable({}, self)
     self.__index = self
     newParticipnat.amountOfMoney = amountOfMoney
