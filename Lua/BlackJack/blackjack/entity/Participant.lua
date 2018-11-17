@@ -27,7 +27,6 @@ function Participant:setBasicMoney(newAmount)
 end
 
 function Participant:showMoney()
-
     return self.amountOfMoney
 end
 

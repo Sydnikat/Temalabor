@@ -1,13 +1,12 @@
 
-Cell = require "entity.Cell"
-StateType = require "type.StateType"
+local Cell = require "entity.Cell"
+local StateType = require "type.StateType"
 
 local Frame = {
     generationCounter = 0,
     duration = 100,
     cells  = {}
 }
-Frame.__index = Frame
 
 setmetatable(Frame, {
     __call = function(class, ...)
@@ -16,42 +15,39 @@ setmetatable(Frame, {
 })
 
 function Frame:CreateFrame(height, width, timeBetweenGens, chance)
-    local self = setmetatable({}, Frame)
-    self.height = height or 20
-    self.width = width or 20
-    self.timeBetweenGens = timeBetweenGens or 400.0
-    self.chance =  chance or 4
+    local newFrame = setmetatable({}, self)
+    self.__index = self
+    newFrame.height = height or 20
+    newFrame.width = width or 20
+    newFrame.timeBetweenGens = timeBetweenGens or 400.0
+    newFrame.chance =  chance or 4
 
-    self:init()
+    newFrame:init()
 
-    return self
+    return newFrame
 end
 
 function Frame:init()
 
-    for i = 1, self.height, 1
-    do
+    for i = 1, self.height, 1 do
         table.insert(self.cells, {})
     end
 
     local chanceGen = self.chance
-    if(2 > chanceGen)
-    then
+    if(2 > chanceGen) then
         chanceGen = 4
     end
 
     math.randomseed(os.time())
-    for i = 1, self.height, 1
-    do
+    for i = 1, self.height, 1 do
 
-        for j = 1, self.width, 1
-        do
+        for j = 1, self.width, 1 do
+
             local isAlive = (math.random(100000) % chanceGen) == 0
 
             local cellState = StateType.ALIVE
 
-            if(isAlive == false)
-            then
+            if(isAlive == false) then
                 cellState = StateType.DEAD
             end
 
@@ -64,10 +60,8 @@ function Frame:init()
 end
 
 function Frame:createNeighbors()
-    for i = 1, self.height, 1
-    do
-        for j = 1, self.width, 1
-        do
+    for i = 1, self.height, 1 do
+        for j = 1, self.width, 1 do
 
             local upperRow
             local lowerRow
@@ -115,12 +109,9 @@ end
 
 function Frame:getLivingCount()
     local livingCount = 0
-    for i = 1, self.height, 1
-    do
-        for j = 1, self.width, 1
-        do
-            if(self.cells[i][j].state == StateType.ALIVE)
-            then
+    for i = 1, self.height, 1 do
+        for j = 1, self.width, 1 do
+            if(self.cells[i][j].state == StateType.ALIVE) then
                 livingCount = livingCount + 1
             end
         end
@@ -130,10 +121,8 @@ function Frame:getLivingCount()
 end
 
 function Frame:markToDie()
-    for i = 1, self.height, 1
-    do
-        for j = 1, self.width, 1
-        do
+    for i = 1, self.height, 1 do
+        for j = 1, self.width, 1 do
             self.cells[i][j]:checkState()
         end
     end
@@ -141,20 +130,16 @@ function Frame:markToDie()
 end
 
 function Frame:cellsDie()
-    for i = 1, self.height, 1
-    do
-        for j = 1, self.width, 1
-        do
+    for i = 1, self.height, 1 do
+        for j = 1, self.width, 1 do
             self.cells[i][j]:die()
         end
     end
 end
 
 function Frame:cellsBirth()
-    for i = 1, self.height, 1
-    do
-        for j = 1, self.width, 1
-        do
+    for i = 1, self.height, 1 do
+        for j = 1, self.width, 1 do
             self.cells[i][j]:birth()
         end
     end
@@ -163,13 +148,10 @@ end
 function Frame:printResult()
     os.execute("cls")
     print("Generation:".. self.generationCounter .."\tNumber of living cells: ".. self:getLivingCount() .."\n")
-    for i = 1, self.height, 1
-    do
+    for i = 1, self.height, 1 do
         io.flush()
-        for j = 1, self.width, 1
-        do
-            if(self.cells[i][j].state == StateType.ALIVE)
-            then
+        for j = 1, self.width, 1 do
+            if(self.cells[i][j].state == StateType.ALIVE) then
                 io.write("#")
             else
                 io.write(" ")
@@ -177,7 +159,6 @@ function Frame:printResult()
         end
         print()
     end
-
     print()
 
 end
@@ -185,9 +166,7 @@ end
 
 function Frame:wait(seconds)
     local time = os.clock()
-    while os.clock()-time < seconds
-    do
-    end
+    while os.clock()-time < seconds do  end
 end
 
 return Frame

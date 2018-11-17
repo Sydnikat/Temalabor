@@ -19,11 +19,11 @@ function ClassicBank:hit(cards)
     return Calculator.evaluate(cards) <= 16
 end
 
-function ClassicBank:double(cards)
+function ClassicBank:double()
     return false
 end
 
-function ClassicBank:split(cards, numberOfDecks)
+function ClassicBank:split()
     return false
 end
 

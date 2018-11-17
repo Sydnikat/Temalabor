@@ -18,15 +18,15 @@ function ClassicBehavior:getMaximumNumberOfDecks()
     return 1
 end
 
-function ClassicBehavior:hit(cards)
+function ClassicBehavior:hit()
     return true
 end
 
-function ClassicBehavior:double(cards)
+function ClassicBehavior:double()
     return true
 end
 
-function ClassicBehavior:split(cards, numberOfDecks)
+function ClassicBehavior:split()
     return true
 end
 

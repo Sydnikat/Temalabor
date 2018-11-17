@@ -1,7 +1,4 @@
 
-local CardType = require "type.CardType"
-local ColorTye = require "type.ColorType"
-
 local CardMaker = {}
 
 function CardMaker:getInstance()

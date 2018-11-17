@@ -84,8 +84,9 @@ function Table:settings()
     end
 end
 
-function Table:showStatistics()                                 --TODO: implementálni
+function Table:showStatistics()
 
+    --os.execute("cls")     -- clear window (on windows)
     print("\nResults:\n \tYou won "..self.winCount.." times\n\tYou lost "..self.loseCount.." times\n\tYour profit: "..self.bank:showMoney() * -1)
 
     print("n - Start new game\tq - Quit")
@@ -120,6 +121,8 @@ function Table:play()
 
     self.player:preparation()
     self.bank:preparation()
+
+    --os.execute("cls")     -- clear window (on windows)
 
     self.player:raise()
 

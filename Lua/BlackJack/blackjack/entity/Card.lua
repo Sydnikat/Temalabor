@@ -1,8 +1,6 @@
 
 local Card = {}
 
-Card.__index = Card
-
 setmetatable(Card, {
     __call = function(class,...)
         return class:new(...)
@@ -10,7 +8,8 @@ setmetatable(Card, {
 })
 
 function Card:new(value, color, number, hidden)
-    local newCard = setmetatable({}, Card)
+    local newCard = setmetatable({}, self)
+    self.__index = self
     newCard.value = value
     newCard.color = color
     newCard.number = number

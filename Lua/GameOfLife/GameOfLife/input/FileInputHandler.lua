@@ -1,9 +1,4 @@
 
---Frame = require "entity.Frame"
-
---getmetatable('').__index = function(str,i) return string.sub(str,i,i) end --> Elkérem a string metatable-jét és felülírom az index operátort, így tudok string-et indexelni lua-ban
---getmetatable('').__len = function(str) return string.len(str) end --> Elkérem a srting metatable-jét és felülírom a hossz operátorját, így egyszerűbben meg tudom mondani a hosszát (mint egy tábla számossága)
-
 local FileInputHandler = {}
 
 
@@ -25,26 +20,19 @@ function FileInputHandler:getInstance()
         local firstLine = instance.split(instance.lines[1], " ")
 
         local error = assert( #firstLine == 3, "The context of the file is incorrect! PLease make sure to give a correct matrix definition!")
-        if(type(error) == string)
-        then
+        if(type(error) == string) then
             print(error)
-            return {}
         end
 
         error = assert( #instance.lines - 1 == tonumber(firstLine[1]), "The context of the file is incorrect! PLease make sure that the number of rows is correct!")
-        if(type(error) == string)
-        then
+        if(type(error) == string) then
             print(error)
-            return {}
         end
 
-        for i = 2, #instance.lines, 1
-        do
+        for i = 2, #instance.lines, 1 do
             error = assert(#instance.lines[i] == tonumber(firstLine[2]), "The context of the file is incorrect! PLease make sure that the number of columns is correct!")
-            if(type(error) == string)
-            then
+            if(type(error) == string) then
                 print(error)
-                return {}
             end
         end
 
@@ -52,15 +40,11 @@ function FileInputHandler:getInstance()
 
         local frame = Frame(tonumber(firstLine[1]), tonumber(firstLine[2]))
 
-        for i = 1, frame.height, 1
-        do
-            for j = 1, frame.width, 1
-            do
+        for i = 1, frame.height, 1 do
+            for j = 1, frame.width, 1 do
                 local state = StateType.DEAD
 
-                if(string.sub(instance.lines[i + 1],j,j) == aliveCellType)
-                --if(instance.lines[i + 1][j] == aliveCellType)
-                then
+                if(string.sub(instance.lines[i + 1],j,j) == aliveCellType) then
                     state = StateType.ALIVE
                 end
 
@@ -81,14 +65,12 @@ function FileInputHandler:getInstance()
 
     instance.getLines = function()
 
-        if(instance.relative)
-        then
+        if(instance.relative) then
             instance.fileName = "testMaps/".. instance.fileName ..".txt"
         end
 
         local lines = {}
-        for line in io.lines(instance.fileName)
-        do
+        for line in io.lines(instance.fileName) do
             lines[#lines + 1] = line
         end
 
@@ -97,15 +79,13 @@ function FileInputHandler:getInstance()
 
     instance.file_exists = function()
         local result
-        if(instance.relative)
-        then
+        if(instance.relative) then
             result = assert(io.open("testMaps/".. instance.fileName ..".txt", "r"), "File not found!")
         else
             result = assert(io.open(instance.fileName , "r"), "File not found!")
         end
 
-        if( type(result) == string)
-        then
+        if( type(result) == type(" ")) then
             print(result)
             return false
         else

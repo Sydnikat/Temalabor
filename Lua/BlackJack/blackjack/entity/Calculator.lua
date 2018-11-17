@@ -1,6 +1,4 @@
 
-
-local CardType = require "type.CardType"
 local ResultType = require "type.ResultType"
 
 local Calculator = {}
@@ -24,7 +22,7 @@ function Calculator:getInstance()
         end
 
         while(sum > 21 and numberOfAces > 0) do
-            sum = sum - 10
+            sum = sum - 10  -- Making the value of ACE (default 11) to 1
             numberOfAces = numberOfAces - 1
         end
 

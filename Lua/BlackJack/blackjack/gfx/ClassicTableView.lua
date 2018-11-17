@@ -22,6 +22,7 @@ end
 
 function ClassicTableView:update()
 
+    --os.execute("cls")     -- Clear window (on windows)
     self.bank:update()
     self.player:update()
 

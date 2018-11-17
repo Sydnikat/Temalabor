@@ -4,13 +4,8 @@ ChangeType = require "type.ChangeType"
 
 local Cell = {
     state = "",
-    changeState = 0,
+    changeState = 0
 }
-Cell.__index = Cell
-
-Cell.__tostring = function(self)  --> TODO: Kivenni
-    return string.format("Cell")
-end
 
 setmetatable(Cell, {
     __call = function(class, ...)
@@ -19,33 +14,30 @@ setmetatable(Cell, {
 })
 
 function Cell:CreateCell(state)
-    local self = setmetatable({}, Cell)
-    self.state = state
-    self.neighbors = {}
-    return self
+    local newCell = setmetatable({}, self)
+    self.__index = self
+    newCell.state = state
+    newCell.neighbors = {}
+    return newCell
 end
 
 function Cell:checkState()
     local livingNeighbors = 0
 
-    for _, cell in ipairs(self.neighbors)
-    do
-        if(cell.state == StateType.ALIVE)
-        then
+    for _, cell in ipairs(self.neighbors) do
+        if(cell.state == StateType.ALIVE) then
             livingNeighbors = livingNeighbors + 1
         end
     end
 
     if(livingNeighbors > 3 or livingNeighbors < 2) then
-        if(self.state == StateType.ALIVE)
-        then
+        if(self.state == StateType.ALIVE) then
             self.changeState = ChangeType.DIE
         else
             self.changeState = ChangeType.NOTHING
         end
     else
-        if(self.state == StateType.DEAD and livingNeighbors == 3)
-        then
+        if(self.state == StateType.DEAD and livingNeighbors == 3) then
             self.changeState = ChangeType.BIRTH
         else
             self.changeState = ChangeType.NOTHING
@@ -55,15 +47,13 @@ function Cell:checkState()
 end
 
 function Cell:die()
-    if(self.changeState == ChangeType.DIE)
-    then
+    if(self.changeState == ChangeType.DIE) then
         self.state = StateType.DEAD
     end
 end
 
 function Cell:birth()
-    if(self.changeState == ChangeType.BIRTH)
-    then
+    if(self.changeState == ChangeType.BIRTH) then
         self.state = StateType.ALIVE
     end
 end

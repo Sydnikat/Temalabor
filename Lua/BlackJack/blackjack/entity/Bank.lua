@@ -28,11 +28,6 @@ function Bank:play()
     end
 
     self.observer:noticeUpdate()
-
-    --if(self.behavior:hit(self.deck.cards) == false and #self.deck.cards == 2)
-   -- then
-     --   self.observer:noticeUpdate()
-   -- end
 end
 
 function Bank:preparation()

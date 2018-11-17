@@ -5,7 +5,8 @@ import gameOfLife.type.StateType
 
 class Cell(var state: StateType){
 
-    private var change = ChangeType.NOTHING
+    var change = ChangeType.NOTHING
+    private set
 
     fun checkState() {
         val livingNeighbors = neighbors.count { it.state == StateType.ALIVE }
