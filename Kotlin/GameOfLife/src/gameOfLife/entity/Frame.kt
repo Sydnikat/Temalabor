@@ -14,7 +14,8 @@ class Frame (val height: Int,
 
     val cells = ArrayList<ArrayList<Cell>>()
 
-    private var state = GameState.PAUSED
+    var state = GameState.PAUSED
+    private set
     private var generationCounter = 0
     private var livingCount = 0
 

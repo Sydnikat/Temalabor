@@ -21,7 +21,7 @@ object FileInputHandler {
 
         (1 until lines.count()).forEach {
             if( lines[it].count() != firstLine[1].toInt())
-                throw Exception("Nem megfelelő a fájl tartalma! A mátrix megadása helytelen!")
+                throw Exception("Nem megfelelő a fájl tartalma! A mátrix megadása helytelen2!")
         }
 
         val aliveCellType = firstLine[2]
