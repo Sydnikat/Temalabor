@@ -118,8 +118,6 @@ class Player(
                 }
             }
 
-            println(idx)
-
             decks[idx].cards.add(card)
             decks[idx].money = deck.money / 2
             deck.money /= 2
