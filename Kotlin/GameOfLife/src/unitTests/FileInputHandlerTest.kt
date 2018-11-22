@@ -1,10 +1,12 @@
 package unitTests
 
 import gameOfLife.input.FileInputHandler
+import gameOfLife.type.StateType
 import org.junit.Test
 
 import java.io.FileNotFoundException
 import java.lang.Exception
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class FileInputHandlerTest {
@@ -21,16 +23,26 @@ class FileInputHandlerTest {
         val frame = FileInputHandler.createFrameFromFile("missingDataTest")
     }
 
-    @Test(expected = Exception::class)
+    @Test
     fun wrongRowDataTest() {
-        val frame = FileInputHandler.createFrameFromFile("missingRowDataTest")
+        assertFailsWith(Exception::class){
+            FileInputHandler.createFrameFromFile("missingRowDataTest")
+        }
     }
 
     @Test
-    fun test() {
-        assertFailsWith(Exception::class, "Nem megfelelő a fájl tartalma! A mátrix megadása helytelen2!"){
-                FileInputHandler.createFrameFromFile("missingRowDataTest")
-        }
+    fun createNewFrameTest() {
+        val frame = FileInputHandler.createFrameFromFile("blinker")
 
+        assertEquals(5, frame.height)
+        assertEquals(5, frame.width)
+        var c = 0
+        frame.cells.forEach {
+            it.forEach { i ->
+                if(i.state == StateType.ALIVE)
+                    c++
+            }
+        }
+        assertEquals(3, c)
     }
 }
