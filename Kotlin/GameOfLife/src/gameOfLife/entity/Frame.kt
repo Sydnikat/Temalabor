@@ -124,11 +124,21 @@ class Frame (val height: Int,
         }
     }
 
+    fun livingCount(): Int{
+        var counter = 0
+        cells.forEach { i ->
+            i.forEach {
+                if(it.state == StateType.ALIVE) counter++
+            }
+        }
+        return counter
+    }
+
     fun printResult(){
 
         ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor()
 
-        println("Generation: $generationCounter\tNumber of living cells: $livingCount\n")
+        println("Generation: $generationCounter\tNumber of living cells: ${livingCount()}\n")
 
         cells.forEach { i ->
             i.forEach { it ->

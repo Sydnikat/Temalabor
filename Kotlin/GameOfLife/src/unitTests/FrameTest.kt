@@ -1,7 +1,8 @@
 package unitTests
 
+import gameOfLife.FrameMaker
 import gameOfLife.entity.Frame
-import gameOfLife.input.InputReader
+import gameOfLife.type.StateType
 import org.junit.Test
 
 import org.junit.Assert.*
@@ -9,16 +10,63 @@ import java.io.ByteArrayInputStream
 
 class FrameTest {
 
-    val frame = Frame(20,20)
+    @Test
+    fun checkNextGenForBeaconTest() {
+
+        System.setIn(ByteArrayInputStream("i\ni\nbeacon".toByteArray()))
+
+        val frame = FrameMaker.createFrame()
+
+        assertEquals(8, frame.livingCount())
+
+        assertEquals(StateType.ALIVE, frame.cells[2][2].state)
+        assertEquals(StateType.ALIVE, frame.cells[3][3].state)
+
+        frame.createNextGen()
+
+        assertEquals(6, frame.livingCount())
+
+        assertEquals(StateType.DEAD, frame.cells[2][2].state)
+        assertEquals(StateType.DEAD, frame.cells[3][3].state)
+
+        frame.createNextGen()
+
+        assertEquals(8, frame.livingCount())
+
+        assertEquals(StateType.ALIVE, frame.cells[2][2].state)
+        assertEquals(StateType.ALIVE, frame.cells[3][3].state)
+    }
 
     @Test
-    fun printResult() {
+    fun checkNextGenForBlinkerTest() {
 
-        System.setIn(ByteArrayInputStream("1".toByteArray()))
+        System.setIn(ByteArrayInputStream("i\ni\nblinker".toByteArray()))
 
-        val sz = InputReader.readNumber()
+        val frame = FrameMaker.createFrame()
 
-        assertEquals(1, sz)
+        assertEquals(3, frame.livingCount())
 
+        assertEquals(StateType.ALIVE, frame.cells[2][1].state)
+        assertEquals(StateType.ALIVE, frame.cells[2][3].state)
+        assertEquals(StateType.DEAD, frame.cells[1][2].state)
+        assertEquals(StateType.DEAD, frame.cells[3][2].state)
+
+        frame.createNextGen()
+
+        assertEquals(3, frame.livingCount())
+
+        assertEquals(StateType.DEAD, frame.cells[2][1].state)
+        assertEquals(StateType.DEAD, frame.cells[2][3].state)
+        assertEquals(StateType.ALIVE, frame.cells[1][2].state)
+        assertEquals(StateType.ALIVE, frame.cells[3][2].state)
+
+        frame.createNextGen()
+
+        assertEquals(3, frame.livingCount())
+
+        assertEquals(StateType.ALIVE, frame.cells[2][1].state)
+        assertEquals(StateType.ALIVE, frame.cells[2][3].state)
+        assertEquals(StateType.DEAD, frame.cells[1][2].state)
+        assertEquals(StateType.DEAD, frame.cells[3][2].state)
     }
 }
