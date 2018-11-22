@@ -8,14 +8,15 @@ import kotlin.collections.ArrayList
 
 class Frame (val height: Int,
              val width: Int,
-             private val timeBetweenGens: Long = 250,
-             fillWithRandom: Boolean = true,
-             chance: Int = 4) : Runnable, GameObserver {
+             val timeBetweenGens: Long = 250,
+             val fillWithRandom: Boolean = true,
+             val chance: Int = 4) : Runnable, GameObserver {
 
     val cells = ArrayList<ArrayList<Cell>>()
 
     var state = GameState.PAUSED
     private set
+
     private var generationCounter = 0
     private var livingCount = 0
 
