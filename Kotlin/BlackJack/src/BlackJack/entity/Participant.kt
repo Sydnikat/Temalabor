@@ -57,7 +57,12 @@ class Player(
 
     override fun play() {
 
-        decks.forEach {
+        var forceStop = false
+        var i = 0
+
+        while (i < decks.count() && !forceStop){
+
+            val it = decks[i++]
 
             if(it.cards.isNotEmpty()){
 
@@ -65,8 +70,6 @@ class Player(
 
                 var done = false
                 while (!done) {
-
-                    //if(Calculator.evaluate(decks[currentDeckIndex].cards) >= 21) break
 
                     when (inputHandler.readKey()) {
 
@@ -77,17 +80,17 @@ class Player(
                         ActionType.END -> {
                             observer.noticeEndGame()
                             done = true
+                            forceStop = true
                         }
                         ActionType.NEW ->{
                             observer.noticeNewGame()
                             done = true
+                            forceStop = true
                         }
                         ActionType.ERROR -> {}
                     }
                 }
-
             }
-
         }
 
     }
