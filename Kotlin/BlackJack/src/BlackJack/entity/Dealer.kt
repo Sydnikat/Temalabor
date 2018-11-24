@@ -31,7 +31,7 @@ open class Dealer(val numberOfDecksUsed: Int, val observer: DealerObserver) {
         deckPool = createDeck()
     }
 
-    fun giveCard() : Card {
+    open fun giveCard() : Card {
 
         if(deckPool.count() < maxCardNumber / 2) observer.noticeLowDeck()
 
@@ -44,6 +44,8 @@ open class Dealer(val numberOfDecksUsed: Int, val observer: DealerObserver) {
 
 class TesterDealer(numberOfDecksUsed: Int, observer: DealerObserver)
     : Dealer(numberOfDecksUsed, observer){
+
+    override fun giveCard(): Card = deckPool.removeAt(0)
 
     fun createNewDeck(cards: ArrayList<Card>) { deckPool = cards }
 }
