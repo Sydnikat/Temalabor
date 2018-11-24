@@ -23,8 +23,6 @@ class ClassicPlayer : Classic() {
 
     override fun split(cards: ArrayList<Card>, numberOfDecks: Int): Boolean {
 
-        println(cards.count())
-
         return when {
             numberOfDecks == 3 -> false
             cards.count() != 2 -> false
