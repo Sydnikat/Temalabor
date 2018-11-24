@@ -1,6 +1,7 @@
 package unitTests
 
 import BlackJack.input.ConsoleInputHandler
+import BlackJack.input.NoInputHandler
 import BlackJack.type.ActionType
 import org.junit.Test
 
@@ -10,6 +11,7 @@ import java.io.ByteArrayInputStream
 class ConsoleInputHandlerTest {
 
     private val cInputHandler = ConsoleInputHandler()
+    private val nInputHandler = NoInputHandler()
 
     @Test
     fun readNumberTest() {
@@ -42,6 +44,14 @@ class ConsoleInputHandlerTest {
         assertEquals(ActionType.NEW, cInputHandler.readKey())
         assertEquals(ActionType.ERROR, cInputHandler.readKey())
         assertEquals(ActionType.ERROR, cInputHandler.readKey())
+
+    }
+
+    @Test
+    fun noInputHandlerTest() {
+
+        assertEquals(null, nInputHandler.readNumber())
+        assertEquals(ActionType.ERROR, nInputHandler.readKey())
 
     }
 }
