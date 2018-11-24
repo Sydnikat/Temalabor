@@ -27,7 +27,9 @@ open class Dealer(val numberOfDecksUsed: Int, val observer: DealerObserver) {
             }
         }
 
-    fun createNewDeck() { deckPool = createDeck() }
+    fun createNewDeck() {
+        deckPool = createDeck()
+    }
 
     fun giveCard() : Card {
 
@@ -36,10 +38,12 @@ open class Dealer(val numberOfDecksUsed: Int, val observer: DealerObserver) {
         return deckPool.removeAt(0)
     }
 
+    fun getDeckPoolSize(): Int = deckPool.count()
+
 }
 
 class TesterDealer(numberOfDecksUsed: Int, observer: DealerObserver)
     : Dealer(numberOfDecksUsed, observer){
 
-      fun createNewDeck(cards: ArrayList<Card>) { deckPool = cards }
+    fun createNewDeck(cards: ArrayList<Card>) { deckPool = cards }
 }
