@@ -27,7 +27,7 @@ open class Dealer(val numberOfDecksUsed: Int, val observer: DealerObserver) {
             }
         }
 
-    fun createNewDeck() {
+    open fun createNewDeck() {
         deckPool = createDeck()
     }
 
