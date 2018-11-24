@@ -6,7 +6,7 @@ import BlackJack.entity.Player
 
 abstract class ClassicView : Updatable
 
-class ClassicTableView(private val player: Player, private val bank: Bank) : ClassicView() {
+class ClassicTableView(player: Player, bank: Bank) : ClassicView() {
 
     private val playerView = ClassicPlayerView(player)
 
@@ -48,17 +48,11 @@ class ClassicPlayerView(private val player: Player) : ClassicView() {
 
 class ClassicBankView(private val bank: Bank) : ClassicView() {
 
-    var prevCardNumber = bank.showDeck().cards.count()
-
     override fun update() {
 
         val deck =  bank.showDeck()
 
-        bank.showDeck().cards.forEach { print(UnicodeMaker.cardToUnicode(it)) }
-
-        prevCardNumber = deck.cards.count()
-
-
+        deck.cards.forEach { print(UnicodeMaker.cardToUnicode(it)) }
     }
 }
 
