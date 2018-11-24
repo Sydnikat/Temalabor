@@ -71,7 +71,6 @@ class TestPlayerObserver: PlayerObserver{
 
     override fun noticeEndGame() {}
     override fun noticeUpdate() {}
-    override fun noticePause() {}
     override fun noticeNewGame() {}
 
 }

@@ -9,6 +9,7 @@ import BlackJack.type.ActionType
 import BlackJack.type.GameState
 import BlackJack.type.ResultType
 import BlackJack.gfx.ClassicTableView
+import java.lang.Math.abs
 
 class Table(numberOfDecks: Int, private val inputHandler: InputHandler, testing: Boolean = false) : DealerObserver, PlayerObserver {
 
@@ -24,8 +25,10 @@ class Table(numberOfDecks: Int, private val inputHandler: InputHandler, testing:
 
     private val tableView = ClassicTableView(player, bank)
 
-    private var winCount = 0
-    private var loseCount = 0
+    var winCount = 0
+    private set
+    var loseCount = 0
+    private set
 
 
     fun startGame(){
@@ -39,7 +42,6 @@ class Table(numberOfDecks: Int, private val inputHandler: InputHandler, testing:
                 GameState.RUNNING -> play()
                 GameState.NEW -> settings()
                 GameState.END -> showStatistics()
-                GameState.PAUSED -> saveState()
                 GameState.QUIT -> {}
             }
 
@@ -113,14 +115,6 @@ class Table(numberOfDecks: Int, private val inputHandler: InputHandler, testing:
 
     }
 
-    private fun saveState(){
-
-        state = GameState.RUNNING  //TODO - Kivenni!
-
-        TODO("not implemented") //fájlkezelés
-
-    }
-
     private fun play(){
 
         if(isLowDeck){
@@ -187,13 +181,16 @@ class Table(numberOfDecks: Int, private val inputHandler: InputHandler, testing:
                 }
                 ResultType.LOSEBYJACK -> {
                     print("Ön vesztett! ")
-                    playerOdds = 0.0
+                    playerOdds = -0.5
                     bankOdds = 1.5
                     loseCount++
                 }
             }
 
-            player.takeMoney(playerMoney * playerOdds)
+            if(player.showMoney() >= abs(playerMoney * playerOdds))
+                player.takeMoney(playerMoney * playerOdds)
+            else
+                player.takeMoney(player.showMoney() * -1)
 
 
             bank.takeMoney(playerMoney * bankOdds)
@@ -229,6 +226,8 @@ class Table(numberOfDecks: Int, private val inputHandler: InputHandler, testing:
 
     }
 
+    fun getPlayerMoney() = player.showMoney()
+
     override fun noticeUpdate() { tableView.update() }
 
     override fun noticeNewGame() {state = GameState.NEW }
@@ -236,6 +235,4 @@ class Table(numberOfDecks: Int, private val inputHandler: InputHandler, testing:
     override fun noticeEndGame() { state = GameState.END }
 
     override fun noticeLowDeck() { isLowDeck = true }
-
-    override fun noticePause() { state = GameState.PAUSED }
 }
