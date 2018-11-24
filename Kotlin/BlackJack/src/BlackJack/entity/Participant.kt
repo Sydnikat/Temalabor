@@ -214,11 +214,9 @@ class Bank (
 
             deck.cards.add(dealer.giveCard())
 
-            observer.noticeUpdate()
         }
 
-        if(!behavior.hit(deck.cards) && deck.cards.count() == 2)
-            observer.noticeUpdate()
+        observer.noticeUpdate()
     }
 
     override fun preparation() {
