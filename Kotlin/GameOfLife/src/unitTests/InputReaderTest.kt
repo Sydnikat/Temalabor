@@ -1,12 +1,20 @@
 package unitTests
 
 import gameOfLife.input.InputReader
+import org.junit.After
 import org.junit.Test
 
 import org.junit.Assert.*
 import java.io.ByteArrayInputStream
 
 class InputReaderTest {
+
+    val stdIn = System.`in`
+
+    @After
+    fun cleanUp(){
+        System.setIn(stdIn)
+    }
 
     @Test
     fun readRealNumberTest() {
