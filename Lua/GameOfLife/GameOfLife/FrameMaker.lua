@@ -71,7 +71,7 @@ function FrameMaker:getInstance()
         print("*Note: If you run this app in command promt please make sure that you are in the root directory of the game!*")
 
         if(string.upper(read()) == "Y") then
-            print("\nPlease enter the name of the pre-defined map (only the name - no extension - !")
+            print("\nPlease enter the name of the pre-defined map (only the name - no extension - )!")
             frame = FileInputHandler.createFrameFromFile(read())
 
         else

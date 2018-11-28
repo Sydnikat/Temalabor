@@ -12,7 +12,7 @@ function FileInputHandler:getInstance()
         instance.relative = relative or true
         instance.lines = {}
 
-        if(instance.file_exists() == false) then return {} end
+        if(instance.file_exists() == false) then return error("file not found.") end
 
         instance.lines = instance.getLines()
 
