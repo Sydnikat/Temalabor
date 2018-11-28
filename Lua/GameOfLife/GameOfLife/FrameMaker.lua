@@ -32,13 +32,13 @@ function FrameMaker:getInstance()
         if(string.upper(read()) == "G")
         then
             frame = Frame(
-                instance.getValue("Please enter the width of the testframe (integer value):"),  -- Frame width
-                instance.getValue("Please enter the height of the testframe (integer value):")  -- Frame height
+                instance.getValue("Please enter the width of the testframe (integer value):"),  -- Frame height
+                instance.getValue("Please enter the height of the testframe (integer value):")  -- Frame width
             )
         else
             frame = Frame(
-                instance.getValue("Please enter the width of the testframe (integer value):"),   -- Frame width
-                instance.getValue("Please enter the height of the testframe (integer value):"), -- Frame height
+                instance.getValue("Please enter the width of the testframe (integer value):"),   -- Frame height
+                instance.getValue("Please enter the height of the testframe (integer value):"), -- Frame width
                 instance.getValue("Please enter the elapsed time between two generations (in millisec)!"),  -- timeBetweenGens
                 instance.getValue("Please enter the rate of the living cells - (1 / rate) will be the chance - (choose at least 2)!")   --chance
             )

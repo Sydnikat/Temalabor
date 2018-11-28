@@ -6,10 +6,12 @@ lu = require "luaunit"
 
  local _ = require "test.cellUnitTest"
 
------------------ InputHandler unit tests ----------------------------
+----------------- FrameMaker unit tests -----------------------------
 
-FileInputHandler = require ("input.FileInputHandler").getInstance()
+local _ = require "test.frameMakerUnitTest"
 
 
+
+----------------- Execute tests -------------------------------------
 
 os.exit( lu.LuaUnit.run() )
