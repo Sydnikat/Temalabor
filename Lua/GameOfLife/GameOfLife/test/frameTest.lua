@@ -1,20 +1,14 @@
 
-local old = io.read
-local input = {}
-local cnt = 0
-
-io.read = function()
-    cnt = cnt+1
-    return input[cnt]
-end
+h = require "test.testHelper"
+io.read = h.read
 
 local FrameMaker = require("FrameMaker").getInstance()
 local StateType = require "type.StateType"
 
 function testCheckNextGenForBeacon()
 
-    input = {"y", "y", "beacon", 0}
-    cnt = 0
+    h.input = {"y", "y", "beacon", 0}
+    h.cnt = 0
 
     local frame = FrameMaker.createFrame()
 
@@ -41,8 +35,8 @@ end
 
 function testCheckNextGenForBlinker()
 
-    input = {"y", "y", "blinker", 0}
-    cnt = 0
+    h.input = {"y", "y", "blinker", 0}
+    h.cnt = 0
 
     local frame = FrameMaker.createFrame()
 
@@ -78,8 +72,8 @@ end
 
 function testCheckNextGenForFullHouse()
 
-    input = {"y", "y", "fullhouse", 0}
-    cnt = 0
+    h.input = {"y", "y", "fullhouse", 0}
+    h.cnt = 0
 
     local frame = FrameMaker.createFrame()
 
@@ -93,8 +87,8 @@ end
 
 
 function testCheckNextGenForToad()
-    input = {"y", "y", "toad", 0}
-    cnt = 0
+    h.input = {"y", "y", "toad", 0}
+    h.cnt = 0
 
     local frame = FrameMaker.createFrame()
 

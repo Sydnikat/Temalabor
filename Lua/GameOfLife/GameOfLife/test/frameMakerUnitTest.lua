@@ -1,19 +1,14 @@
 
-local old = io.read
-local input = {}
-local cnt = 0
 
-io.read = function()
-    cnt = cnt+1
-    return input[cnt]
-end
+h = require "test.testHelper"
+io.read = h.read
 
 local FrameMaker = require("FrameMaker").getInstance()
 
 function testCreateFrameFromFile()
 
-    input = {"y", "y", "blinker", 2}
-    cnt = 0
+    h.input = {"y", "y", "blinker", 2}
+    h.cnt = 0
 
     local frame = FrameMaker.createFrame()
 
@@ -25,8 +20,8 @@ end
 
 function testCreateGeneralFrame()
 
-    input = {"n", "g", 20, 15, 2}
-    cnt = 0
+    h.input = {"n", "g", 20, 15, 2}
+    h.cnt = 0
 
     local frame = FrameMaker.createFrame()
 
@@ -40,8 +35,8 @@ end
 
 function testCreateIndividual()
 
-    input = {"n", "i", 20, 15, 300, 3, 2}
-    cnt = 0
+    h.input = {"n", "i", 20, 15, 300, 3, 2}
+    h.cnt = 0
 
     local frame = FrameMaker.createFrame()
 
