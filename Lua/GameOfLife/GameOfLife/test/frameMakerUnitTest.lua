@@ -9,7 +9,6 @@ io.read = function()
 end
 
 local FrameMaker = require("FrameMaker").getInstance()
-local StateType = require "type.StateType"
 
 function testCreateFrameFromFile()
 
@@ -20,14 +19,7 @@ function testCreateFrameFromFile()
 
     lu.assertEquals(frame.height, 5)
     lu.assertEquals(frame.width, 5)
-
-    local c = 0
-    for i = 1, frame.height, 1 do
-        for j = 1, frame.width, 1 do
-            if(frame.cells[i][j].state == StateType.ALIVE) then c = c + 1 end
-        end
-    end
-    lu.assertEquals(c, 3)
+    lu.assertEquals(frame:getLivingCount(), 3)
 end
 
 
@@ -59,5 +51,5 @@ function testCreateIndividual()
     lu.assertEquals(frame.chance, 3)
 end
 
-io.read = old
+--io.read = old
 

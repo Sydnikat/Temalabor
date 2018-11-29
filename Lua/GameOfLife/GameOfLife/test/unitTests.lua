@@ -1,6 +1,6 @@
 
 
-lu = require "luaunit"
+lu = require "test.luaunit"
 
 --------------------- Cell unit tests -------------------------------
 
@@ -10,7 +10,9 @@ lu = require "luaunit"
 
 local _ = require "test.frameMakerUnitTest"
 
+----------------- Frame unit tests ----------------------------------
 
+local _ = require "test.frameTest"
 
 ----------------- Execute tests -------------------------------------
 
