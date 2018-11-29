@@ -5,7 +5,6 @@ local StateType = require "type.StateType"
 local Frame = {
     generationCounter = 0,
     duration = 100,
-    cells  = {}
 }
 
 setmetatable(Frame, {
@@ -21,6 +20,7 @@ function Frame:CreateFrame(height, width, timeBetweenGens, chance)
     newFrame.width = width or 20
     newFrame.timeBetweenGens = timeBetweenGens or 400.0
     newFrame.chance =  chance or 4
+    newFrame.cells = {}
 
     newFrame:init()
 
