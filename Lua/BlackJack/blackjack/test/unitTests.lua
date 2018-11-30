@@ -23,6 +23,10 @@ require "test.consoleInputHandlerTest"
 
 require "test.bankTest"
 
+----------------- Player unit tests ---------------------------------
+
+require "test.playerTest"
+
 ----------------- Execute tests -------------------------------------
 
 os.exit( lu.LuaUnit.run() )
