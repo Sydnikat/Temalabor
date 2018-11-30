@@ -43,7 +43,6 @@ function Table:startGame()
     while(self.state ~= GameState.QUIT) do
         if(self.state == GameState.RUNNING) then self:play()
         elseif(self.state == GameState.NEW) then self:settings()
-        elseif(self.state == GameState.PAUSED) then self:saveState()
         elseif(self.state == GameState.END) then self:showStatistics()
         elseif(self.state == GameState.QUIT) then
         end
@@ -105,11 +104,6 @@ function Table:showStatistics()
         end
     end
 
-end
-
-function Table:saveState()
-
-    self.state = GameState.RUNNING                              -- TODO: Kivenni! soon: Fájlkezelés
 end
 
 function Table:play()
@@ -227,10 +221,6 @@ end
 
 function Table:noticeLowDeck()
     self.isLowDeck = true
-end
-
-function Table:noticePause()
-    self.state = GameState.PAUSED
 end
 
 return Table

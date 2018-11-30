@@ -2,9 +2,8 @@
 local GameState = {
     NEW = 1,
     RUNNING = 2,
-    PAUSED = 3,
-    END = 4,
-    QUIT = 5
+    END = 3,
+    QUIT = 4
 }
 
 return GameState
