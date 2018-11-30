@@ -27,6 +27,10 @@ require "test.bankTest"
 
 require "test.playerTest"
 
+----------------- Table unit tests ----------------------------------
+
+require "test.tableTest"
+
 ----------------- Execute tests -------------------------------------
 
 os.exit( lu.LuaUnit.run() )
