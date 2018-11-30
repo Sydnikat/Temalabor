@@ -15,6 +15,10 @@ require "test.cardMakerTest"
 
 require "test.dealerTest"
 
+----------------- ConsoleInputHandler unit tests --------------------
+
+require "test.consoleInputHandlerTest"
+
 ----------------- Execute tests -------------------------------------
 
 os.exit( lu.LuaUnit.run() )
