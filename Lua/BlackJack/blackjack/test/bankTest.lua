@@ -41,7 +41,7 @@ function testPlay()
 end
 
 
-function testReceiveFirstCards()
+function testFirstCards()
 
     local bank = Bank(0, testDealer, ClassicBank(), nil, testPlayerObserver)
 

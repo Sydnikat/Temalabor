@@ -72,7 +72,7 @@ function testMultipleDouble()
 end
 
 
-function tetsCheckMaximumDouble()
+function testCheckMaximumDouble()
 
     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
     setUp(player)
@@ -82,7 +82,7 @@ function tetsCheckMaximumDouble()
     player:raise()
     player:receiveFirstCards()
 
-    lu.assertEquals(player:showMoney(), 40.0)
+    lu.assertEquals(player:showMoney(), 60.0)
 
     player:double(player:showDeck())
     player:double(player:showDeck())
@@ -225,7 +225,7 @@ function testSplitTwoCardsAndWithTheSameValue()
 end
 
 
-function tetsSplitWithTwoCardsButNotTheSameValue()
+function testSplitWithTwoCardsButNotTheSameValue()
 
     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
     setUp(player)
