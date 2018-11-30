@@ -11,6 +11,10 @@ require "test.calculatorTest"
 
 require "test.cardMakerTest"
 
+----------------- Dealer unit tests ---------------------------------
+
+require "test.dealerTest"
+
 ----------------- Execute tests -------------------------------------
 
 os.exit( lu.LuaUnit.run() )
