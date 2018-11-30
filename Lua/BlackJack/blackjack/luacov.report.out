@@ -1,0 +1,5304 @@
+==============================================================================
+.\behavior\ClassicBank.lua
+==============================================================================
+
+    1 local ClassicBehavior = require "behavior.ClassicBehavior"
+    1 local Calculator = require("entity.Calculator"):getInstance()
+
+    1 local ClassicBank = {}
+
+    2 setmetatable(ClassicBank, {
+    1     __index = ClassicBehavior,
+          __call = function(class, ...)
+    5         return class:new(...)
+          end
+      })
+
+    1 function ClassicBank:hit(cards)
+    9     return Calculator.evaluate(cards) <= 16
+      end
+
+    1 return ClassicBank
+
+==============================================================================
+.\behavior\ClassicBehavior.lua
+==============================================================================
+
+
+    1 local ClassicBehavior = {}
+
+    2 setmetatable(ClassicBehavior, {
+          __call = function(class,...)
+****0         return class:new(...)
+          end
+      })
+
+    1 function ClassicBehavior:new()
+   22     local newClassicBehavior = setmetatable({}, self)
+   22     self.__index = self
+   22     return newClassicBehavior
+      end
+
+    1 function ClassicBehavior:getMaximumNumberOfDecks()
+****0     return 1
+      end
+
+    1 function ClassicBehavior:hit()
+****0     return true
+      end
+
+    1 function ClassicBehavior:double()
+    7     return true
+      end
+
+    1 function ClassicBehavior:split()
+****0     return true
+      end
+
+    1 return ClassicBehavior
+
+
+==============================================================================
+.\behavior\ClassicPlayer.lua
+==============================================================================
+
+    1 local ClassicBehavior = require "behavior.ClassicBehavior"
+    1 local Calculator = require("entity.Calculator"):getInstance()
+
+    1 local ClassicPlayer = {}
+
+    2 setmetatable(ClassicPlayer, {
+    1     __index = ClassicBehavior,
+          __call = function(class, ...)
+   17         return class:new(...)
+          end
+      })
+
+    1 function ClassicPlayer:getMaximumNumberOfDecks()
+   48     return 3
+      end
+
+    1 function ClassicPlayer:hit(cards)
+   16     return Calculator.evaluate(cards) <= 21
+      end
+
+    1 function ClassicPlayer:split(cards, numberOfDecks)
+
+          local result
+
+    8     if(numberOfDecks == 3) then result = false
+    7     elseif(#cards ~= 2) then result = false
+    6     elseif(cards[1].value ~= cards[2].value) then result = false
+    5     else result = true
+          end
+
+    8     return result
+      end
+
+    1 return ClassicPlayer
+
+==============================================================================
+.\entity\Bank.lua
+==============================================================================
+
+    1 local Participant = require "entity.Participant"
+    1 local Deck = require "entity.Deck"
+
+    1 local Bank = {}
+
+    2 setmetatable(Bank, {
+    1     __index = Participant,
+          __call = function(class,...)
+    5         local newBank = class:new(...)
+
+    5         newBank.deck = Deck({}, 0)
+
+    5         return newBank
+          end
+      })
+
+    1 function Bank:play()
+
+   18     for _, card in ipairs(self.deck.cards) do
+   12         card.hidden = false
+          end
+
+    9     while(self.behavior:hit(self.deck.cards)) do
+
+    3         table.insert(self.deck.cards, self.dealer:giveCard())
+
+          end
+
+    6     self.observer:noticeUpdate()
+      end
+
+    1 function Bank:preparation()
+    6     self.deck.cards = {}
+      end
+
+    1 function Bank:receiveFirstCards()
+    8     table.insert(self.deck.cards, self.dealer:giveCard())
+    8     local card = self.dealer:giveCard()
+    8     card.hidden = true
+    8     table.insert(self.deck.cards, card)
+      end
+
+    1 function Bank:showDeck()
+   26     return self.deck
+      end
+
+    1 return Bank
+
+
+==============================================================================
+.\entity\Calculator.lua
+==============================================================================
+
+    1 local ResultType = require "type.ResultType"
+
+    1 local Calculator = {}
+
+    1 function Calculator:getInstance()
+
+          local evaluate = function(cards)
+   69         local sum = 0
+
+  234         for _, card in ipairs(cards) do
+  165             sum = sum + card.number
+              end
+
+   69         local numberOfAces = 0
+
+  234         for _, card in ipairs(cards) do
+  165             if(card.value == "ACE")
+                  then
+   20                 numberOfAces = numberOfAces + 1
+                  end
+              end
+
+   80         while(sum > 21 and numberOfAces > 0) do
+   11             sum = sum - 10  -- Making the value of ACE (default 11) to 1
+   11             numberOfAces = numberOfAces - 1
+              end
+
+   69         return sum
+
+          end
+
+          local calculateResult = function(playerDeck, bankDeck)
+
+   16         local playerValue = evaluate(playerDeck.cards)
+   16         local bankValue = evaluate(bankDeck.cards)
+
+   16         if(playerValue == 21 and #playerDeck.cards == 2) then
+    6             if((playerDeck.cards[1].value == "JACK" or playerDeck.cards[2].value == "JACK") and
+    3                (playerDeck.cards[1].value == "TEN" or playerDeck.cards[2].value == "TEN")) then
+    3                 return ResultType.WINBYJACK
+                  end
+              end
+
+   13         if(bankValue == 21 and #bankDeck.cards == 2) then
+    3             if((bankDeck.cards[1].value == "JACK" or bankDeck.cards[2].value == "JACK") and
+    3                (bankDeck.cards[1].value == "TEN" or bankDeck.cards[2].value == "TEN")) then
+    3                 return ResultType.LOSEBYJACK
+                  end
+              end
+
+   10         if(playerValue > 21) then return ResultType.LOSE
+    8         elseif(playerValue == 21) then
+    3             if(bankValue == 21) then return ResultType.TIE
+    2             else return ResultType.WIN
+                  end
+              else
+    5             if(bankValue == 21) then return ResultType.LOSE
+    5             elseif(bankValue > 21) then return ResultType.WIN
+                  else
+    5                 if(bankValue < playerValue) then return ResultType.WIN
+    4                 elseif(bankValue == playerValue) then return ResultType.TIE
+    2                 else return ResultType.LOSE
+                      end
+                  end
+              end
+
+          end
+
+    4     return {
+    4         evaluate = evaluate,
+    4         calculateResult = calculateResult
+    4     }
+      end
+
+    1 return Calculator
+
+==============================================================================
+.\entity\Card.lua
+==============================================================================
+
+    1 local Card = {}
+
+    2 setmetatable(Card, {
+          __call = function(class,...)
+ 1091         return class:new(...)
+          end
+      })
+
+    1 function Card:new(value, color, number, hidden)
+ 1091     local newCard = setmetatable({}, self)
+ 1091     self.__index = self
+ 1091     newCard.value = value
+ 1091     newCard.color = color
+ 1091     newCard.number = number
+ 1091     newCard.hidden = hidden or false
+ 1091     return newCard
+      end
+
+    1 return Card
+
+==============================================================================
+.\entity\Dealer.lua
+==============================================================================
+
+
+    1 local ColorType = require "type.ColorType"
+    1 local CardType = require "type.CardType"
+    1 local Card = require "entity.Card"
+
+    1 local Dealer = {}
+
+    2 setmetatable(Dealer, {
+          __call = function(class,...)
+    4         return class:new(...)
+          end
+      })
+
+    1 function Dealer:new(numberOfUsedDecks, observer)
+
+    4     local newDealer = setmetatable({}, self)
+    4     self.__index = self
+    4     newDealer.numberOfUsedDecks = numberOfUsedDecks or 1
+    4     newDealer.observer = observer
+    4     newDealer.maxCardNumber = newDealer.numberOfUsedDecks * 52
+    4     newDealer.deckPool = newDealer:createDeck()
+    4     newDealer:shuffle()
+    4     return newDealer
+      end
+
+    1 function Dealer:createDeck()
+
+    5     local deck = {}
+
+    5     local usedDecks = self.numberOfUsedDecks
+
+   22     for i = 1, usedDecks, 1 do
+   85         for color, _ in pairs(ColorType) do
+  952             for value, number in pairs(CardType) do
+  884                 table.insert(deck, Card(value, color, number))
+                  end
+              end
+          end
+
+    5     return deck
+
+      end
+
+    1 function Dealer:createNewDeck()
+    1     self.deckPool = self:createDeck()
+      end
+
+    1 function Dealer:giveCard()
+
+   28     if(#self.deckPool < self.maxCardNumber / 2) then
+    1         self.observer:noticeLowDeck()
+          end
+
+   28     return table.remove(self.deckPool, 1)
+
+      end
+
+    1 function Dealer:shuffle()
+    4     local size = #self.deckPool
+  836     for i = size, 1, -1 do
+  832         local rand = math.random(size)
+  832         self.deckPool[i],self.deckPool[rand] = self.deckPool[rand], self.deckPool[i]
+          end
+      end
+
+    1 return Dealer
+
+==============================================================================
+.\entity\Deck.lua
+==============================================================================
+
+    1 local Deck = {}
+
+    2 setmetatable(Deck, {
+          __call = function(class,...)
+   78         return class:new(...)
+          end
+      })
+
+    1 function Deck:new(cards, money)
+   78     local newDeck = setmetatable({}, self)
+   78     self.__index = self
+   78     newDeck.cards = cards
+   78     newDeck.money = money
+   78     return newDeck
+      end
+
+    1 return Deck
+
+==============================================================================
+.\entity\Participant.lua
+==============================================================================
+
+    1 local Participant = {}
+
+    2 setmetatable(Participant, {
+          __call = function(class,...)
+****0         return class:new(...)
+          end
+      })
+
+    1 function Participant:new(amountOfMoney, dealer, behavior, inputHandler, observer)
+   22     local newParticipnat = setmetatable({}, self)
+   22     self.__index = self
+   22     newParticipnat.amountOfMoney = amountOfMoney
+   22     newParticipnat.behavior = behavior
+   22     newParticipnat.dealer = dealer
+   22     newParticipnat.inputHandler = inputHandler
+   22     newParticipnat.observer = observer
+   22     return newParticipnat
+      end
+
+    1 function Participant:takeMoney(money)
+   10     self.amountOfMoney = self.amountOfMoney + money
+      end
+
+    1 function Participant:setBasicMoney(newAmount)
+    5     self.amountOfMoney = newAmount
+      end
+
+    1 function Participant:showMoney()
+   43     return self.amountOfMoney
+      end
+
+    1 return Participant
+
+==============================================================================
+.\entity\Player.lua
+==============================================================================
+
+    1 local Participant = require "entity.Participant"
+    1 local Deck = require "entity.Deck"
+    1 local ConsoleInputHandler = require("input.ConsoleInputHandler"):getInstance()
+    1 local ActionType = require "type.ActionType"
+
+    1 local Player = {}
+
+    2 setmetatable(Player, {
+          __call = function(class,...)
+   17         local newPlayer = class:new(...)
+   17         newPlayer.currentDeckIndex = 1
+   17         newPlayer.numberOfUsedDecks = 1
+   17         newPlayer.decks = class:createDecks(newPlayer)
+
+   17         return newPlayer
+          end,
+    1     __index = Participant
+      })
+
+
+    1 function Player:createDecks(player)
+   17     local decks = {}
+   68     for i = 1, player.behavior.getMaximumNumberOfDecks(), 1 do
+   51         table.insert(decks, Deck({}, 0))
+          end
+   17     return decks
+      end
+
+    1 function Player:preparation()
+
+   28     for i = 1, #self.decks, 1 do
+   21         self.decks[i].cards = {}
+   21         self.decks[i].money = 0
+          end
+    7     self.currentDeckIndex = 1
+    7     self.numberOfUsedDecks = 1
+      end
+
+    1 function Player:play()
+
+   32     for _, deck in ipairs(self.decks) do
+
+   24         if(#deck.cards ~= 0) then
+
+   10             self.observer:noticeUpdate()
+
+   10             local done = false
+
+   29             while(done == false) do
+
+   19                 local key = ConsoleInputHandler.readKey()
+
+   19                 if(key == ActionType.HIT) then self:hit(deck)
+   14                 elseif(key == ActionType.STAND) then done = true
+    7                 elseif(key == ActionType.DOUBLE) then self:double(deck)
+    5                 elseif(key == ActionType.SPLIT) then self:split(deck)
+    3                 elseif(key == ActionType.END) then
+    1                     self.observer:noticeEndGame()
+    1                     done = true
+    2                 elseif(key == ActionType.NEW) then
+    2                     self.observer:noticeNewGame()
+    2                     done = true
+                      else
+                      end
+                  end
+              end
+          end
+      end
+
+    1 function Player:hit(deck)
+   16     if(self.behavior:hit(deck.cards)) then
+   15         table.insert(deck.cards, self.dealer:giveCard())
+   15         self.observer:noticeUpdate()
+          end
+
+      end
+
+    1 function Player:split(deck)
+    8     if(self.behavior:split(deck.cards, self.numberOfUsedDecks)) then
+
+    5         self.numberOfUsedDecks = self.numberOfUsedDecks + 1
+
+    5         local card = table.remove(deck.cards, 1)
+
+    5         local idx = 0
+   11         for i, d in ipairs(self.decks) do
+   11             if(#d.cards == 0) then
+    5                 idx = i
+                      break
+                  end
+              end
+
+    5         table.insert(self.decks[idx].cards, card)
+    5         self.decks[idx].money = deck.money / 2
+    5         deck.money = deck.money / 2
+
+    5         self.observer:noticeUpdate()
+          end
+      end
+
+    1 function Player:changeDeck(index)
+   43     if(index >= 1 and index <= self.behavior:getMaximumNumberOfDecks()) then
+   29         self.currentDeckIndex = index
+          end
+      end
+
+    1 function Player:double(deck)
+    7     if(self.behavior:double(deck.cards)) then
+
+    7         local currentMoney = deck.money
+
+    7         if(self.amountOfMoney >= currentMoney) then
+
+    6             self.amountOfMoney = self.amountOfMoney - currentMoney
+    6             deck.money = 2 * deck.money
+
+    1         elseif(self.amountOfMoney > 0.0) then
+
+    1             deck.money = deck.money + self.amountOfMoney
+    1             self.amountOfMoney = 0.0
+              end
+
+    7         self.observer:noticeUpdate()
+          end
+      end
+
+    1 function Player:raise()
+   19     local valid = false
+
+   19     print("\nPlease raise!")
+
+   43     while (valid == false) do
+
+   24         local newAmount = ConsoleInputHandler.readNumber()
+
+   24         if(type(newAmount) == "number") then
+
+   20             if(newAmount <= self.amountOfMoney) then
+
+   19                 self.decks[1].money = newAmount
+   19                 self.amountOfMoney = self.amountOfMoney - newAmount
+   19                 valid = true
+                  end
+              end
+
+
+          end
+   19     print("\n\n")
+      end
+
+    1 function Player:receiveFirstCards()
+   19     table.insert(self.decks[1].cards, self.dealer:giveCard())
+   19     table.insert(self.decks[1].cards, self.dealer:giveCard())
+      end
+
+    1 function Player:showDeck()
+   88     return self.decks[self.currentDeckIndex]
+      end
+
+
+    1 return Player
+
+==============================================================================
+.\entity\Table.lua
+==============================================================================
+
+    1 local Player = require "entity.Player"
+    1 local Bank = require "entity.Bank"
+    1 local Dealer = require "entity.Dealer"
+    1 local ActionType = require "type.ActionType"
+    1 local GameState = require "type.GameState"
+    1 local ResultType = require "type.ResultType"
+    1 local ClassicTableView = require "gfx.ClassicTableView"
+    1 local ClassicPlayer = require "behavior.ClassicPlayer"
+    1 local ClassicBank = require "behavior.ClassicBank"
+    1 local Calculator = require("entity.Calculator"):getInstance()
+
+
+    1 local Table = {}
+
+    2 setmetatable(Table, {
+          __call = function(class,...)
+    3         return class:new(...)
+          end
+      })
+
+    1 function Table:new(numberOfDecks, inputHandler)
+    3     local newTable = setmetatable({}, self)
+    3     self.__index = self
+
+    3     newTable.inputHandler = inputHandler
+    3     newTable.dealer = Dealer(numberOfDecks, self)
+    3     newTable.player = Player(0, newTable.dealer, ClassicPlayer(), inputHandler, newTable)
+    3     newTable.bank = Bank(0, newTable.dealer, ClassicBank(), nil, newTable)
+    3     newTable.state = GameState.NEW
+    3     newTable.isLowDeck = false
+    3     newTable.tableView = ClassicTableView(newTable.player, newTable.bank)
+    3     newTable.wincount = 0
+    3     newTable.loseCount = 0
+
+
+    3     return newTable
+      end
+
+    1 function Table:startGame()
+    3     print("\nWelcome to the table! Do not forget, the house always wins!")
+
+   17     while(self.state ~= GameState.QUIT) do
+   14         if(self.state == GameState.RUNNING) then self:play()
+    8         elseif(self.state == GameState.NEW) then self:settings()
+    3         elseif(self.state == GameState.END) then self:showStatistics()
+****0         elseif(self.state == GameState.QUIT) then
+              end
+          end
+
+    3     print("Thank you for choosing our BlackJack app! \nBye-Bye! Have a nice day!")
+      end
+
+    1 function Table:settings()
+    5     print("Please enter the amount of money you want to have!")
+
+    5     local newAmount = self.inputHandler.readNumber()
+
+    8     while(type(newAmount) ~= "number") do
+    3         print("Incorrect value!")
+    3         newAmount = self.inputHandler.readNumber()
+          end
+
+    5     self.player:setBasicMoney(newAmount)
+
+    5     self.winCount = 0
+    5     self.loseCount = 0
+
+    5     print("n - Start new game\tq - Quit")
+    5     local valid = false
+   13     while(valid == false) do
+
+    8         local key = self.inputHandler.readKey()
+    8         if( key == ActionType.NEW)then
+    4             self.state = GameState.RUNNING
+    4             valid = true
+    4         elseif(key ==  ActionType.END) then
+    1             self.state = GameState.QUIT
+    1             valid = true
+              else
+    3             valid = false
+              end
+          end
+      end
+
+    1 function Table:showStatistics()
+
+          --os.execute("cls")     -- clear window (on windows)
+    3     print("\nResults:\n \tYou won "..self.winCount.." times\n\tYou lost "..self.loseCount.." times\n\tYour profit: "..self.bank:showMoney() * -1)
+
+    3     print("n - Start new game\tq - Quit")
+    3     local valid = false
+    6     while(valid == false) do
+
+    3         local key = self.inputHandler.readKey()
+    3         if( key == ActionType.NEW)then
+    1             self.state = GameState.NEW
+    1             valid = true
+    2         elseif(key ==  ActionType.END) then
+    2             self.state = GameState.QUIT
+    2             valid = true
+              else
+****0             valid = false
+              end
+          end
+
+      end
+
+    1 function Table:play()
+
+    6     if(self.isLowDeck) then
+****0         self.dealer:createNewDeck()
+****0         self.isLowDecl = false
+          end
+
+    6     self.player:preparation()
+    6     self.bank:preparation()
+
+          --os.execute("cls")     -- clear window (on windows)
+
+    6     self.player:raise()
+
+    6     self.player:receiveFirstCards()
+    6     self.bank:receiveFirstCards()
+
+    6     self.player:play()
+
+    6     if( self.state ~= GameState.RUNNING ) then return
+          end
+
+    5     self.bank:play()
+
+    5     self:calculateResult()
+
+      end
+
+    1 function Table:calculateResult()
+
+          local playerOdds
+          local bankOdds
+
+   10     for i = 1, self.player.numberOfUsedDecks, 1 do
+
+    5         self.player:changeDeck(i)
+
+    5         local result = Calculator.calculateResult(self.player:showDeck(), self.bank:showDeck())
+    5         local playerMoney = self.player:showDeck().money
+
+    5         if(result == ResultType.WIN) then
+    1             print("You win!")
+    1             playerOdds = 2
+    1             bankOdds = -1
+    1             self.winCount = self.winCount + 1
+    4         elseif(result == ResultType.WINBYJACK) then
+    1             print("BlackJack! You win!")
+    1             playerOdds = 2.5
+    1             bankOdds = -1.5
+    1             self.winCount = self.winCount + 1
+    3         elseif(result == ResultType.TIE) then
+    1             print("It's tie!")
+    1             playerOdds = 1
+    1             bankOdds = 1
+    2         elseif(result == ResultType.LOSE) then
+    1             print("You lost!")
+    1             playerOdds = 0
+    1             bankOdds = 1
+    1             self.loseCount = self.loseCount + 1
+    1         elseif(result == ResultType.LOSEBYJACK) then
+    1             print("You lost!")
+    1             playerOdds = -0.5
+    1             bankOdds = 1.5
+    1             self.loseCount = self.loseCount + 1
+****0         else print("error")
+              end
+
+    5         if(self.player:showMoney() >= math.abs(playerMoney * playerOdds)) then
+    4             self.player:takeMoney(playerMoney * playerOdds)
+              else
+    1             self.player:takeMoney(self.player:showMoney() * -1)
+              end
+
+    5         self.bank:takeMoney(playerMoney * bankOdds)
+
+          end
+
+    5     print("\nCurrent account: "..self.player:showMoney())
+
+    5     local canPlay = true
+    5     if(self.player:showMoney() <= 0) then canPlay = false end
+
+    5     print("Continue? i - Yes \tq - No")
+    5     local valid = false
+   10     while(valid == false) do
+
+    5         local key = self.inputHandler.readKey()
+    5         if( key == ActionType.NEW)then
+    2             if(canPlay) then
+    2                 self.state = GameState.RUNNING
+    2                 valid = true
+                  end
+    3         elseif(key ==  ActionType.END) then
+    3             self.state = GameState.END
+    3             valid = true
+              else
+****0             valid = false
+              end
+          end
+
+
+      end
+
+      -- Interface functions
+
+    1 function Table:noticeUpdate()
+   12     self.tableView:update()
+      end
+
+    1 function Table:noticeNewGame()
+    1     self.state = GameState.NEW
+      end
+
+    1 function Table:noticeEndGame()
+****0     self.state = GameState.END
+      end
+
+    1 function Table:noticeLowDeck()
+****0     self.isLowDeck = true
+      end
+
+    1 return Table
+
+
+==============================================================================
+.\gfx\CardMaker.lua
+==============================================================================
+
+    1 local CardMaker = {}
+
+    1 function CardMaker:getInstance()
+
+          local printCard = function(card)
+
+              local cardString
+
+   57         if(card.hidden)
+              then
+    8             cardString = "1F0A0"
+              else
+                  local type
+
+   49             if(card.color == "SPADES") then type = "A"
+   48             elseif(card.color == "HEARTS") then type = "B"
+   47             elseif(card.color == "DIAMONDS") then type = "C"
+    1             else type = "D"
+                  end
+
+                  local value
+
+   49             if(card.value == "ACE") then value = 1
+   49             elseif(card.value == "TWO") then value = 2
+   49             elseif(card.value == "THREE") then value = 3
+   42             elseif(card.value == "FOUR") then value = 4
+   37             elseif(card.value == "FIVE") then value = 5
+   36             elseif(card.value == "SIX") then value = 6
+   34             elseif(card.value == "SEVEN") then value = 7
+   26             elseif(card.value == "EIGHT") then value = 8
+   26             elseif(card.value == "NINE") then value = 9
+   25             elseif(card.value == "TEN") then value = "A"
+   16             elseif(card.value == "JACK") then value = "B"
+    8             elseif(card.value == "QUEEN") then value = "D"
+    4             else value = "E"
+                  end
+
+   49             cardString = "1F0"..type..value
+              end
+
+   57         io.write(utf8.char(tonumber(cardString,16)))
+
+   57         return cardString
+          end
+
+    3     return{
+    3         printCard = printCard
+    3     }
+
+      end
+
+    1 return CardMaker
+
+
+==============================================================================
+.\gfx\ClassicBankView.lua
+==============================================================================
+
+    1 local CardMaker = require("gfx.CardMaker"):getInstance()
+
+    1 local ClassicBankView = {}
+
+    2 setmetatable(ClassicBankView, {
+          __call = function(class, ...)
+    3         return class:new(...)
+          end
+      })
+
+    1 function ClassicBankView:new(bank)
+    3     local newView = setmetatable({}, self)
+    3     self.__index = self
+    3     newView.bank = bank
+    3     return newView
+      end
+
+    1 function ClassicBankView:update()
+
+   38     for _, card in ipairs(self.bank:showDeck().cards) do
+   26         CardMaker.printCard(card)
+          end
+   12     print("\n")
+
+      end
+
+    1 return ClassicBankView
+
+==============================================================================
+.\gfx\ClassicPlayerView.lua
+==============================================================================
+
+    1 local CardMaker = require("gfx.CardMaker"):getInstance()
+
+    1 local ClassicPlayerView = {}
+
+    2 setmetatable(ClassicPlayerView, {
+          __call = function(class, ...)
+    3         return class:new(...)
+          end
+      })
+
+    1 function ClassicPlayerView:new(player)
+    3     local newView = setmetatable({}, self)
+    3     self.__index = self
+    3     newView.player = player
+    3     return newView
+      end
+
+    1 function ClassicPlayerView:update()
+
+   24     for i = 1, self.player.numberOfUsedDecks, 1 do
+
+   12         self.player:changeDeck(i)
+
+   12         local deck = self.player:showDeck()
+
+   12         io.flush()
+   12         io.write( i..": "..deck.money.." ")
+
+
+   38         for _, card in ipairs(deck.cards) do
+   26             CardMaker.printCard(card)
+              end
+
+   12         io.write("\t")
+          end
+
+   12     io.write(self.player:showMoney())
+   12     print()
+
+      end
+
+    1 return ClassicPlayerView
+
+
+==============================================================================
+.\gfx\ClassicTableView.lua
+==============================================================================
+
+    1 local PlayerView = require "gfx.ClassicPlayerView"
+    1 local BankView = require "gfx.ClassicBankView"
+
+    1 local ClassicTableView = {}
+
+    2 setmetatable(ClassicTableView, {
+          __call = function(class, ...)
+    3         return class:new(...)
+          end
+      })
+
+    1 function ClassicTableView:new(player, bank)
+
+    3     local newView = setmetatable({}, self)
+    3     self.__index = self
+    3     newView.player = PlayerView(player)
+    3     newView.bank = BankView(bank)
+
+    3     return newView
+      end
+
+    1 function ClassicTableView:update()
+
+          --os.execute("cls")     -- Clear window (on windows)
+   12     self.bank:update()
+   12     self.player:update()
+
+      end
+
+    1 return ClassicTableView
+
+
+==============================================================================
+.\input\ConsoleInputHandler.lua
+==============================================================================
+
+    1 local ActionType = require "type.ActionType"
+    1 local read = io.read
+
+    1 local ConsoleInputHandler = {}
+
+    1 function ConsoleInputHandler:getInstance()
+
+          local readNumber = function()
+   37         return tonumber(read())
+          end
+
+          local readKey = function()
+   44         local line = string.upper(read())
+              local result
+
+   44         if(line == "S") then result = ActionType.SPLIT
+   41         elseif(line == "D") then result = ActionType.DOUBLE
+   38         elseif(line == "Q") then result = ActionType.END
+   30         elseif(line == "H") then result = ActionType.HIT
+   24         elseif(line == "E") then result = ActionType.STAND
+   16         elseif(line == "N" or line == "I") then result = ActionType.NEW
+    5         else result = ActionType.ERROR
+              end
+
+   44         return result
+
+          end
+
+    4     return {
+    4         readNumber = readNumber,
+    4         readKey = readKey
+    4     }
+      end
+
+    1 return ConsoleInputHandler
+
+==============================================================================
+.\test\bankTest.lua
+==============================================================================
+
+
+    1 local Bank = require "entity.Bank"
+    1 local Card = require "entity.Card"
+    1 local ClassicBank = require "behavior.ClassicBank"
+    1 local testPlayerObserver = require "test.testPlayerObserver"
+
+
+    1 local testDealer = {
+    1     deckPool = {}
+      }
+    1 function testDealer:giveCard()
+    5     return table.remove(self.deckPool, 1)
+      end
+
+
+    1 function testPlay()
+
+    1     local bank = Bank(0, testDealer, ClassicBank(), nil, testPlayerObserver)
+
+    1     local cards = {}
+
+    1     table.insert(cards, Card("KING", "DIAMONDS", 11))
+    1     table.insert(cards, Card("FOUR", "HEARTS", 4))
+    1     table.insert(cards, Card("NINE", "CLUBS", 9))
+    1     table.insert(cards, Card("QUEEN", "SPADES", 11))
+
+    1     bank.dealer.deckPool = cards
+
+    1     bank:receiveFirstCards()
+
+    1     bank:play()
+
+    1     lu.assertEquals(#bank:showDeck().cards, 3)
+          
+    1     lu.assertFalse(bank:showDeck().cards[2].hidden)
+          
+    1     lu.assertEquals("NINE", bank:showDeck().cards[3].value)
+    1     lu.assertEquals("CLUBS", bank:showDeck().cards[3].color)
+
+      end
+
+
+    1 function testFirstCards()
+
+    1     local bank = Bank(0, testDealer, ClassicBank(), nil, testPlayerObserver)
+
+    1     local cards = {}
+
+    1     table.insert(cards, Card("KING", "DIAMONDS", 11))
+    1     table.insert(cards, Card("FOUR", "HEARTS", 4))
+    1     table.insert(cards, Card("NINE", "CLUBS", 9))
+    1     table.insert(cards, Card("QUEEN", "SPADES", 11))
+
+    1     bank.dealer.deckPool = cards
+
+    1     bank:receiveFirstCards()
+
+    1     lu.assertEquals("KING", bank:showDeck().cards[1].value)
+    1     lu.assertEquals("DIAMONDS", bank:showDeck().cards[1].color)
+          
+    1     lu.assertEquals("FOUR", bank:showDeck().cards[2].value)
+    1     lu.assertEquals("HEARTS", bank:showDeck().cards[2].color)
+          
+    1     lu.assertTrue(bank:showDeck().cards[2].hidden)
+
+      end
+
+==============================================================================
+.\test\calculatorTest.lua
+==============================================================================
+
+
+    1 local ResultType = require "type.ResultType"
+    1 local ColorType = require "type.ColorType"
+    1 local Calculator = require("entity.Calculator"):getInstance()
+    1 local Card = require "entity.Card"
+    1 local Deck = require "entity.Deck"
+
+
+    1 function testEvaluateCardsWithoutAce()
+
+    1     local cards1 = {}
+    1     table.insert(cards1, Card("EIGHT", ColorType.CLUBS, 8))
+    1     table.insert(cards1, Card("TEN", ColorType.SPADES, 10))
+
+    1     local cards2 = {}
+    1     table.insert(cards2, Card("QUEEN", ColorType.DIAMONDS, 11))
+    1     table.insert(cards2, Card("KING", ColorType.SPADES, 11))
+
+
+    1     local cards3 = {}
+    1     table.insert(cards3, Card("JACK", ColorType.CLUBS, 11))
+    1     table.insert(cards3, Card("TEN", ColorType.HEARTS, 10))
+
+
+    1     local cards4 = {}
+    1     table.insert(cards4, Card("TWO", ColorType.CLUBS, 2))
+    1     table.insert(cards4, Card("SEVEN", ColorType.SPADES, 7))
+    1     table.insert(cards4, Card("SIX", ColorType.HEARTS, 6))
+    1     table.insert(cards4, Card("FOUR", ColorType.SPADES, 4))
+
+
+    1     lu.assertEquals(Calculator.evaluate(cards1), 18)
+    1     lu.assertEquals(Calculator.evaluate(cards2), 22)
+    1     lu.assertEquals(Calculator.evaluate(cards3), 21)
+    1     lu.assertEquals(Calculator.evaluate(cards4), 19)
+
+      end
+
+
+    1 function testEvaluateCardsWithAceButLessThan21OrEvenWith21()
+
+    1     local cards1 = {}
+    1     table.insert(cards1, Card("EIGHT", ColorType.CLUBS, 8))
+    1     table.insert(cards1, Card("ACE", ColorType.SPADES, 11))
+
+
+    1     local cards2 = {}
+    1     table.insert(cards2, Card("TEN", ColorType.DIAMONDS, 10))
+    1     table.insert(cards2, Card("ACE", ColorType.HEARTS, 11))
+
+
+    1     lu.assertEquals(Calculator.evaluate(cards1), 19)
+    1     lu.assertEquals(Calculator.evaluate(cards2), 21)
+
+      end
+
+
+    1 function testEvaluateCardsWithAceButMoreThan21()
+
+    1     local cards1 = {}
+    1     table.insert(cards1, Card("JACK", ColorType.CLUBS, 11))
+    1     table.insert(cards1, Card("ACE", ColorType.SPADES, 11))
+
+
+    1 local cards2 = {}
+    1     table.insert(cards2, Card("ACE", ColorType.DIAMONDS, 11))
+    1     table.insert(cards2, Card("TEN", ColorType.SPADES, 10))
+    1     table.insert(cards2, Card("TWO", ColorType.SPADES, 2))
+
+
+    1 local cards3 = {}
+    1     table.insert(cards3, Card("ACE", ColorType.DIAMONDS, 11))
+    1     table.insert(cards3, Card("FOUR", ColorType.CLUBS, 4))
+    1     table.insert(cards3, Card("SIX", ColorType.HEARTS, 6))
+    1     table.insert(cards3, Card("QUEEN", ColorType.DIAMONDS, 11))
+
+
+    1     lu.assertEquals(Calculator.evaluate(cards1), 12)
+    1     lu.assertEquals(Calculator.evaluate(cards2), 13)
+    1     lu.assertEquals(Calculator.evaluate(cards3), 22)
+
+      end
+
+
+    1 function testEvaluateCardsWithMultipleAces()
+
+    1     local cards1 = {}
+    1     table.insert(cards1, Card("ACE", ColorType.CLUBS, 11))
+    1     table.insert(cards1, Card("ACE", ColorType.SPADES, 11))
+
+
+    1     local cards2 = {}
+    1     table.insert(cards2, Card("ACE", ColorType.DIAMONDS, 11))
+    1     table.insert(cards2, Card("TEN", ColorType.SPADES, 10))
+    1     table.insert(cards2, Card("ACE", ColorType.SPADES, 11))
+    1     table.insert(cards2, Card("SIX", ColorType.SPADES, 6))
+
+
+    1     local cards3 = {}
+    1     table.insert(cards3, Card("ACE", ColorType.DIAMONDS, 11))
+    1     table.insert(cards3, Card("EIGHT", ColorType.CLUBS, 8))
+    1     table.insert(cards3, Card("ACE", ColorType.HEARTS, 11))
+    1     table.insert(cards3, Card("JACK", ColorType.DIAMONDS, 11))
+
+
+    1     lu.assertEquals(Calculator.evaluate(cards1), 12)
+    1     lu.assertEquals(Calculator.evaluate(cards2), 18)
+    1     lu.assertEquals(Calculator.evaluate(cards3), 21)
+
+      end
+
+
+    1 function testCalculateResultWithWinByBlackJack()
+
+    2     local pDeck = Deck({
+    1             Card("JACK", ColorType.CLUBS, 11),
+    1             Card("TEN", ColorType.SPADES, 10)
+    1             }, 0)
+
+    2     local bDeck = Deck({
+    1             Card("NINE", ColorType.DIAMONDS, 9),
+    1             Card("ACE", ColorType.HEARTS, 11)
+    1             }, 0)
+
+    1     lu.assertEquals(Calculator.calculateResult(pDeck, bDeck), ResultType.WINBYJACK)
+
+    2     pDeck = Deck({
+    1             Card("TEN", ColorType.DIAMONDS, 10),
+    1             Card("JACK", ColorType.HEARTS, 11)
+    2             }, 0)
+
+    2     bDeck = Deck({
+    1             Card("TEN", ColorType.SPADES, 10),
+    1             Card("ACE", ColorType.SPADES, 11)
+    2             }, 0)
+
+    1     lu.assertEquals(Calculator.calculateResult(pDeck, bDeck), ResultType.WINBYJACK)
+
+      end
+
+
+    1 function testCalculateResultWithLoseByBlackJack()
+
+    2     local bDeck = Deck({
+    1         Card("JACK", ColorType.CLUBS, 11),
+    1         Card("TEN", ColorType.SPADES, 10)
+    1     }, 0)
+
+    2     local pDeck = Deck({
+    1         Card("NINE", ColorType.DIAMONDS, 9),
+    1         Card("ACE", ColorType.HEARTS, 11)
+    1     }, 0)
+
+    1     lu.assertEquals(Calculator.calculateResult(pDeck, bDeck), ResultType.LOSEBYJACK)
+
+    2     bDeck = Deck({
+    1         Card("TEN", ColorType.DIAMONDS, 10),
+    1         Card("JACK", ColorType.HEARTS, 11)
+    2     }, 0)
+
+    2     pDeck = Deck({
+    1         Card("TEN", ColorType.SPADES, 10),
+    1         Card("ACE", ColorType.SPADES, 11)
+    2     }, 0)
+
+    1     lu.assertEquals(Calculator.calculateResult(pDeck, bDeck), ResultType.LOSEBYJACK)
+
+      end
+
+
+    1 function testCalculateResultWithTie()
+
+    2     local bDeck = Deck({
+    1         Card("NINE", ColorType.CLUBS, 9),
+    1         Card("TEN", ColorType.SPADES, 10),
+    1         Card("TWO", ColorType.SPADES, 2)
+    1     }, 0)
+
+    2     local pDeck = Deck({
+    1         Card("TEN", ColorType.DIAMONDS, 10),
+    1         Card("ACE", ColorType.HEARTS, 11)
+    1     }, 0)
+
+    1     lu.assertEquals(Calculator.calculateResult(pDeck, bDeck), ResultType.TIE)
+
+    2     bDeck = Deck({
+    1         Card("TEN", ColorType.DIAMONDS, 10),
+    1         Card("SIX", ColorType.SPADES, 6),
+    1         Card("FOUR", ColorType.CLUBS, 4)
+    2     }, 0)
+
+    2     pDeck = Deck({
+    1         Card("NINE", ColorType.DIAMONDS, 9),
+    1         Card("FIVE", ColorType.HEARTS, 5),
+    1         Card("THREE", ColorType.SPADES, 3),
+    1         Card("THREE", ColorType.HEARTS, 3)
+
+    2     }, 0)
+
+    1     lu.assertEquals(Calculator.calculateResult(pDeck, bDeck), ResultType.TIE)
+
+      end
+
+
+    1 function testCalculateResultLose()
+
+
+    2     local pDeck = Deck({
+    1         Card("QUEEN", ColorType.CLUBS, 11),
+    1         Card("KING", ColorType.SPADES, 11)
+    1     }, 0)
+
+    2     local bDeck = Deck({
+    1         Card("THREE", ColorType.DIAMONDS, 3),
+    1         Card("ACE", ColorType.HEARTS, 11)
+    1     }, 0)
+
+    1     lu.assertEquals(Calculator.calculateResult(pDeck, bDeck), ResultType.LOSE)
+
+    2     pDeck = Deck({
+    1         Card("QUEEN", ColorType.CLUBS, 11),
+    1         Card("KING", ColorType.SPADES, 11)
+    2     }, 0)
+
+    2     bDeck = Deck({
+    1         Card("JACK", ColorType.DIAMONDS, 11),
+    1         Card("JACK", ColorType.HEARTS, 11)
+    2     }, 0)
+
+    1     lu.assertEquals(Calculator.calculateResult(pDeck, bDeck), ResultType.LOSE)
+
+    2     pDeck = Deck({
+    1         Card("TEN", ColorType.DIAMONDS, 10),
+    1         Card("SIX", ColorType.SPADES, 6),
+    1         Card("THREE", ColorType.CLUBS, 3)
+    2     }, 0)
+
+    2     bDeck = Deck({
+    1         Card("NINE", ColorType.DIAMONDS, 9),
+    1         Card("FIVE", ColorType.HEARTS, 5),
+    1         Card("THREE", ColorType.SPADES, 3),
+    1         Card("THREE", ColorType.HEARTS, 3)
+
+    2     }, 0)
+
+    1     lu.assertEquals(Calculator.calculateResult(pDeck, bDeck), ResultType.LOSE)
+
+      end
+
+
+    1 function testCalculateWin()
+
+    2     local pDeck = Deck({
+    1         Card("TEN", ColorType.CLUBS, 10),
+    1         Card("KING", ColorType.SPADES, 11)
+    1     }, 0)
+
+    2     local bDeck = Deck({
+    1         Card("JACK", ColorType.DIAMONDS, 11),
+    1         Card("JACK", ColorType.HEARTS, 11)
+    1     }, 0)
+
+    1     lu.assertEquals(Calculator.calculateResult(pDeck, bDeck), ResultType.WIN)
+
+    2     pDeck = Deck({
+    1         Card("TEN", ColorType.DIAMONDS, 10),
+    1         Card("SIX", ColorType.SPADES, 6),
+    1         Card("THREE", ColorType.CLUBS, 3)
+    2     }, 0)
+
+    2     bDeck = Deck({
+    1         Card("NINE", ColorType.DIAMONDS, 9),
+    1         Card("FIVE", ColorType.HEARTS, 5),
+    1         Card("THREE", ColorType.SPADES, 3)
+
+    2     }, 0)
+
+    1     lu.assertEquals(Calculator.calculateResult(pDeck, bDeck), ResultType.WIN)
+
+      end 
+
+==============================================================================
+.\test\cardMakerTest.lua
+==============================================================================
+
+    1 local CardMaker = require("gfx.CardMaker"):getInstance()
+    1 local Card = require "entity.Card"
+
+    1 function testCardToUnicode() 
+
+    2     lu.assertEquals(
+    1         utf8.char(tonumber(CardMaker.printCard(Card("JACK", "CLUBS", 11, true)), 16)),
+              "🂠"
+    1     )
+          
+    2     lu.assertEquals(
+    1         utf8.char(tonumber(CardMaker.printCard(Card("JACK", "CLUBS", 11, false)), 16)),
+              "🃛"
+    1     )
+          
+    2     lu.assertEquals(
+    1         utf8.char(tonumber(CardMaker.printCard(Card("FOUR", "HEARTS", 4, false)), 16)),
+              "🂴"
+    1     )
+          
+    2     lu.assertEquals(
+    1         utf8.char(tonumber(CardMaker.printCard(Card("NINE", "SPADES", 9, false)), 16)),
+              "🂩"
+    1     )
+          
+    2     lu.assertEquals(
+    1         utf8.char(tonumber(CardMaker.printCard(Card("KING", "DIAMONDS", 11, false)), 16)),
+              "🃎"
+    1     )
+
+      end
+
+
+==============================================================================
+.\test\consoleInputHandlerTest.lua
+==============================================================================
+
+    1 h = require "test.testHelper"
+    1 io.read = h.read
+
+    1 local ActionType = require "type.ActionType"
+    1 local ConsoleInputHandler = require("input.ConsoleInputHandler"):getInstance()
+
+
+    1 function testReadNumber()
+
+    1     h.input = {"5", "2.0", "2.2.2", " ", "5a6"}
+    1     h.cnt = 0
+
+    1     lu.assertEquals(ConsoleInputHandler.readNumber(), 5) -- A number típus igazából nem tesz különbséget 5 és 5.0 között
+          
+    1     lu.assertEquals(ConsoleInputHandler.readNumber(), 2.0)
+          
+    1     lu.assertEquals(ConsoleInputHandler.readNumber(), nil)
+          
+    1     lu.assertEquals(ConsoleInputHandler.readNumber(), nil)
+          
+    1     lu.assertEquals(ConsoleInputHandler.readNumber(), nil)
+
+      end
+
+
+    1 function testReadKey()
+
+    1     h.input = {"s", "d", "q", "h", "e", "n", "i", " ", "rossz input"}
+    1     h.cnt = 0
+
+    1     lu.assertEquals(ConsoleInputHandler.readKey(), ActionType.SPLIT)
+    1     lu.assertEquals(ConsoleInputHandler.readKey(), ActionType.DOUBLE)
+    1     lu.assertEquals(ConsoleInputHandler.readKey(), ActionType.END)
+    1     lu.assertEquals(ConsoleInputHandler.readKey(), ActionType.HIT)
+    1     lu.assertEquals(ConsoleInputHandler.readKey(), ActionType.STAND)
+    1     lu.assertEquals(ConsoleInputHandler.readKey(), ActionType.NEW)
+    1     lu.assertEquals(ConsoleInputHandler.readKey(), ActionType.NEW)
+    1     lu.assertEquals(ConsoleInputHandler.readKey(), ActionType.ERROR)
+    1     lu.assertEquals(ConsoleInputHandler.readKey(), ActionType.ERROR)
+
+      end
+
+
+==============================================================================
+.\test\dealerTest.lua
+==============================================================================
+
+
+    1 local Dealer = require "entity.Dealer"
+
+    1 local testObserver = {
+    1     dealer = {}
+      }
+
+    1 function testObserver:noticeLowDeck()
+    1     self.dealer:createNewDeck()
+      end
+
+    1 function testGiveCardAndNoticeLowDeck()
+          
+    1     local dealer = Dealer(1, testObserver)
+
+    1     testObserver.dealer = dealer
+          
+    1     lu.assertEquals(#dealer.deckPool, 52)
+          
+    1     dealer:giveCard()
+          
+    1     lu.assertEquals(#dealer.deckPool, 51)
+
+   26     for i = 1, 25, 1 do
+   25         dealer:giveCard()
+          end
+          
+    1     lu.assertEquals(#dealer.deckPool, 26)
+          
+    1     dealer:giveCard()
+          
+    1     lu.assertEquals(#dealer.deckPool, 25)
+          
+    1     dealer:giveCard()
+          
+    1     lu.assertEquals(#dealer.deckPool, 51)
+
+      end
+
+==============================================================================
+.\test\luaunit.lua
+==============================================================================
+      --[[
+              luaunit.lua
+
+      Description: A unit testing framework
+      Homepage: https://github.com/bluebird75/luaunit
+      Development by Philippe Fremy <phil@freehackers.org>
+      Based on initial work of Ryu, Gwang (http://www.gpgstudy.com/gpgiki/LuaUnit)
+      License: BSD License, see LICENSE.txt
+      ]]--
+
+    1 require("math")
+    1 local M={}
+
+      -- private exported functions (for testing)
+    1 M.private = {}
+
+    1 M.VERSION='3.3'
+    1 M._VERSION=M.VERSION -- For LuaUnit v2 compatibility
+
+      -- a version which distinguish between regular Lua and LuaJit
+    1 M._LUAVERSION = (jit and jit.version) or _VERSION
+
+      --[[ Some people like assertEquals( actual, expected ) and some people prefer
+      assertEquals( expected, actual ).
+      ]]--
+    1 M.ORDER_ACTUAL_EXPECTED = true
+    1 M.PRINT_TABLE_REF_IN_ERROR_MSG = false
+    1 M.TABLE_EQUALS_KEYBYCONTENT = true
+    1 M.LINE_LENGTH = 80
+    1 M.TABLE_DIFF_ANALYSIS_THRESHOLD = 10    -- display deep analysis for more than 10 items
+    1 M.LIST_DIFF_ANALYSIS_THRESHOLD  = 10    -- display deep analysis for more than 10 items
+
+      --[[ EPS is meant to help with Lua's floating point math in simple corner
+      cases like almostEquals(1.1-0.1, 1), which may not work as-is (e.g. on numbers
+      with rational binary representation) if the user doesn't provide some explicit
+      error margin.
+
+      The default margin used by almostEquals() in such cases is EPS; and since
+      Lua may be compiled with different numeric precisions (single vs. double), we
+      try to select a useful default for it dynamically. Note: If the initial value
+      is not acceptable, it can be changed by the user to better suit specific needs.
+
+      See also: https://en.wikipedia.org/wiki/Machine_epsilon
+      ]]
+    1 M.EPS = 2^-52 -- = machine epsilon for "double", ~2.22E-16
+    1 if math.abs(1.1 - 1 - 0.1) > M.EPS then
+          -- rounding error is above EPS, assume single precision
+****0     M.EPS = 2^-23 -- = machine epsilon for "float", ~1.19E-07
+      end
+
+      -- set this to false to debug luaunit
+    1 local STRIP_LUAUNIT_FROM_STACKTRACE = true
+
+    1 M.VERBOSITY_DEFAULT = 10
+    1 M.VERBOSITY_LOW     = 1
+    1 M.VERBOSITY_QUIET   = 0
+    1 M.VERBOSITY_VERBOSE = 20
+    1 M.DEFAULT_DEEP_ANALYSIS = nil
+    1 M.FORCE_DEEP_ANALYSIS   = true
+    1 M.DISABLE_DEEP_ANALYSIS = false
+
+      -- set EXPORT_ASSERT_TO_GLOBALS to have all asserts visible as global values
+      -- EXPORT_ASSERT_TO_GLOBALS = true
+
+      -- we need to keep a copy of the script args before it is overriden
+    1 local cmdline_argv = rawget(_G, "arg")
+
+    1 M.FAILURE_PREFIX = 'LuaUnit test FAILURE: ' -- prefix string for failed tests
+    1 M.SUCCESS_PREFIX = 'LuaUnit test SUCCESS: ' -- prefix string for successful tests finished early
+
+
+
+      M.USAGE=[[Usage: lua <your_test_suite.lua> [options] [testname1 [testname2] ... ]
+      Options:
+        -h, --help:             Print this help
+        --version:              Print version information
+        -v, --verbose:          Increase verbosity
+        -q, --quiet:            Set verbosity to minimum
+        -e, --error:            Stop on first error
+        -f, --failure:          Stop on first failure or error
+        -s, --shuffle:          Shuffle tests before running them
+        -o, --output OUTPUT:    Set output type to OUTPUT
+                                Possible values: text, tap, junit, nil
+        -n, --name NAME:        For junit only, mandatory name of xml file
+        -r, --repeat NUM:       Execute all tests NUM times, e.g. to trig the JIT
+        -p, --pattern PATTERN:  Execute all test names matching the Lua PATTERN
+                                May be repeated to include several patterns
+                                Make sure you escape magic chars like +? with %
+        -x, --exclude PATTERN:  Exclude all test names matching the Lua PATTERN
+                                May be repeated to exclude several patterns
+                                Make sure you escape magic chars like +? with %
+        testname1, testname2, ... : tests to run in the form of testFunction,
+                                    TestClass or TestClass.testMethod
+    1 ]]
+
+      local is_equal -- defined here to allow calling from mismatchFormattingPureList
+
+      ----------------------------------------------------------------
+      --
+      --                 general utility functions
+      --
+      ----------------------------------------------------------------
+
+      local function pcall_or_abort(func, ...)
+          -- unpack is a global function for Lua 5.1, otherwise use table.unpack
+    1     local unpack = rawget(_G, "unpack") or table.unpack
+    1     local result = {pcall(func, ...)}
+    1     if not result[1] then
+              -- an error occurred
+****0         print(result[2]) -- error message
+****0         print()
+****0         print(M.USAGE)
+****0         os.exit(-1)
+          end
+    1     return unpack(result, 2)
+      end
+
+    1 local crossTypeOrdering = {
+    1     number = 1, boolean = 2, string = 3, table = 4, other = 5
+      }
+    1 local crossTypeComparison = {
+    1     number = function(a, b) return a < b end,
+    1     string = function(a, b) return a < b end,
+    1     other = function(a, b) return tostring(a) < tostring(b) end,
+      }
+
+      local function crossTypeSort(a, b)
+****0     local type_a, type_b = type(a), type(b)
+****0     if type_a == type_b then
+****0         local func = crossTypeComparison[type_a] or crossTypeComparison.other
+****0         return func(a, b)
+          end
+****0     type_a = crossTypeOrdering[type_a] or crossTypeOrdering.other
+****0     type_b = crossTypeOrdering[type_b] or crossTypeOrdering.other
+****0     return type_a < type_b
+      end
+
+      local function __genSortedIndex( t )
+          -- Returns a sequence consisting of t's keys, sorted.
+****0     local sortedIndex = {}
+
+****0     for key,_ in pairs(t) do
+****0         table.insert(sortedIndex, key)
+          end
+
+****0     table.sort(sortedIndex, crossTypeSort)
+****0     return sortedIndex
+      end
+    1 M.private.__genSortedIndex = __genSortedIndex
+
+      local function sortedNext(state, control)
+          -- Equivalent of the next() function of table iteration, but returns the
+          -- keys in sorted order (see __genSortedIndex and crossTypeSort).
+          -- The state is a temporary variable during iteration and contains the
+          -- sorted key table (state.sortedIdx). It also stores the last index (into
+          -- the keys) used by the iteration, to find the next one quickly.
+          local key
+
+          --print("sortedNext: control = "..tostring(control) )
+****0     if control == nil then
+              -- start of iteration
+****0         state.count = #state.sortedIdx
+****0         state.lastIdx = 1
+****0         key = state.sortedIdx[1]
+****0         return key, state.t[key]
+          end
+
+          -- normally, we expect the control variable to match the last key used
+****0     if control ~= state.sortedIdx[state.lastIdx] then
+              -- strange, we have to find the next value by ourselves
+              -- the key table is sorted in crossTypeSort() order! -> use bisection
+****0         local lower, upper = 1, state.count
+              repeat
+****0             state.lastIdx = math.modf((lower + upper) / 2)
+****0             key = state.sortedIdx[state.lastIdx]
+****0             if key == control then
+                      break -- key found (and thus prev index)
+                  end
+****0             if crossTypeSort(key, control) then
+                      -- key < control, continue search "right" (towards upper bound)
+****0                 lower = state.lastIdx + 1
+                  else
+                      -- key > control, continue search "left" (towards lower bound)
+****0                 upper = state.lastIdx - 1
+                  end
+****0         until lower > upper
+****0         if lower > upper then -- only true if the key wasn't found, ...
+****0             state.lastIdx = state.count -- ... so ensure no match in code below
+              end
+          end
+
+          -- proceed by retrieving the next value (or nil) from the sorted keys
+****0     state.lastIdx = state.lastIdx + 1
+****0     key = state.sortedIdx[state.lastIdx]
+****0     if key then
+****0         return key, state.t[key]
+          end
+
+          -- getting here means returning `nil`, which will end the iteration
+      end
+
+      local function sortedPairs(tbl)
+          -- Equivalent of the pairs() function on tables. Allows to iterate in
+          -- sorted order. As required by "generic for" loops, this will return the
+          -- iterator (function), an "invariant state", and the initial control value.
+          -- (see http://www.lua.org/pil/7.2.html)
+****0     return sortedNext, {t = tbl, sortedIdx = __genSortedIndex(tbl)}, nil
+      end
+    1 M.private.sortedPairs = sortedPairs
+
+      -- seed the random with a strongly varying seed
+    1 math.randomseed(os.clock()*1E11)
+
+      local function randomizeTable( t )
+          -- randomize the item orders of the table t
+****0     for i = #t, 2, -1 do
+****0         local j = math.random(i)
+****0         if i ~= j then
+****0             t[i], t[j] = t[j], t[i]
+              end
+          end
+      end
+    1 M.private.randomizeTable = randomizeTable
+
+      local function strsplit(delimiter, text)
+      -- Split text into a list consisting of the strings in text, separated
+      -- by strings matching delimiter (which may _NOT_ be a pattern).
+      -- Example: strsplit(", ", "Anna, Bob, Charlie, Dolores")
+****0     if delimiter == "" or delimiter == nil then -- this would result in endless loops
+****0         error("delimiter is nil or empty string!")
+          end
+****0     if text == nil then
+****0         return nil
+          end
+
+****0     local list, pos, first, last = {}, 1
+          while true do
+****0         first, last = text:find(delimiter, pos, true)
+****0         if first then -- found?
+****0             table.insert(list, text:sub(pos, first - 1))
+****0             pos = last + 1
+              else
+****0             table.insert(list, text:sub(pos))
+                  break
+              end
+          end
+****0     return list
+      end
+    1 M.private.strsplit = strsplit
+
+      local function hasNewLine( s )
+          -- return true if s has a newline
+****0     return (string.find(s, '\n', 1, true) ~= nil)
+      end
+    1 M.private.hasNewLine = hasNewLine
+
+      local function prefixString( prefix, s )
+          -- Prefix all the lines of s with prefix
+****0     return prefix .. string.gsub(s, '\n', '\n' .. prefix)
+      end
+    1 M.private.prefixString = prefixString
+
+      local function strMatch(s, pattern, start, final )
+          -- return true if s matches completely the pattern from index start to index end
+          -- return false in every other cases
+          -- if start is nil, matches from the beginning of the string
+          -- if final is nil, matches to the end of the string
+****0     start = start or 1
+****0     final = final or string.len(s)
+
+****0     local foundStart, foundEnd = string.find(s, pattern, start, false)
+****0     return foundStart == start and foundEnd == final
+      end
+    1 M.private.strMatch = strMatch
+
+      local function patternFilter(patterns, expr)
+          -- Run `expr` through the inclusion and exclusion rules defined in patterns
+          -- and return true if expr shall be included, false for excluded.
+          -- Inclusion pattern are defined as normal patterns, exclusions 
+          -- patterns start with `!` and are followed by a normal pattern
+
+          -- result: nil = UNKNOWN (not matched yet), true = ACCEPT, false = REJECT
+          -- default: true if no explicit "include" is found, set to false otherwise
+   32     local default, result = true, nil
+
+   32     if patterns ~= nil then
+****0         for _, pattern in ipairs(patterns) do
+****0             local exclude = pattern:sub(1,1) == '!'
+****0             if exclude then
+****0                 pattern = pattern:sub(2)
+                  else
+                      -- at least one include pattern specified, a match is required
+****0                 default = false
+                  end
+                  -- print('pattern: ',pattern)
+                  -- print('exclude: ',exclude)
+                  -- print('default: ',default)
+
+****0             if string.find(expr, pattern) then
+                      -- set result to false when excluding, true otherwise
+****0                 result = not exclude
+                  end
+              end
+          end
+
+   32     if result ~= nil then
+****0         return result
+          end
+   32     return default
+      end
+    1 M.private.patternFilter = patternFilter
+
+      local function xmlEscape( s )
+          -- Return s escaped for XML attributes
+          -- escapes table:
+          -- "   &quot;
+          -- '   &apos;
+          -- <   &lt;
+          -- >   &gt;
+          -- &   &amp;
+
+****0     return string.gsub( s, '.', {
+              ['&'] = "&amp;",
+              ['"'] = "&quot;",
+              ["'"] = "&apos;",
+              ['<'] = "&lt;",
+              ['>'] = "&gt;",
+          } )
+      end
+    1 M.private.xmlEscape = xmlEscape
+
+      local function xmlCDataEscape( s )
+          -- Return s escaped for CData section, escapes: "]]>"
+****0     return string.gsub( s, ']]>', ']]&gt;' )
+      end
+    1 M.private.xmlCDataEscape = xmlCDataEscape
+
+      local function stripLuaunitTrace( stackTrace )
+          --[[
+          -- Example of  a traceback:
+          <<stack traceback:
+              example_with_luaunit.lua:130: in function 'test2_withFailure'
+              ./luaunit.lua:1449: in function <./luaunit.lua:1449>
+              [C]: in function 'xpcall'
+              ./luaunit.lua:1449: in function 'protectedCall'
+              ./luaunit.lua:1508: in function 'execOneFunction'
+              ./luaunit.lua:1596: in function 'runSuiteByInstances'
+              ./luaunit.lua:1660: in function 'runSuiteByNames'
+              ./luaunit.lua:1736: in function 'runSuite'
+              example_with_luaunit.lua:140: in main chunk
+              [C]: in ?>>
+
+              Other example:
+          <<stack traceback:
+              ./luaunit.lua:545: in function 'assertEquals'
+              example_with_luaunit.lua:58: in function 'TestToto.test7'
+              ./luaunit.lua:1517: in function <./luaunit.lua:1517>
+              [C]: in function 'xpcall'
+              ./luaunit.lua:1517: in function 'protectedCall'
+              ./luaunit.lua:1578: in function 'execOneFunction'
+              ./luaunit.lua:1677: in function 'runSuiteByInstances'
+              ./luaunit.lua:1730: in function 'runSuiteByNames'
+              ./luaunit.lua:1806: in function 'runSuite'
+              example_with_luaunit.lua:140: in main chunk
+              [C]: in ?>>
+
+          <<stack traceback:
+              luaunit2/example_with_luaunit.lua:124: in function 'test1_withFailure'
+              luaunit2/luaunit.lua:1532: in function <luaunit2/luaunit.lua:1532>
+              [C]: in function 'xpcall'
+              luaunit2/luaunit.lua:1532: in function 'protectedCall'
+              luaunit2/luaunit.lua:1591: in function 'execOneFunction'
+              luaunit2/luaunit.lua:1679: in function 'runSuiteByInstances'
+              luaunit2/luaunit.lua:1743: in function 'runSuiteByNames'
+              luaunit2/luaunit.lua:1819: in function 'runSuite'
+              luaunit2/example_with_luaunit.lua:140: in main chunk
+              [C]: in ?>>
+
+
+          -- first line is "stack traceback": KEEP
+          -- next line may be luaunit line: REMOVE
+          -- next lines are call in the program under testOk: REMOVE
+          -- next lines are calls from luaunit to call the program under test: KEEP
+
+          -- Strategy:
+          -- keep first line
+          -- remove lines that are part of luaunit
+          -- kepp lines until we hit a luaunit line
+          ]]
+
+          local function isLuaunitInternalLine( s )
+              -- return true if line of stack trace comes from inside luaunit
+****0         return s:find('[/\\]luaunit%.lua:%d+: ') ~= nil
+          end
+
+          -- print( '<<'..stackTrace..'>>' )
+
+****0     local t = strsplit( '\n', stackTrace )
+          -- print( prettystr(t) )
+
+****0     local idx = 2
+
+          -- remove lines that are still part of luaunit
+****0     while t[idx] and isLuaunitInternalLine( t[idx] ) do
+              -- print('Removing : '..t[idx] )
+****0         table.remove(t, idx)
+          end
+
+          -- keep lines until we hit luaunit again
+****0     while t[idx] and (not isLuaunitInternalLine(t[idx])) do
+              -- print('Keeping : '..t[idx] )
+****0         idx = idx + 1
+          end
+
+          -- remove remaining luaunit lines
+****0     while t[idx] do
+              -- print('Removing : '..t[idx] )
+****0         table.remove(t, idx)
+          end
+
+          -- print( prettystr(t) )
+****0     return table.concat( t, '\n')
+
+      end
+    1 M.private.stripLuaunitTrace = stripLuaunitTrace
+
+
+      local function prettystr_sub(v, indentLevel, printTableRefs, recursionTable )
+****0     local type_v = type(v)
+****0     if "string" == type_v  then
+              -- use clever delimiters according to content:
+              -- enclose with single quotes if string contains ", but no '
+****0         if v:find('"', 1, true) and not v:find("'", 1, true) then
+****0             return "'" .. v .. "'"
+              end
+              -- use double quotes otherwise, escape embedded "
+****0         return '"' .. v:gsub('"', '\\"') .. '"'
+
+****0     elseif "table" == type_v then
+              --if v.__class__ then
+              --    return string.gsub( tostring(v), 'table', v.__class__ )
+              --end
+****0         return M.private._table_tostring(v, indentLevel, printTableRefs, recursionTable)
+
+****0     elseif "number" == type_v then
+              -- eliminate differences in formatting between various Lua versions
+****0         if v ~= v then
+****0             return "#NaN" -- "not a number"
+              end
+****0         if v == math.huge then
+****0             return "#Inf" -- "infinite"
+              end
+****0         if v == -math.huge then
+****0             return "-#Inf"
+              end
+****0         if _VERSION == "Lua 5.3" then
+****0             local i = math.tointeger(v)
+****0             if i then
+****0                 return tostring(i)
+                  end
+              end
+          end
+
+****0     return tostring(v)
+      end
+
+      local function prettystr( v )
+          --[[ Pretty string conversion, to display the full content of a variable of any type.
+
+          * string are enclosed with " by default, or with ' if string contains a "
+          * tables are expanded to show their full content, with indentation in case of nested tables
+          ]]--
+****0     local recursionTable = {}
+****0     local s = prettystr_sub(v, 1, M.PRINT_TABLE_REF_IN_ERROR_MSG, recursionTable)
+****0     if recursionTable.recursionDetected and not M.PRINT_TABLE_REF_IN_ERROR_MSG then
+              -- some table contain recursive references,
+              -- so we must recompute the value by including all table references
+              -- else the result looks like crap
+****0         recursionTable = {}
+****0         s = prettystr_sub(v, 1, true, recursionTable)
+          end
+****0     return s
+      end
+    1 M.prettystr = prettystr
+
+    1 function M.adjust_err_msg_with_iter( err_msg, iter_msg )
+          --[[ Adjust the error message err_msg: trim the FAILURE_PREFIX or SUCCESS_PREFIX information if needed, 
+          add the iteration message if any and return the result.
+
+          err_msg:  string, error message captured with pcall
+          iter_msg: a string describing the current iteration ("iteration N") or nil
+                    if there is no iteration in this test.
+
+          Returns: (new_err_msg, test_status)
+              new_err_msg: string, adjusted error message, or nil in case of success
+              test_status: M.NodeStatus.FAIL, SUCCESS or ERROR according to the information
+                           contained in the error message.
+          ]]
+****0     if iter_msg then
+****0         iter_msg = iter_msg..', '
+          else
+****0         iter_msg = ''
+          end
+
+****0     local RE_FILE_LINE = '.*:%d+: '
+
+          -- error message is not necessarily a string, 
+          -- so convert the value to string with prettystr()
+****0     if type( err_msg ) ~= 'string' then
+****0         err_msg = prettystr( err_msg )
+          end
+
+****0     if (err_msg:find( M.SUCCESS_PREFIX ) == 1) or err_msg:match( '('..RE_FILE_LINE..')' .. M.SUCCESS_PREFIX .. ".*" ) then
+              -- test finished early with success()
+****0         return nil, M.NodeStatus.PASS
+          end
+
+****0     if (err_msg:find( M.FAILURE_PREFIX ) == 1) or (err_msg:match( '('..RE_FILE_LINE..')' .. M.FAILURE_PREFIX .. ".*" ) ~= nil) then
+              -- substitute prefix by iteration message
+****0         err_msg = err_msg:gsub(M.FAILURE_PREFIX, iter_msg, 1)
+              -- print("failure detected")
+****0         return err_msg, M.NodeStatus.FAIL
+          else
+              -- print("error detected")
+              -- regular error, not a failure
+****0         if iter_msg then
+                  local match
+                  -- "./test\\test_luaunit.lua:2241: some error msg
+****0             match = err_msg:match( '(.*:%d+: ).*' ) 
+****0             if match then
+****0                 err_msg = err_msg:gsub( match, match .. iter_msg )
+                  else
+                      -- no file:line: infromation, just add the iteration info at the beginning of the line
+****0                 err_msg = iter_msg .. err_msg
+                  end
+              end
+****0         return err_msg, M.NodeStatus.ERROR
+          end
+      end
+
+      local function tryMismatchFormatting( table_a, table_b, doDeepAnalysis )
+          --[[
+          Prepares a nice error message when comparing tables, performing a deeper 
+          analysis.
+
+          Arguments:
+          * table_a, table_b: tables to be compared
+          * doDeepAnalysis:
+              M.DEFAULT_DEEP_ANALYSIS: (the default if not specified) perform deep analysis only for big lists and big dictionnaries
+              M.FORCE_DEEP_ANALYSIS  : always perform deep analysis
+              M.DISABLE_DEEP_ANALYSIS: never perform deep analysis
+
+          Returns: {success, result}
+          * success: false if deep analysis could not be performed 
+                     in this case, just use standard assertion message
+          * result: if success is true, a multi-line string with deep analysis of the two lists
+          ]]
+
+          -- check if table_a & table_b are suitable for deep analysis
+****0     if type(table_a) ~= 'table' or type(table_b) ~= 'table' then
+****0         return false
+          end
+
+****0     if doDeepAnalysis == M.DISABLE_DEEP_ANALYSIS then
+****0         return false
+          end
+
+****0     local len_a, len_b, isPureList = #table_a, #table_b, true
+
+****0     for k1, v1 in pairs(table_a) do
+****0         if type(k1) ~= 'number' or k1 > len_a then
+                  -- this table a mapping
+****0             isPureList = false
+                  break
+              end
+          end
+
+****0     if isPureList then
+****0         for k2, v2 in pairs(table_b) do
+****0             if type(k2) ~= 'number' or k2 > len_b then
+                      -- this table a mapping
+****0                 isPureList = false
+                      break
+                  end
+              end
+          end
+
+****0     if isPureList and math.min(len_a, len_b) < M.LIST_DIFF_ANALYSIS_THRESHOLD then
+****0         if not (doDeepAnalysis == M.FORCE_DEEP_ANALYSIS) then
+****0             return false
+              end
+          end
+
+****0     if isPureList then
+****0         return M.private.mismatchFormattingPureList( table_a, table_b )
+          else
+              -- only work on mapping for the moment
+              -- return M.private.mismatchFormattingMapping( table_a, table_b, doDeepAnalysis )
+****0         return false
+          end
+      end
+    1 M.private.tryMismatchFormatting = tryMismatchFormatting
+
+      local function getTaTbDescr()
+****0     if not M.ORDER_ACTUAL_EXPECTED then
+****0         return 'expected', 'actual'
+          end
+****0     return 'actual', 'expected'
+      end
+
+      local function extendWithStrFmt( res, ... )
+****0     table.insert( res, string.format( ... ) )
+      end
+
+      local function mismatchFormattingMapping( table_a, table_b, doDeepAnalysis )
+          --[[
+          Prepares a nice error message when comparing tables which are not pure lists, performing a deeper 
+          analysis.
+
+          Returns: {success, result}
+          * success: false if deep analysis could not be performed 
+                     in this case, just use standard assertion message
+          * result: if success is true, a multi-line string with deep analysis of the two lists
+          ]]
+
+          -- disable for the moment
+          --[[
+          local result = {}
+          local descrTa, descrTb = getTaTbDescr()
+
+          local keysCommon = {}
+          local keysOnlyTa = {}
+          local keysOnlyTb = {}
+          local keysDiffTaTb = {}
+
+          local k, v
+
+          for k,v in pairs( table_a ) do
+              if is_equal( v, table_b[k] ) then
+                  table.insert( keysCommon, k )
+              else 
+                  if table_b[k] == nil then
+                      table.insert( keysOnlyTa, k )
+                  else
+                      table.insert( keysDiffTaTb, k )
+                  end
+              end
+          end
+
+          for k,v in pairs( table_b ) do
+              if not is_equal( v, table_a[k] ) and table_a[k] == nil then
+                  table.insert( keysOnlyTb, k )
+              end
+          end
+
+          local len_a = #keysCommon + #keysDiffTaTb + #keysOnlyTa
+          local len_b = #keysCommon + #keysDiffTaTb + #keysOnlyTb
+          local limited_display = (len_a < 5 or len_b < 5)
+
+          if math.min(len_a, len_b) < M.TABLE_DIFF_ANALYSIS_THRESHOLD then
+              return false
+          end
+
+          if not limited_display then
+              if len_a == len_b then
+                  extendWithStrFmt( result, 'Table A (%s) and B (%s) both have %d items', descrTa, descrTb, len_a )
+              else
+                  extendWithStrFmt( result, 'Table A (%s) has %d items and table B (%s) has %d items', descrTa, len_a, descrTb, len_b )
+                  end
+
+              if #keysCommon == 0 and #keysDiffTaTb == 0 then
+                  table.insert( result, 'Table A and B have no keys in common, they are totally different')
+              else
+                  local s_other = 'other '
+                  if #keysCommon then
+                      extendWithStrFmt( result, 'Table A and B have %d identical items', #keysCommon )
+                  else
+                      table.insert( result, 'Table A and B have no identical items' )
+                      s_other = ''
+                  end
+
+                  if #keysDiffTaTb ~= 0 then
+                      result[#result] = string.format( '%s and %d items differing present in both tables', result[#result], #keysDiffTaTb)
+                  else
+                      result[#result] = string.format( '%s and no %sitems differing present in both tables', result[#result], s_other, #keysDiffTaTb)
+                  end
+              end
+
+              extendWithStrFmt( result, 'Table A has %d keys not present in table B and table B has %d keys not present in table A', #keysOnlyTa, #keysOnlyTb ) 
+          end
+
+          local function keytostring(k)
+              if "string" == type(k) and k:match("^[_%a][_%w]*$") then
+                  return k
+              end
+              return prettystr(k)
+          end
+
+          if #keysDiffTaTb ~= 0 then
+              table.insert( result, 'Items differing in A and B:')
+              for k,v in sortedPairs( keysDiffTaTb ) do
+                  extendWithStrFmt( result, '  - A[%s]: %s', keytostring(v), prettystr(table_a[v]) )
+                  extendWithStrFmt( result, '  + B[%s]: %s', keytostring(v), prettystr(table_b[v]) )
+              end
+          end    
+
+          if #keysOnlyTa ~= 0 then
+              table.insert( result, 'Items only in table A:' )
+              for k,v in sortedPairs( keysOnlyTa ) do
+                  extendWithStrFmt( result, '  - A[%s]: %s', keytostring(v), prettystr(table_a[v]) )
+              end
+          end
+
+          if #keysOnlyTb ~= 0 then
+              table.insert( result, 'Items only in table B:' )
+              for k,v in sortedPairs( keysOnlyTb ) do
+                  extendWithStrFmt( result, '  + B[%s]: %s', keytostring(v), prettystr(table_b[v]) )
+              end
+          end
+
+          if #keysCommon ~= 0 then
+              table.insert( result, 'Items common to A and B:')
+              for k,v in sortedPairs( keysCommon ) do
+                  extendWithStrFmt( result, '  = A and B [%s]: %s', keytostring(v), prettystr(table_a[v]) )
+              end
+          end    
+
+          return true, table.concat( result, '\n')
+          ]]
+      end
+    1 M.private.mismatchFormattingMapping = mismatchFormattingMapping
+
+      local function mismatchFormattingPureList( table_a, table_b )
+          --[[
+          Prepares a nice error message when comparing tables which are lists, performing a deeper 
+          analysis.
+
+          Returns: {success, result}
+          * success: false if deep analysis could not be performed 
+                     in this case, just use standard assertion message
+          * result: if success is true, a multi-line string with deep analysis of the two lists
+          ]]
+****0     local result, descrTa, descrTb = {}, getTaTbDescr()
+
+****0     local len_a, len_b, refa, refb = #table_a, #table_b, '', ''
+****0     if M.PRINT_TABLE_REF_IN_ERROR_MSG then
+****0         refa, refb = string.format( '<%s> ', tostring(table_a)), string.format('<%s> ', tostring(table_b) )
+          end
+****0     local longest, shortest = math.max(len_a, len_b), math.min(len_a, len_b)
+****0     local deltalv  = longest - shortest
+
+****0     local commonUntil = shortest
+****0     for i = 1, shortest do
+****0         if not is_equal(table_a[i], table_b[i]) then
+****0             commonUntil = i - 1
+                  break
+              end
+          end
+
+****0     local commonBackTo = shortest - 1
+****0     for i = 0, shortest - 1 do
+****0         if not is_equal(table_a[len_a-i], table_b[len_b-i]) then
+****0             commonBackTo = i - 1
+                  break
+              end
+          end
+
+
+****0     table.insert( result, 'List difference analysis:' )    
+****0     if len_a == len_b then
+              -- TODO: handle expected/actual naming
+****0         extendWithStrFmt( result, '* lists %sA (%s) and %sB (%s) have the same size', refa, descrTa, refb, descrTb )
+          else 
+****0         extendWithStrFmt( result, '* list sizes differ: list %sA (%s) has %d items, list %sB (%s) has %d items', refa, descrTa, len_a, refb, descrTb, len_b )
+          end
+
+****0     extendWithStrFmt( result, '* lists A and B start differing at index %d', commonUntil+1 ) 
+****0     if commonBackTo >= 0 then
+****0         if deltalv > 0 then
+****0             extendWithStrFmt( result, '* lists A and B are equal again from index %d for A, %d for B', len_a-commonBackTo, len_b-commonBackTo )
+              else
+****0             extendWithStrFmt( result, '* lists A and B are equal again from index %d', len_a-commonBackTo )
+              end
+          end
+
+          local function insertABValue(ai, bi)
+****0         bi = bi or ai
+****0         if is_equal( table_a[ai], table_b[bi]) then
+****0             return extendWithStrFmt( result, '  = A[%d], B[%d]: %s', ai, bi, prettystr(table_a[ai]) )
+              else
+****0             extendWithStrFmt( result, '  - A[%d]: %s', ai, prettystr(table_a[ai]))
+****0             extendWithStrFmt( result, '  + B[%d]: %s', bi, prettystr(table_b[bi]))
+              end
+          end
+
+          -- common parts to list A & B, at the beginning
+****0     if commonUntil > 0 then
+****0         table.insert( result, '* Common parts:' )
+****0         for i = 1, commonUntil do
+****0             insertABValue( i )
+              end
+          end
+
+          -- diffing parts to list A & B
+****0     if commonUntil < shortest - commonBackTo - 1 then
+****0         table.insert( result, '* Differing parts:' )
+****0         for i = commonUntil + 1, shortest - commonBackTo - 1 do
+****0             insertABValue( i )
+              end
+          end
+
+          -- display indexes of one list, with no match on other list
+****0     if shortest - commonBackTo <= longest - commonBackTo - 1 then
+****0         table.insert( result, '* Present only in one list:' )
+****0         for i = shortest - commonBackTo, longest - commonBackTo - 1 do
+****0             if len_a > len_b then
+****0                 extendWithStrFmt( result, '  - A[%d]: %s', i, prettystr(table_a[i]) )
+                      -- table.insert( result, '+ (no matching B index)')
+                  else
+                      -- table.insert( result, '- no matching A index')
+****0                 extendWithStrFmt( result, '  + B[%d]: %s', i, prettystr(table_b[i]) )
+                  end
+              end
+          end
+
+          -- common parts to list A & B, at the end
+****0     if commonBackTo >= 0 then
+****0         table.insert( result, '* Common parts at the end of the lists' )
+****0         for i = longest - commonBackTo, longest do
+****0             if len_a > len_b then
+****0                 insertABValue( i, i-deltalv )
+                  else
+****0                 insertABValue( i-deltalv, i )
+                  end
+              end
+          end
+
+****0     return true, table.concat( result, '\n')
+      end
+    1 M.private.mismatchFormattingPureList = mismatchFormattingPureList
+
+      local function prettystrPairs(value1, value2, suffix_a, suffix_b)
+          --[[
+          This function helps with the recurring task of constructing the "expected
+          vs. actual" error messages. It takes two arbitrary values and formats
+          corresponding strings with prettystr().
+
+          To keep the (possibly complex) output more readable in case the resulting
+          strings contain line breaks, they get automatically prefixed with additional
+          newlines. Both suffixes are optional (default to empty strings), and get
+          appended to the "value1" string. "suffix_a" is used if line breaks were
+          encountered, "suffix_b" otherwise.
+
+          Returns the two formatted strings (including padding/newlines).
+          ]]
+****0     local str1, str2 = prettystr(value1), prettystr(value2)
+****0     if hasNewLine(str1) or hasNewLine(str2) then
+              -- line break(s) detected, add padding
+****0         return "\n" .. str1 .. (suffix_a or ""), "\n" .. str2
+          end
+****0     return str1 .. (suffix_b or ""), str2
+      end
+    1 M.private.prettystrPairs = prettystrPairs
+
+      local function _table_raw_tostring( t )
+          -- return the default tostring() for tables, with the table ID, even if the table has a metatable
+          -- with the __tostring converter
+****0     local mt = getmetatable( t )
+****0     if mt then setmetatable( t, nil ) end
+****0     local ref = tostring(t)
+****0     if mt then setmetatable( t, mt ) end
+****0     return ref
+      end
+    1 M.private._table_raw_tostring = _table_raw_tostring
+
+    1 local TABLE_TOSTRING_SEP = ", "
+    1 local TABLE_TOSTRING_SEP_LEN = string.len(TABLE_TOSTRING_SEP)
+
+      local function _table_tostring( tbl, indentLevel, printTableRefs, recursionTable )
+****0     printTableRefs = printTableRefs or M.PRINT_TABLE_REF_IN_ERROR_MSG
+****0     recursionTable = recursionTable or {}
+****0     recursionTable[tbl] = true
+
+****0     local result, dispOnMultLines = {}, false
+
+          -- like prettystr but do not enclose with "" if the string is just alphanumerical
+          -- this is better for displaying table keys who are often simple strings
+          local function keytostring(k)
+****0         if "string" == type(k) and k:match("^[_%a][_%w]*$") then
+****0             return k
+              end
+****0         return prettystr_sub(k, indentLevel+1, printTableRefs, recursionTable)
+          end
+
+****0     local mt = getmetatable( tbl )
+
+****0     if mt and mt.__tostring then
+              -- if table has a __tostring() function in its metatable, use it to display the table
+              -- else, compute a regular table
+****0         result = tostring(tbl)
+****0         if type(result) ~= 'string' then
+****0             return string.format( '<invalid tostring() result: "%s" >', prettystr(result) )
+              end
+****0         result = strsplit( '\n', result )
+****0         return M.private._table_tostring_format_multiline_string( result, indentLevel )
+
+          else
+              -- no metatable, compute the table representation
+
+****0         local entry, count, seq_index = nil, 0, 1
+****0         for k, v in sortedPairs( tbl ) do
+
+                  -- key part
+****0             if k == seq_index then
+                      -- for the sequential part of tables, we'll skip the "<key>=" output
+****0                 entry = ''
+****0                 seq_index = seq_index + 1
+****0             elseif recursionTable[k] then
+                      -- recursion in the key detected
+****0                 recursionTable.recursionDetected = true
+****0                 entry = "<".._table_raw_tostring(k)..">="
+                  else
+****0                 entry = keytostring(k) .. "="
+                  end
+
+                  -- value part 
+****0             if recursionTable[v] then
+                      -- recursion in the value detected!
+****0                 recursionTable.recursionDetected = true
+****0                 entry = entry .. "<".._table_raw_tostring(v)..">"
+                  else
+****0                 entry = entry ..
+****0                     prettystr_sub( v, indentLevel+1, printTableRefs, recursionTable )
+                  end
+****0             count = count + 1
+****0             result[count] = entry
+              end
+****0         return M.private._table_tostring_format_result( tbl, result, indentLevel, printTableRefs )
+          end
+
+      end
+    1 M.private._table_tostring = _table_tostring -- prettystr_sub() needs it
+
+      local function _table_tostring_format_multiline_string( tbl_str, indentLevel )
+****0     local indentString = '\n'..string.rep("    ", indentLevel - 1)
+****0     return table.concat( tbl_str, indentString )
+
+      end
+    1 M.private._table_tostring_format_multiline_string = _table_tostring_format_multiline_string
+
+
+      local function _table_tostring_format_result( tbl, result, indentLevel, printTableRefs )
+          -- final function called in _table_to_string() to format the resulting list of 
+          -- string describing the table.
+
+****0     local dispOnMultLines = false
+
+          -- set dispOnMultLines to true if the maximum LINE_LENGTH would be exceeded with the values
+****0     local totalLength = 0
+****0     for k, v in ipairs( result ) do
+****0         totalLength = totalLength + string.len( v )
+****0         if totalLength >= M.LINE_LENGTH then
+****0             dispOnMultLines = true
+                  break
+              end
+          end
+
+          -- set dispOnMultLines to true if the max LINE_LENGTH would be exceeded
+          -- with the values and the separators.
+****0     if not dispOnMultLines then
+              -- adjust with length of separator(s):
+              -- two items need 1 sep, three items two seps, ... plus len of '{}'
+****0         if #result > 0 then
+****0             totalLength = totalLength + TABLE_TOSTRING_SEP_LEN * (#result - 1)
+              end
+****0         dispOnMultLines = (totalLength + 2 >= M.LINE_LENGTH)
+          end
+
+          -- now reformat the result table (currently holding element strings)
+****0     if dispOnMultLines then
+****0         local indentString = string.rep("    ", indentLevel - 1)
+****0         result = {  
+                          "{\n    ", 
+                          indentString,
+****0                     table.concat(result, ",\n    " .. indentString), 
+                          "\n",
+                          indentString, 
+                          "}"
+                      }
+          else
+****0         result = {"{", table.concat(result, TABLE_TOSTRING_SEP), "}"}
+          end
+****0     if printTableRefs then
+****0         table.insert(result, 1, "<".._table_raw_tostring(tbl).."> ") -- prepend table ref
+          end
+****0     return table.concat(result)
+      end
+    1 M.private._table_tostring_format_result = _table_tostring_format_result -- prettystr_sub() needs it
+
+      local function _table_contains(t, element)
+****0     if type(t) == "table" then
+****0         local type_e = type(element)
+****0         for _, value in pairs(t) do
+****0             if type(value) == type_e then
+****0                 if value == element then
+****0                     return true
+                      end
+****0                 if type_e == 'table' then
+                          -- if we wanted recursive items content comparison, we could use
+                          -- _is_table_items_equals(v, expected) but one level of just comparing
+                          -- items is sufficient
+****0                     if M.private._is_table_equals( value, element ) then
+****0                         return true
+                          end
+                      end
+                  end
+              end
+          end
+****0     return false
+      end
+
+      local function _is_table_items_equals(actual, expected )
+****0     local type_a, type_e = type(actual), type(expected)
+
+****0     if (type_a == 'table') and (type_e == 'table') then
+****0         for k, v in pairs(actual) do
+****0             if not _table_contains(expected, v) then
+****0                 return false
+                  end
+              end
+****0         for k, v in pairs(expected) do
+****0             if not _table_contains(actual, v) then
+****0                 return false
+                  end
+              end
+****0         return true
+
+****0     elseif type_a ~= type_e then
+****0         return false
+
+****0     elseif actual ~= expected then
+****0         return false
+          end
+
+****0     return true
+      end
+
+      --[[
+      This is a specialized metatable to help with the bookkeeping of recursions
+      in _is_table_equals(). It provides an __index table that implements utility
+      functions for easier management of the table. The "cached" method queries
+      the state of a specific (actual,expected) pair; and the "store" method sets
+      this state to the given value. The state of pairs not "seen" / visited is
+      assumed to be `nil`.
+      ]]
+    1 local _recursion_cache_MT = {
+    1     __index = {
+              -- Return the cached value for an (actual,expected) pair (or `nil`)
+              cached = function(t, actual, expected)
+****0             local subtable = t[actual] or {}
+****0             return subtable[expected]
+              end,
+
+              -- Store cached value for a specific (actual,expected) pair.
+              -- Returns the value, so it's easy to use for a "tailcall" (return ...).
+              store = function(t, actual, expected, value, asymmetric)
+****0             local subtable = t[actual]
+****0             if not subtable then
+****0                 subtable = {}
+****0                 t[actual] = subtable
+                  end
+****0             subtable[expected] = value
+
+                  -- Unless explicitly marked "asymmetric": Consider the recursion
+                  -- on (expected,actual) to be equivalent to (actual,expected) by
+                  -- default, and thus cache the value for both.
+****0             if not asymmetric then
+****0                 t:store(expected, actual, value, true)
+                  end
+
+****0             return value
+              end
+    1     }
+      }
+
+      local function _is_table_equals(actual, expected, recursions)
+****0     local type_a, type_e = type(actual), type(expected)
+****0     recursions = recursions or setmetatable({}, _recursion_cache_MT)
+
+****0     if type_a ~= type_e then
+****0         return false -- different types won't match
+          end
+
+****0     if (type_a == 'table') --[[ and (type_e == 'table') ]] then
+****0         if actual == expected then
+                  -- Both reference the same table, so they are actually identical
+****0             return recursions:store(actual, expected, true)
+              end
+
+              -- If we've tested this (actual,expected) pair before: return cached value
+****0         local previous = recursions:cached(actual, expected)
+****0         if previous ~= nil then
+****0             return previous
+              end
+
+              -- Mark this (actual,expected) pair, so we won't recurse it again. For
+              -- now, assume a "false" result, which we might adjust later if needed.
+****0         recursions:store(actual, expected, false)
+
+              -- Tables must have identical element count, or they can't match.
+****0         if (#actual ~= #expected) then
+****0             return false
+              end
+
+****0         local actualKeysMatched, actualTableKeys = {}, {}
+
+****0         for k, v in pairs(actual) do
+****0             if M.TABLE_EQUALS_KEYBYCONTENT and type(k) == "table" then
+                      -- If the keys are tables, things get a bit tricky here as we
+                      -- can have _is_table_equals(t[k1], t[k2]) despite k1 ~= k2. So
+                      -- we first collect table keys from "actual", and then later try
+                      -- to match each table key from "expected" to actualTableKeys.
+****0                 table.insert(actualTableKeys, k)
+                  else
+****0                 if not _is_table_equals(v, expected[k], recursions) then
+****0                     return false -- Mismatch on value, tables can't be equal
+                      end
+****0                 actualKeysMatched[k] = true -- Keep track of matched keys
+                  end
+              end
+
+****0         for k, v in pairs(expected) do
+****0             if M.TABLE_EQUALS_KEYBYCONTENT and type(k) == "table" then
+****0                 local found = false
+                      -- Note: DON'T use ipairs() here, table may be non-sequential!
+****0                 for i, candidate in pairs(actualTableKeys) do
+****0                     if _is_table_equals(candidate, k, recursions) then
+****0                         if _is_table_equals(actual[candidate], v, recursions) then
+****0                             found = true
+                                  -- Remove the candidate we matched against from the list
+                                  -- of table keys, so each key in actual can only match
+                                  -- one key in expected.
+****0                             actualTableKeys[i] = nil
+                                  break
+                              end
+                              -- keys match but values don't, keep searching
+                          end
+                      end
+****0                 if not found then
+****0                     return false -- no matching (key,value) pair
+                      end
+                  else
+****0                 if not actualKeysMatched[k] then
+                          -- Found a key that we did not see in "actual" -> mismatch
+****0                     return false
+                      end
+                      -- Otherwise actual[k] was already matched against v = expected[k].
+                  end
+              end
+
+****0         if next(actualTableKeys) then
+                  -- If there is any key left in actualTableKeys, then that is
+                  -- a table-type key in actual with no matching counterpart
+                  -- (in expected), and so the tables aren't equal.
+****0             return false
+              end
+
+              -- The tables are actually considered equal, update cache and return result
+****0         return recursions:store(actual, expected, true)
+
+****0     elseif actual ~= expected then
+****0         return false
+          end
+
+****0     return true
+      end
+    1 M.private._is_table_equals = _is_table_equals
+    1 is_equal = _is_table_equals
+
+      local function failure(main_msg, extra_msg_or_nil, level)
+          -- raise an error indicating a test failure
+          -- for error() compatibility we adjust "level" here (by +1), to report the
+          -- calling context
+          local msg
+****0     if type(extra_msg_or_nil) == 'string' and extra_msg_or_nil:len() > 0 then
+****0         msg = extra_msg_or_nil .. '\n' .. main_msg
+          else
+****0         msg = main_msg
+          end
+****0     error(M.FAILURE_PREFIX .. msg, (level or 1) + 1)
+      end
+
+      local function fail_fmt(level, extra_msg_or_nil, ...)
+           -- failure with printf-style formatted message and given error level
+****0     failure(string.format(...), extra_msg_or_nil, (level or 1) + 1)
+      end
+    1 M.private.fail_fmt = fail_fmt
+
+      local function error_fmt(level, ...)
+           -- printf-style error()
+****0     error(string.format(...), (level or 1) + 1)
+      end
+
+      ----------------------------------------------------------------
+      --
+      --                     assertions
+      --
+      ----------------------------------------------------------------
+
+      local function errorMsgEquality(actual, expected, doDeepAnalysis)
+
+****0     if not M.ORDER_ACTUAL_EXPECTED then
+****0         expected, actual = actual, expected
+          end
+****0     if type(expected) == 'string' or type(expected) == 'table' then
+****0         local strExpected, strActual = prettystrPairs(expected, actual)
+****0         local result = string.format("expected: %s\nactual: %s", strExpected, strActual)
+
+              -- extend with mismatch analysis if possible:
+              local success, mismatchResult
+****0         success, mismatchResult = tryMismatchFormatting( actual, expected, doDeepAnalysis )
+****0         if success then 
+****0             result = table.concat( { result, mismatchResult }, '\n' )
+              end
+****0         return result
+          end
+****0     return string.format("expected: %s, actual: %s",
+****0                          prettystr(expected), prettystr(actual))
+      end
+
+    1 function M.assertError(f, ...)
+          -- assert that calling f with the arguments will raise an error
+          -- example: assertError( f, 1, 2 ) => f(1,2) should generate an error
+****0     if pcall( f, ... ) then
+****0         failure( "Expected an error when calling function but no error generated", nil, 2 )
+          end
+      end
+
+    1 function M.fail( msg )
+          -- stops a test due to a failure
+****0     failure( msg, nil, 2 )
+      end
+
+    1 function M.failIf( cond, msg )
+          -- Fails a test with "msg" if condition is true
+****0     if cond then
+****0         failure( msg, nil, 2 )
+          end
+      end
+
+    1 function M.success()
+          -- stops a test with a success
+****0     error(M.SUCCESS_PREFIX, 2)
+      end
+
+    1 function M.successIf( cond )
+          -- stops a test with a success if condition is met
+****0     if cond then
+****0         error(M.SUCCESS_PREFIX, 2)
+          end
+      end
+
+
+      ------------------------------------------------------------------
+      --                  Equality assertions
+      ------------------------------------------------------------------
+
+    1 function M.assertEquals(actual, expected, extra_msg_or_nil, doDeepAnalysis)
+  116     if type(actual) == 'table' and type(expected) == 'table' then
+****0         if not _is_table_equals(actual, expected) then
+****0             failure( errorMsgEquality(actual, expected, doDeepAnalysis), extra_msg_or_nil, 2 )
+              end
+  116     elseif type(actual) ~= type(expected) then
+****0         failure( errorMsgEquality(actual, expected), extra_msg_or_nil, 2 )
+  116     elseif actual ~= expected then
+****0         failure( errorMsgEquality(actual, expected), extra_msg_or_nil, 2 )
+          end
+      end
+
+    1 function M.almostEquals( actual, expected, margin )
+****0     if type(actual) ~= 'number' or type(expected) ~= 'number' or type(margin) ~= 'number' then
+****0         error_fmt(3, 'almostEquals: must supply only number arguments.\nArguments supplied: %s, %s, %s',
+****0             prettystr(actual), prettystr(expected), prettystr(margin))
+          end
+****0     if margin < 0 then
+****0         error('almostEquals: margin must not be negative, current value is ' .. margin, 3)
+          end
+****0     return math.abs(expected - actual) <= margin
+      end
+
+    1 function M.assertAlmostEquals( actual, expected, margin, extra_msg_or_nil )
+          -- check that two floats are close by margin
+****0     margin = margin or M.EPS
+****0     if not M.almostEquals(actual, expected, margin) then
+****0         if not M.ORDER_ACTUAL_EXPECTED then
+****0             expected, actual = actual, expected
+              end
+****0         local delta = math.abs(actual - expected) 
+****0         fail_fmt(2, extra_msg_or_nil, 'Values are not almost equal\n' ..
+                          'Actual: %s, expected: %s, delta %s above margin of %s',
+****0                     actual, expected, delta, margin)
+          end
+      end
+
+    1 function M.assertNotEquals(actual, expected, extra_msg_or_nil)
+    2     if type(actual) ~= type(expected) then
+****0         return
+          end
+
+    2     if type(actual) == 'table' and type(expected) == 'table' then
+****0         if not _is_table_equals(actual, expected) then
+****0             return
+              end
+    2     elseif actual ~= expected then
+    2         return
+          end
+****0     fail_fmt(2, extra_msg_or_nil, 'Received the not expected value: %s', prettystr(actual))
+      end
+
+    1 function M.assertNotAlmostEquals( actual, expected, margin, extra_msg_or_nil )
+          -- check that two floats are not close by margin
+****0     margin = margin or M.EPS
+****0     if M.almostEquals(actual, expected, margin) then
+****0         if not M.ORDER_ACTUAL_EXPECTED then
+****0             expected, actual = actual, expected
+              end
+****0         local delta = math.abs(actual - expected)
+****0         fail_fmt(2, extra_msg_or_nil, 'Values are almost equal\nActual: %s, expected: %s' ..
+                          ', delta %s below margin of %s',
+****0                     actual, expected, delta, margin)
+          end
+      end
+
+    1 function M.assertItemsEquals(actual, expected, extra_msg_or_nil)
+          -- checks that the items of table expected
+          -- are contained in table actual. Warning, this function
+          -- is at least O(n^2)
+****0     if not _is_table_items_equals(actual, expected ) then
+****0         expected, actual = prettystrPairs(expected, actual)
+****0         fail_fmt(2, extra_msg_or_nil, 'Content of the tables are not identical:\nExpected: %s\nActual: %s',
+****0                  expected, actual)
+          end
+      end
+
+      ------------------------------------------------------------------
+      --                  String assertion
+      ------------------------------------------------------------------
+
+    1 function M.assertStrContains( str, sub, isPattern, extra_msg_or_nil )
+          -- this relies on lua string.find function
+          -- a string always contains the empty string
+****0     if not string.find(str, sub, 1, not isPattern) then
+****0         sub, str = prettystrPairs(sub, str, '\n')
+****0         fail_fmt(2, extra_msg_or_nil, 'Could not find %s %s in string %s',
+****0                  isPattern and 'pattern' or 'substring', sub, str)
+          end
+      end
+
+    1 function M.assertStrIContains( str, sub, extra_msg_or_nil )
+          -- this relies on lua string.find function
+          -- a string always contains the empty string
+****0     if not string.find(str:lower(), sub:lower(), 1, true) then
+****0         sub, str = prettystrPairs(sub, str, '\n')
+****0         fail_fmt(2, extra_msg_or_nil, 'Could not find (case insensitively) substring %s in string %s',
+****0                  sub, str)
+          end
+      end
+
+    1 function M.assertNotStrContains( str, sub, isPattern, extra_msg_or_nil )
+          -- this relies on lua string.find function
+          -- a string always contains the empty string
+****0     if string.find(str, sub, 1, not isPattern) then
+****0         sub, str = prettystrPairs(sub, str, '\n')
+****0         fail_fmt(2, extra_msg_or_nil, 'Found the not expected %s %s in string %s',
+****0                  isPattern and 'pattern' or 'substring', sub, str)
+          end
+      end
+
+    1 function M.assertNotStrIContains( str, sub, extra_msg_or_nil )
+          -- this relies on lua string.find function
+          -- a string always contains the empty string
+****0     if string.find(str:lower(), sub:lower(), 1, true) then
+****0         sub, str = prettystrPairs(sub, str, '\n')
+****0         fail_fmt(2, extra_msg_or_nil, 'Found (case insensitively) the not expected substring %s in string %s',
+****0                  sub, str)
+          end
+      end
+
+    1 function M.assertStrMatches( str, pattern, start, final, extra_msg_or_nil )
+          -- Verify a full match for the string
+****0     if not strMatch( str, pattern, start, final ) then
+****0         pattern, str = prettystrPairs(pattern, str, '\n')
+****0         fail_fmt(2, extra_msg_or_nil, 'Could not match pattern %s with string %s',
+****0                  pattern, str)
+          end
+      end
+
+      local function _assertErrorMsgEquals( stripFileAndLine, expectedMsg, func, ... )
+****0     local no_error, error_msg = pcall( func, ... )
+****0     if no_error then
+****0         failure( 'No error generated when calling function but expected error: '..M.prettystr(expectedMsg), nil, 3 )
+          end
+****0     if type(expectedMsg) == "string" and type(error_msg) ~= "string" then
+              -- table are converted to string automatically
+****0         error_msg = tostring(error_msg)
+          end
+****0     local differ = false
+****0     if stripFileAndLine then
+****0         if error_msg:gsub("^.+:%d+: ", "") ~= expectedMsg then
+****0             differ = true
+              end
+          else
+****0         if error_msg ~= expectedMsg then
+****0             local tr = type(error_msg)
+****0             local te = type(expectedMsg)
+****0             if te == 'table' then
+****0                 if tr ~= 'table' then
+****0                     differ = true
+                      else
+****0                      local ok = pcall(M.assertItemsEquals, error_msg, expectedMsg)
+****0                      if not ok then
+****0                          differ = true
+                           end
+                      end
+                  else
+****0                differ = true
+                  end
+              end
+          end
+
+****0     if differ then
+****0         error_msg, expectedMsg = prettystrPairs(error_msg, expectedMsg)
+****0         fail_fmt(3, nil, 'Error message expected: %s\nError message received: %s\n',
+****0                  expectedMsg, error_msg)
+          end
+      end
+
+    1 function M.assertErrorMsgEquals( expectedMsg, func, ... )
+          -- assert that calling f with the arguments will raise an error
+          -- example: assertError( f, 1, 2 ) => f(1,2) should generate an error
+****0     _assertErrorMsgEquals(false, expectedMsg, func, ...)
+      end
+
+    1 function M.assertErrorMsgContentEquals(expectedMsg, func, ...)
+****0      _assertErrorMsgEquals(true, expectedMsg, func, ...)
+      end
+
+    1 function M.assertErrorMsgContains( partialMsg, func, ... )
+          -- assert that calling f with the arguments will raise an error
+          -- example: assertError( f, 1, 2 ) => f(1,2) should generate an error
+****0     local no_error, error_msg = pcall( func, ... )
+****0     if no_error then
+****0         failure( 'No error generated when calling function but expected error containing: '..prettystr(partialMsg), nil, 2 )
+          end
+****0     if type(error_msg) ~= "string" then
+****0         error_msg = tostring(error_msg)
+          end
+****0     if not string.find( error_msg, partialMsg, nil, true ) then
+****0         error_msg, partialMsg = prettystrPairs(error_msg, partialMsg)
+****0         fail_fmt(2, nil, 'Error message does not contain: %s\nError message received: %s\n',
+****0                  partialMsg, error_msg)
+          end
+      end
+
+    1 function M.assertErrorMsgMatches( expectedMsg, func, ... )
+          -- assert that calling f with the arguments will raise an error
+          -- example: assertError( f, 1, 2 ) => f(1,2) should generate an error
+****0     local no_error, error_msg = pcall( func, ... )
+****0     if no_error then
+****0         failure( 'No error generated when calling function but expected error matching: "'..expectedMsg..'"', nil, 2 )
+          end
+****0     if type(error_msg) ~= "string" then
+****0         error_msg = tostring(error_msg)
+          end
+****0     if not strMatch( error_msg, expectedMsg ) then
+****0         expectedMsg, error_msg = prettystrPairs(expectedMsg, error_msg)
+****0         fail_fmt(2, nil, 'Error message does not match pattern: %s\nError message received: %s\n',
+****0                  expectedMsg, error_msg)
+          end
+      end
+
+      ------------------------------------------------------------------
+      --              Type assertions
+      ------------------------------------------------------------------
+
+    1 function M.assertEvalToTrue(value, extra_msg_or_nil)
+****0     if not value then
+****0         failure("expected: a value evaluating to true, actual: " ..prettystr(value), extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertEvalToFalse(value, extra_msg_or_nil)
+****0     if value then
+****0         failure("expected: false or nil, actual: " ..prettystr(value), extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertIsTrue(value, extra_msg_or_nil)
+    1     if value ~= true then
+****0         failure("expected: true, actual: " ..prettystr(value), extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertNotIsTrue(value, extra_msg_or_nil)
+****0     if value == true then
+****0         failure("expected: not true, actual: " ..prettystr(value), extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertIsFalse(value, extra_msg_or_nil)
+    1     if value ~= false then
+****0         failure("expected: false, actual: " ..prettystr(value), extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertNotIsFalse(value, extra_msg_or_nil)
+****0     if value == false then
+****0         failure("expected: not false, actual: " ..prettystr(value), extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertIsNil(value, extra_msg_or_nil)
+****0     if value ~= nil then
+****0         failure("expected: nil, actual: " ..prettystr(value), extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertNotIsNil(value, extra_msg_or_nil)
+****0     if value == nil then
+****0         failure("expected: not nil, actual: nil", extra_msg_or_nil, 2)
+          end
+      end
+
+      --[[
+      Add type assertion functions to the module table M. Each of these functions
+      takes a single parameter "value", and checks that its Lua type matches the
+      expected string (derived from the function name):
+
+      M.assertIsXxx(value) -> ensure that type(value) conforms to "xxx"
+      ]]
+   10 for _, funcName in ipairs(
+    1     {'assertIsNumber', 'assertIsString', 'assertIsTable', 'assertIsBoolean',
+    1      'assertIsFunction', 'assertIsUserdata', 'assertIsThread'}
+    1 ) do
+    7     local typeExpected = funcName:match("^assertIs([A-Z]%a*)$")
+          -- Lua type() always returns lowercase, also make sure the match() succeeded
+    7     typeExpected = typeExpected and typeExpected:lower()
+    7                    or error("bad function name '"..funcName.."' for type assertion")
+
+          M[funcName] = function(value, extra_msg_or_nil)
+****0         if type(value) ~= typeExpected then
+****0             if type(value) == 'nil' then
+****0                 fail_fmt(2, extra_msg_or_nil, 'expected: a %s value, actual: nil',
+****0                          typeExpected, type(value), prettystrPairs(value))
+                  else
+****0                 fail_fmt(2, extra_msg_or_nil, 'expected: a %s value, actual: type %s, value %s',
+****0                          typeExpected, type(value), prettystrPairs(value))
+                  end
+              end
+          end
+      end
+
+      --[[
+      Add shortcuts for verifying type of a variable, without failure (luaunit v2 compatibility)
+      M.isXxx(value) -> returns true if type(value) conforms to "xxx"
+      ]]
+   11 for _, typeExpected in ipairs(
+    1     {'Number', 'String', 'Table', 'Boolean',
+    1      'Function', 'Userdata', 'Thread', 'Nil' }
+    1 ) do
+    8     local typeExpectedLower = typeExpected:lower()
+          local isType = function(value)
+****0         return (type(value) == typeExpectedLower)
+          end
+    8     M['is'..typeExpected] = isType
+    8     M['is_'..typeExpectedLower] = isType
+      end
+
+      --[[
+      Add non-type assertion functions to the module table M. Each of these functions
+      takes a single parameter "value", and checks that its Lua type differs from the
+      expected string (derived from the function name):
+
+      M.assertNotIsXxx(value) -> ensure that type(value) is not "xxx"
+      ]]
+   10 for _, funcName in ipairs(
+    1     {'assertNotIsNumber', 'assertNotIsString', 'assertNotIsTable', 'assertNotIsBoolean',
+    1      'assertNotIsFunction', 'assertNotIsUserdata', 'assertNotIsThread'}
+    1 ) do
+    7     local typeUnexpected = funcName:match("^assertNotIs([A-Z]%a*)$")
+          -- Lua type() always returns lowercase, also make sure the match() succeeded
+    7     typeUnexpected = typeUnexpected and typeUnexpected:lower()
+    7                    or error("bad function name '"..funcName.."' for type assertion")
+
+          M[funcName] = function(value, extra_msg_or_nil)
+****0         if type(value) == typeUnexpected then
+****0             fail_fmt(2, extra_msg_or_nil, 'expected: not a %s type, actual: value %s',
+****0                      typeUnexpected, prettystrPairs(value))
+              end
+          end
+      end
+
+    1 function M.assertIs(actual, expected, extra_msg_or_nil)
+****0     if actual ~= expected then
+****0         if not M.ORDER_ACTUAL_EXPECTED then
+****0             actual, expected = expected, actual
+              end
+****0         expected, actual = prettystrPairs(expected, actual, '\n', '')
+****0         fail_fmt(2, extra_msg_or_nil, 'expected and actual object should not be different\nExpected: %s\nReceived: %s',
+****0                  expected, actual)
+          end
+      end
+
+    1 function M.assertNotIs(actual, expected, extra_msg_or_nil)
+****0     if actual == expected then
+****0         if not M.ORDER_ACTUAL_EXPECTED then
+****0             expected = actual
+              end
+****0         fail_fmt(2, extra_msg_or_nil, 'expected and actual object should be different: %s',
+****0                  prettystrPairs(expected))
+          end
+      end
+
+
+      ------------------------------------------------------------------
+      --              Scientific assertions
+      ------------------------------------------------------------------
+
+
+    1 function M.assertIsNaN(value, extra_msg_or_nil)
+****0     if type(value) ~= "number" or value == value then
+****0         failure("expected: NaN, actual: " ..prettystr(value), extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertNotIsNaN(value, extra_msg_or_nil)
+****0     if type(value) == "number" and value ~= value then
+****0         failure("expected: not NaN, actual: NaN", extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertIsInf(value, extra_msg_or_nil)
+****0     if type(value) ~= "number" or math.abs(value) ~= math.huge then
+****0         failure("expected: #Inf, actual: " ..prettystr(value), extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertIsPlusInf(value, extra_msg_or_nil)
+****0     if type(value) ~= "number" or value ~= math.huge then
+****0         failure("expected: #Inf, actual: " ..prettystr(value), extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertIsMinusInf(value, extra_msg_or_nil)
+****0     if type(value) ~= "number" or value ~= -math.huge then
+****0         failure("expected: -#Inf, actual: " ..prettystr(value), extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertNotIsPlusInf(value, extra_msg_or_nil)
+****0     if type(value) == "number" and value == math.huge then
+****0         failure("expected: not #Inf, actual: #Inf", extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertNotIsMinusInf(value, extra_msg_or_nil)
+****0     if type(value) == "number" and value == -math.huge then
+****0         failure("expected: not -#Inf, actual: -#Inf", extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertNotIsInf(value, extra_msg_or_nil)
+****0     if type(value) == "number" and math.abs(value) == math.huge then
+****0         failure("expected: not infinity, actual: " .. prettystr(value), extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertIsPlusZero(value, extra_msg_or_nil)
+****0     if type(value) ~= 'number' or value ~= 0 then
+****0         failure("expected: +0.0, actual: " ..prettystr(value), extra_msg_or_nil, 2)
+****0     else if (1/value == -math.huge) then
+                  -- more precise error diagnosis
+****0             failure("expected: +0.0, actual: -0.0", extra_msg_or_nil, 2)
+****0         else if (1/value ~= math.huge) then
+                      -- strange, case should have already been covered
+****0                 failure("expected: +0.0, actual: " ..prettystr(value), extra_msg_or_nil, 2)
+                  end
+              end
+          end
+      end
+
+    1 function M.assertIsMinusZero(value, extra_msg_or_nil)
+****0     if type(value) ~= 'number' or value ~= 0 then
+****0         failure("expected: -0.0, actual: " ..prettystr(value), extra_msg_or_nil, 2)
+****0     else if (1/value == math.huge) then
+                  -- more precise error diagnosis
+****0             failure("expected: -0.0, actual: +0.0", extra_msg_or_nil, 2)
+****0         else if (1/value ~= -math.huge) then
+                      -- strange, case should have already been covered
+****0                 failure("expected: -0.0, actual: " ..prettystr(value), extra_msg_or_nil, 2)
+                  end
+              end
+          end
+      end
+
+    1 function M.assertNotIsPlusZero(value, extra_msg_or_nil)
+****0     if type(value) == 'number' and (1/value == math.huge) then
+****0         failure("expected: not +0.0, actual: +0.0", extra_msg_or_nil, 2)
+          end
+      end
+
+    1 function M.assertNotIsMinusZero(value, extra_msg_or_nil)
+****0     if type(value) == 'number' and (1/value == -math.huge) then
+****0         failure("expected: not -0.0, actual: -0.0", extra_msg_or_nil, 2)
+          end
+      end
+
+      ----------------------------------------------------------------
+      --                     Compatibility layer
+      ----------------------------------------------------------------
+
+      -- for compatibility with LuaUnit v2.x
+    1 function M.wrapFunctions()
+          -- In LuaUnit version <= 2.1 , this function was necessary to include
+          -- a test function inside the global test suite. Nowadays, the functions
+          -- are simply run directly as part of the test discovery process.
+          -- so just do nothing !
+****0     io.stderr:write[[Use of WrapFunctions() is no longer needed.
+      Just prefix your test function names with "test" or "Test" and they
+      will be picked up and run by LuaUnit.
+****0 ]]
+      end
+
+    1 local list_of_funcs = {
+          -- { official function name , alias }
+
+          -- general assertions
+    1     { 'assertEquals'            , 'assert_equals' },
+    1     { 'assertItemsEquals'       , 'assert_items_equals' },
+    1     { 'assertNotEquals'         , 'assert_not_equals' },
+    1     { 'assertAlmostEquals'      , 'assert_almost_equals' },
+    1     { 'assertNotAlmostEquals'   , 'assert_not_almost_equals' },
+    1     { 'assertEvalToTrue'        , 'assert_eval_to_true' },
+    1     { 'assertEvalToFalse'       , 'assert_eval_to_false' },
+    1     { 'assertStrContains'       , 'assert_str_contains' },
+    1     { 'assertStrIContains'      , 'assert_str_icontains' },
+    1     { 'assertNotStrContains'    , 'assert_not_str_contains' },
+    1     { 'assertNotStrIContains'   , 'assert_not_str_icontains' },
+    1     { 'assertStrMatches'        , 'assert_str_matches' },
+    1     { 'assertError'             , 'assert_error' },
+    1     { 'assertErrorMsgEquals'    , 'assert_error_msg_equals' },
+    1     { 'assertErrorMsgContains'  , 'assert_error_msg_contains' },
+    1     { 'assertErrorMsgMatches'   , 'assert_error_msg_matches' },
+    1     { 'assertErrorMsgContentEquals', 'assert_error_msg_content_equals' },
+    1     { 'assertIs'                , 'assert_is' },
+    1     { 'assertNotIs'             , 'assert_not_is' },
+    1     { 'wrapFunctions'           , 'WrapFunctions' },
+    1     { 'wrapFunctions'           , 'wrap_functions' },
+
+          -- type assertions: assertIsXXX -> assert_is_xxx
+    1     { 'assertIsNumber'          , 'assert_is_number' },
+    1     { 'assertIsString'          , 'assert_is_string' },
+    1     { 'assertIsTable'           , 'assert_is_table' },
+    1     { 'assertIsBoolean'         , 'assert_is_boolean' },
+    1     { 'assertIsNil'             , 'assert_is_nil' },
+    1     { 'assertIsTrue'            , 'assert_is_true' },
+    1     { 'assertIsFalse'           , 'assert_is_false' },
+    1     { 'assertIsNaN'             , 'assert_is_nan' },
+    1     { 'assertIsInf'             , 'assert_is_inf' },
+    1     { 'assertIsPlusInf'         , 'assert_is_plus_inf' },
+    1     { 'assertIsMinusInf'        , 'assert_is_minus_inf' },
+    1     { 'assertIsPlusZero'        , 'assert_is_plus_zero' },
+    1     { 'assertIsMinusZero'       , 'assert_is_minus_zero' },
+    1     { 'assertIsFunction'        , 'assert_is_function' },
+    1     { 'assertIsThread'          , 'assert_is_thread' },
+    1     { 'assertIsUserdata'        , 'assert_is_userdata' },
+
+          -- type assertions: assertIsXXX -> assertXxx
+    1     { 'assertIsNumber'          , 'assertNumber' },
+    1     { 'assertIsString'          , 'assertString' },
+    1     { 'assertIsTable'           , 'assertTable' },
+    1     { 'assertIsBoolean'         , 'assertBoolean' },
+    1     { 'assertIsNil'             , 'assertNil' },
+    1     { 'assertIsTrue'            , 'assertTrue' },
+    1     { 'assertIsFalse'           , 'assertFalse' },
+    1     { 'assertIsNaN'             , 'assertNaN' },
+    1     { 'assertIsInf'             , 'assertInf' },
+    1     { 'assertIsPlusInf'         , 'assertPlusInf' },
+    1     { 'assertIsMinusInf'        , 'assertMinusInf' },
+    1     { 'assertIsPlusZero'        , 'assertPlusZero' },
+    1     { 'assertIsMinusZero'       , 'assertMinusZero'},
+    1     { 'assertIsFunction'        , 'assertFunction' },
+    1     { 'assertIsThread'          , 'assertThread' },
+    1     { 'assertIsUserdata'        , 'assertUserdata' },
+
+          -- type assertions: assertIsXXX -> assert_xxx (luaunit v2 compat)
+    1     { 'assertIsNumber'          , 'assert_number' },
+    1     { 'assertIsString'          , 'assert_string' },
+    1     { 'assertIsTable'           , 'assert_table' },
+    1     { 'assertIsBoolean'         , 'assert_boolean' },
+    1     { 'assertIsNil'             , 'assert_nil' },
+    1     { 'assertIsTrue'            , 'assert_true' },
+    1     { 'assertIsFalse'           , 'assert_false' },
+    1     { 'assertIsNaN'             , 'assert_nan' },
+    1     { 'assertIsInf'             , 'assert_inf' },
+    1     { 'assertIsPlusInf'         , 'assert_plus_inf' },
+    1     { 'assertIsMinusInf'        , 'assert_minus_inf' },
+    1     { 'assertIsPlusZero'        , 'assert_plus_zero' },
+    1     { 'assertIsMinusZero'       , 'assert_minus_zero' },
+    1     { 'assertIsFunction'        , 'assert_function' },
+    1     { 'assertIsThread'          , 'assert_thread' },
+    1     { 'assertIsUserdata'        , 'assert_userdata' },
+
+          -- type assertions: assertNotIsXXX -> assert_not_is_xxx
+    1     { 'assertNotIsNumber'       , 'assert_not_is_number' },
+    1     { 'assertNotIsString'       , 'assert_not_is_string' },
+    1     { 'assertNotIsTable'        , 'assert_not_is_table' },
+    1     { 'assertNotIsBoolean'      , 'assert_not_is_boolean' },
+    1     { 'assertNotIsNil'          , 'assert_not_is_nil' },
+    1     { 'assertNotIsTrue'         , 'assert_not_is_true' },
+    1     { 'assertNotIsFalse'        , 'assert_not_is_false' },
+    1     { 'assertNotIsNaN'          , 'assert_not_is_nan' },
+    1     { 'assertNotIsInf'          , 'assert_not_is_inf' },
+    1     { 'assertNotIsPlusInf'      , 'assert_not_plus_inf' },
+    1     { 'assertNotIsMinusInf'     , 'assert_not_minus_inf' },
+    1     { 'assertNotIsPlusZero'     , 'assert_not_plus_zero' },
+    1     { 'assertNotIsMinusZero'    , 'assert_not_minus_zero' },
+    1     { 'assertNotIsFunction'     , 'assert_not_is_function' },
+    1     { 'assertNotIsThread'       , 'assert_not_is_thread' },
+    1     { 'assertNotIsUserdata'     , 'assert_not_is_userdata' },
+
+          -- type assertions: assertNotIsXXX -> assertNotXxx (luaunit v2 compat)
+    1     { 'assertNotIsNumber'       , 'assertNotNumber' },
+    1     { 'assertNotIsString'       , 'assertNotString' },
+    1     { 'assertNotIsTable'        , 'assertNotTable' },
+    1     { 'assertNotIsBoolean'      , 'assertNotBoolean' },
+    1     { 'assertNotIsNil'          , 'assertNotNil' },
+    1     { 'assertNotIsTrue'         , 'assertNotTrue' },
+    1     { 'assertNotIsFalse'        , 'assertNotFalse' },
+    1     { 'assertNotIsNaN'          , 'assertNotNaN' },
+    1     { 'assertNotIsInf'          , 'assertNotInf' },
+    1     { 'assertNotIsPlusInf'      , 'assertNotPlusInf' },
+    1     { 'assertNotIsMinusInf'     , 'assertNotMinusInf' },
+    1     { 'assertNotIsPlusZero'     , 'assertNotPlusZero' },
+    1     { 'assertNotIsMinusZero'    , 'assertNotMinusZero' },
+    1     { 'assertNotIsFunction'     , 'assertNotFunction' },
+    1     { 'assertNotIsThread'       , 'assertNotThread' },
+    1     { 'assertNotIsUserdata'     , 'assertNotUserdata' },
+
+          -- type assertions: assertNotIsXXX -> assert_not_xxx
+    1     { 'assertNotIsNumber'       , 'assert_not_number' },
+    1     { 'assertNotIsString'       , 'assert_not_string' },
+    1     { 'assertNotIsTable'        , 'assert_not_table' },
+    1     { 'assertNotIsBoolean'      , 'assert_not_boolean' },
+    1     { 'assertNotIsNil'          , 'assert_not_nil' },
+    1     { 'assertNotIsTrue'         , 'assert_not_true' },
+    1     { 'assertNotIsFalse'        , 'assert_not_false' },
+    1     { 'assertNotIsNaN'          , 'assert_not_nan' },
+    1     { 'assertNotIsInf'          , 'assert_not_inf' },
+    1     { 'assertNotIsPlusInf'      , 'assert_not_plus_inf' },
+    1     { 'assertNotIsMinusInf'     , 'assert_not_minus_inf' },
+    1     { 'assertNotIsPlusZero'     , 'assert_not_plus_zero' },
+    1     { 'assertNotIsMinusZero'    , 'assert_not_minus_zero' },
+    1     { 'assertNotIsFunction'     , 'assert_not_function' },
+    1     { 'assertNotIsThread'       , 'assert_not_thread' },
+    1     { 'assertNotIsUserdata'     , 'assert_not_userdata' },
+
+          -- all assertions with Coroutine duplicate Thread assertions
+    1     { 'assertIsThread'          , 'assertIsCoroutine' },
+    1     { 'assertIsThread'          , 'assertCoroutine' },
+    1     { 'assertIsThread'          , 'assert_is_coroutine' },
+    1     { 'assertIsThread'          , 'assert_coroutine' },
+    1     { 'assertNotIsThread'       , 'assertNotIsCoroutine' },
+    1     { 'assertNotIsThread'       , 'assertNotCoroutine' },
+    1     { 'assertNotIsThread'       , 'assert_not_is_coroutine' },
+    1     { 'assertNotIsThread'       , 'assert_not_coroutine' },
+    1 }
+
+      -- Create all aliases in M
+  126 for _,v in ipairs( list_of_funcs ) do
+  125     local funcname, alias = v[1], v[2]
+  125     M[alias] = M[funcname]
+
+  125     if EXPORT_ASSERT_TO_GLOBALS then
+****0         _G[funcname] = M[funcname]
+****0         _G[alias] = M[funcname]
+          end
+      end
+
+      ----------------------------------------------------------------
+      --
+      --                     Outputters
+      --
+      ----------------------------------------------------------------
+
+      -- A common "base" class for outputters
+      -- For concepts involved (class inheritance) see http://www.lua.org/pil/16.2.html
+
+    1 local genericOutput = { __class__ = 'genericOutput' } -- class
+    1 local genericOutput_MT = { __index = genericOutput } -- metatable
+    1 M.genericOutput = genericOutput -- publish, so that custom classes may derive from it
+
+    2 function genericOutput.new(runner, default_verbosity)
+          -- runner is the "parent" object controlling the output, usually a LuaUnit instance
+    4     local t = { runner = runner }
+    4     if runner then
+    1         t.result = runner.result
+    1         t.verbosity = runner.verbosity or default_verbosity
+    1         t.fname = runner.fname
+          else
+    3         t.verbosity = default_verbosity
+          end
+    4     return setmetatable( t, genericOutput_MT)
+      end
+
+      -- abstract ("empty") methods
+    1 function genericOutput:startSuite() end
+    2 function genericOutput:startClass(className) end
+    1 function genericOutput:startTest(testName) end
+    1 function genericOutput:addStatus(node) end
+    1 function genericOutput:endTest(node) end
+    2 function genericOutput:endClass() end
+    1 function genericOutput:endSuite() end
+
+
+      ----------------------------------------------------------------
+      --                     class TapOutput
+      ----------------------------------------------------------------
+
+    1 local TapOutput = genericOutput.new() -- derived class
+    1 local TapOutput_MT = { __index = TapOutput } -- metatable
+    1 TapOutput.__class__ = 'TapOutput'
+
+          -- For a good reference for TAP format, check: http://testanything.org/tap-specification.html
+
+    2     function TapOutput.new(runner)
+****0         local t = genericOutput.new(runner, M.VERBOSITY_LOW)
+****0         return setmetatable( t, TapOutput_MT)
+          end
+    2     function TapOutput:startSuite()
+****0         print("1.."..self.result.testCount)
+****0         print('# Started on '..self.result.startDate)
+          end
+    2     function TapOutput:startClass(className)
+****0         if className ~= '[TestFunctions]' then
+****0             print('# Starting class: '..className)
+              end
+          end
+
+    2     function TapOutput:addStatus( node )
+****0         io.stdout:write("not ok ", self.result.currentTestNumber, "\t", node.testName, "\n")
+****0         if self.verbosity > M.VERBOSITY_LOW then
+****0            print( prefixString( '#   ', node.msg ) )
+              end
+****0         if self.verbosity > M.VERBOSITY_DEFAULT then
+****0            print( prefixString( '#   ', node.stackTrace ) )
+              end
+          end
+
+    2     function TapOutput:endTest( node )
+****0         if node:isPassed() then
+****0             io.stdout:write("ok     ", self.result.currentTestNumber, "\t", node.testName, "\n")
+              end
+          end
+
+    2     function TapOutput:endSuite()
+****0         print( '# '..M.LuaUnit.statusLine( self.result ) )
+****0         return self.result.notPassedCount
+          end
+
+
+      -- class TapOutput end
+
+      ----------------------------------------------------------------
+      --                     class JUnitOutput
+      ----------------------------------------------------------------
+
+      -- See directory junitxml for more information about the junit format
+    1 local JUnitOutput = genericOutput.new() -- derived class
+    1 local JUnitOutput_MT = { __index = JUnitOutput } -- metatable
+    1 JUnitOutput.__class__ = 'JUnitOutput'
+
+    2     function JUnitOutput.new(runner)
+****0         local t = genericOutput.new(runner, M.VERBOSITY_LOW)
+****0         t.testList = {}
+****0         return setmetatable( t, JUnitOutput_MT )
+          end
+
+    2     function JUnitOutput:startSuite()
+              -- open xml file early to deal with errors
+****0         if self.fname == nil then
+****0             error('With Junit, an output filename must be supplied with --name!')
+              end
+****0         if string.sub(self.fname,-4) ~= '.xml' then
+****0             self.fname = self.fname..'.xml'
+              end
+****0         self.fd = io.open(self.fname, "w")
+****0         if self.fd == nil then
+****0             error("Could not open file for writing: "..self.fname)
+              end
+
+****0         print('# XML output to '..self.fname)
+****0         print('# Started on '..self.result.startDate)
+          end
+    2     function JUnitOutput:startClass(className)
+****0         if className ~= '[TestFunctions]' then
+****0             print('# Starting class: '..className)
+              end
+          end
+    2     function JUnitOutput:startTest(testName)
+****0         print('# Starting test: '..testName)
+          end
+
+    2     function JUnitOutput:addStatus( node )
+****0         if node:isFailure() then
+****0             print( '#   Failure: ' .. prefixString( '#   ', node.msg ):sub(4, nil) )
+                  -- print('# ' .. node.stackTrace)
+****0         elseif node:isError() then
+****0             print( '#   Error: ' .. prefixString( '#   '  , node.msg ):sub(4, nil) )
+                  -- print('# ' .. node.stackTrace)
+              end
+          end
+
+    2     function JUnitOutput:endSuite()
+****0         print( '# '..M.LuaUnit.statusLine(self.result))
+
+              -- XML file writing
+****0         self.fd:write('<?xml version="1.0" encoding="UTF-8" ?>\n')
+****0         self.fd:write('<testsuites>\n')
+****0         self.fd:write(string.format(
+                  '    <testsuite name="LuaUnit" id="00001" package="" hostname="localhost" tests="%d" timestamp="%s" time="%0.3f" errors="%d" failures="%d">\n',
+****0             self.result.runCount, self.result.startIsodate, self.result.duration, self.result.errorCount, self.result.failureCount ))
+****0         self.fd:write("        <properties>\n")
+****0         self.fd:write(string.format('            <property name="Lua Version" value="%s"/>\n', _VERSION ) )
+****0         self.fd:write(string.format('            <property name="LuaUnit Version" value="%s"/>\n', M.VERSION) )
+              -- XXX please include system name and version if possible
+****0         self.fd:write("        </properties>\n")
+
+****0         for i,node in ipairs(self.result.tests) do
+****0             self.fd:write(string.format('        <testcase classname="%s" name="%s" time="%0.3f">\n',
+****0                 node.className, node.testName, node.duration ) )
+****0             if node:isNotPassed() then
+****0                 self.fd:write(node:statusXML())
+                  end
+****0             self.fd:write('        </testcase>\n')
+              end
+
+              -- Next two lines are needed to validate junit ANT xsd, but really not useful in general:
+****0         self.fd:write('    <system-out/>\n')
+****0         self.fd:write('    <system-err/>\n')
+
+****0         self.fd:write('    </testsuite>\n')
+****0         self.fd:write('</testsuites>\n')
+****0         self.fd:close()
+****0         return self.result.notPassedCount
+          end
+
+
+      -- class TapOutput end
+
+      ----------------------------------------------------------------
+      --                     class TextOutput
+      ----------------------------------------------------------------
+
+      --[[
+
+      -- Python Non verbose:
+
+      For each test: . or F or E
+
+      If some failed tests:
+          ==============
+          ERROR / FAILURE: TestName (testfile.testclass)
+          ---------
+          Stack trace
+
+
+      then --------------
+      then "Ran x tests in 0.000s"
+      then OK or FAILED (failures=1, error=1)
+
+      -- Python Verbose:
+      testname (filename.classname) ... ok
+      testname (filename.classname) ... FAIL
+      testname (filename.classname) ... ERROR
+
+      then --------------
+      then "Ran x tests in 0.000s"
+      then OK or FAILED (failures=1, error=1)
+
+      -- Ruby:
+      Started
+       .
+       Finished in 0.002695 seconds.
+
+       1 tests, 2 assertions, 0 failures, 0 errors
+
+      -- Ruby:
+      >> ruby tc_simple_number2.rb
+      Loaded suite tc_simple_number2
+      Started
+      F..
+      Finished in 0.038617 seconds.
+
+        1) Failure:
+      test_failure(TestSimpleNumber) [tc_simple_number2.rb:16]:
+      Adding doesn't work.
+      <3> expected but was
+      <4>.
+
+      3 tests, 4 assertions, 1 failures, 0 errors
+
+      -- Java Junit
+      .......F.
+      Time: 0,003
+      There was 1 failure:
+      1) testCapacity(junit.samples.VectorTest)junit.framework.AssertionFailedError
+          at junit.samples.VectorTest.testCapacity(VectorTest.java:87)
+          at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+          at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+          at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+
+      FAILURES!!!
+      Tests run: 8,  Failures: 1,  Errors: 0
+
+
+      -- Maven
+
+      # mvn test
+      -------------------------------------------------------
+       T E S T S
+      -------------------------------------------------------
+      Running math.AdditionTest
+      Tests run: 2, Failures: 1, Errors: 0, Skipped: 0, Time elapsed:
+      0.03 sec <<< FAILURE!
+
+      Results :
+
+      Failed tests:
+        testLireSymbole(math.AdditionTest)
+
+      Tests run: 2, Failures: 1, Errors: 0, Skipped: 0
+
+
+      -- LuaUnit
+      ---- non verbose
+      * display . or F or E when running tests
+      ---- verbose
+      * display test name + ok/fail
+      ----
+      * blank line
+      * number) ERROR or FAILURE: TestName
+         Stack trace
+      * blank line
+      * number) ERROR or FAILURE: TestName
+         Stack trace
+
+      then --------------
+      then "Ran x tests in 0.000s (%d not selected, %d skipped)"
+      then OK or FAILED (failures=1, error=1)
+
+
+      ]]
+
+    1 local TextOutput = genericOutput.new() -- derived class
+    1 local TextOutput_MT = { __index = TextOutput } -- metatable
+    1 TextOutput.__class__ = 'TextOutput'
+
+    2     function TextOutput.new(runner)
+    1         local t = genericOutput.new(runner, M.VERBOSITY_DEFAULT)
+    1         t.errorList = {}
+    1         return setmetatable( t, TextOutput_MT )
+          end
+
+    2     function TextOutput:startSuite()
+    1         if self.verbosity > M.VERBOSITY_DEFAULT then
+****0             print( 'Started on '.. self.result.startDate )
+              end
+          end
+
+    2     function TextOutput:startTest(testName)
+   32         if self.verbosity > M.VERBOSITY_DEFAULT then
+****0             io.stdout:write( "    ", self.result.currentNode.testName, " ... " )
+              end
+          end
+
+    2     function TextOutput:endTest( node )
+   32         if node:isPassed() then
+   32             if self.verbosity > M.VERBOSITY_DEFAULT then
+****0                 io.stdout:write("Ok\n")
+                  else
+   32                 io.stdout:write(".")
+   32                 io.stdout:flush()
+                  end
+              else
+****0             if self.verbosity > M.VERBOSITY_DEFAULT then
+****0                 print( node.status )
+****0                 print( node.msg )
+                      --[[
+                      -- find out when to do this:
+                      if self.verbosity > M.VERBOSITY_DEFAULT then
+                          print( node.stackTrace )
+                      end
+                      ]]
+                  else
+                      -- write only the first character of status
+****0                 io.stdout:write(string.sub(node.status, 1, 1))
+****0                 io.stdout:flush()
+                  end
+              end
+          end
+
+    2     function TextOutput:displayOneFailedTest( index, fail )
+****0         print(index..") "..fail.testName )
+****0         print( fail.msg )
+****0         print( fail.stackTrace )
+****0         print()
+          end
+
+    2     function TextOutput:displayFailedTests()
+    1         if self.result.notPassedCount ~= 0 then
+****0             print("Failed tests:")
+****0             print("-------------")
+****0             for i, v in ipairs(self.result.notPassed) do
+****0                 self:displayOneFailedTest(i, v)
+                  end
+              end
+          end
+
+    2     function TextOutput:endSuite()
+    1         if self.verbosity > M.VERBOSITY_DEFAULT then
+****0             print("=========================================================")
+              else
+    1             print()
+              end
+    1         self:displayFailedTests()
+    1         print( M.LuaUnit.statusLine( self.result ) )
+    1         if self.result.notPassedCount == 0 then
+    1             print('OK')
+              end
+          end
+
+      -- class TextOutput end
+
+
+      ----------------------------------------------------------------
+      --                     class NilOutput
+      ----------------------------------------------------------------
+
+      local function nopCallable()
+          --print(42)
+****0     return nopCallable
+      end
+
+    1 local NilOutput = { __class__ = 'NilOuptut' } -- class
+    1 local NilOutput_MT = { __index = nopCallable } -- metatable
+
+    2 function NilOutput.new(runner)
+****0     return setmetatable( { __class__ = 'NilOutput' }, NilOutput_MT )
+      end
+
+      ----------------------------------------------------------------
+      --
+      --                     class LuaUnit
+      --
+      ----------------------------------------------------------------
+
+    1 M.LuaUnit = {
+    1     outputType = TextOutput,
+    1     verbosity = M.VERBOSITY_DEFAULT,
+    1     __class__ = 'LuaUnit'
+    1 }
+    1 local LuaUnit_MT = { __index = M.LuaUnit }
+
+    1 if EXPORT_ASSERT_TO_GLOBALS then
+****0     LuaUnit = M.LuaUnit
+      end
+
+    2     function M.LuaUnit.new()
+    1         return setmetatable( {}, LuaUnit_MT )
+          end
+
+          -----------------[[ Utility methods ]]---------------------
+
+    2     function M.LuaUnit.asFunction(aObject)
+              -- return "aObject" if it is a function, and nil otherwise
+   64         if 'function' == type(aObject) then
+   64             return aObject
+              end
+          end
+
+    2     function M.LuaUnit.splitClassMethod(someName)
+              --[[
+              Return a pair of className, methodName strings for a name in the form
+              "class.method". If no class part (or separator) is found, will return
+              nil, someName instead (the latter being unchanged).
+
+              This convention thus also replaces the older isClassMethod() test:
+              You just have to check for a non-nil className (return) value.
+              ]]
+   32         local separator = string.find(someName, '.', 1, true)
+   32         if separator then
+****0             return someName:sub(1, separator - 1), someName:sub(separator + 1)
+              end
+   32         return nil, someName
+          end
+
+    2     function M.LuaUnit.isMethodTestName( s )
+              -- return true is the name matches the name of a test method
+              -- default rule is that is starts with 'Test' or with 'test'
+****0         return string.sub(s, 1, 4):lower() == 'test'
+          end
+
+    2     function M.LuaUnit.isTestName( s )
+              -- return true is the name matches the name of a test
+              -- default rule is that is starts with 'Test' or with 'test'
+   73         return string.sub(s, 1, 4):lower() == 'test'
+          end
+
+    2     function M.LuaUnit.collectTests()
+              -- return a list of all test names in the global namespace
+              -- that match LuaUnit.isTestName
+
+    1         local testNames = {}
+   74         for k, _ in pairs(_G) do
+   73             if type(k) == "string" and M.LuaUnit.isTestName( k ) then
+   32                 table.insert( testNames , k )
+                  end
+              end
+    1         table.sort( testNames )
+    1         return testNames
+          end
+
+    2     function M.LuaUnit.parseCmdLine( cmdLine )
+              -- parse the command line
+              -- Supported command line parameters:
+              -- --verbose, -v: increase verbosity
+              -- --quiet, -q: silence output
+              -- --error, -e: treat errors as fatal (quit program)
+              -- --output, -o, + name: select output type
+              -- --pattern, -p, + pattern: run test matching pattern, may be repeated
+              -- --exclude, -x, + pattern: run test not matching pattern, may be repeated
+              -- --shuffle, -s, : shuffle tests before reunning them
+              -- --name, -n, + fname: name of output file for junit, default to stdout
+              -- --repeat, -r, + num: number of times to execute each test
+              -- [testnames, ...]: run selected test names
+              --
+              -- Returns a table with the following fields:
+              -- verbosity: nil, M.VERBOSITY_DEFAULT, M.VERBOSITY_QUIET, M.VERBOSITY_VERBOSE
+              -- output: nil, 'tap', 'junit', 'text', 'nil'
+              -- testNames: nil or a list of test names to run
+              -- exeRepeat: num or 1
+              -- pattern: nil or a list of patterns
+              -- exclude: nil or a list of patterns
+
+    1         local result, state = {}, nil
+    1         local SET_OUTPUT = 1
+    1         local SET_PATTERN = 2
+    1         local SET_EXCLUDE = 3
+    1         local SET_FNAME = 4
+    1         local SET_REPEAT = 5
+
+    1         if cmdLine == nil then
+****0             return result
+              end
+
+              local function parseOption( option )
+****0             if option == '--help' or option == '-h' then
+****0                 result['help'] = true
+****0                 return
+****0             elseif option == '--version' then
+****0                 result['version'] = true
+****0                 return
+****0             elseif option == '--verbose' or option == '-v' then
+****0                 result['verbosity'] = M.VERBOSITY_VERBOSE
+****0                 return
+****0             elseif option == '--quiet' or option == '-q' then
+****0                 result['verbosity'] = M.VERBOSITY_QUIET
+****0                 return
+****0             elseif option == '--error' or option == '-e' then
+****0                 result['quitOnError'] = true
+****0                 return
+****0             elseif option == '--failure' or option == '-f' then
+****0                 result['quitOnFailure'] = true
+****0                 return
+****0             elseif option == '--shuffle' or option == '-s' then
+****0                 result['shuffle'] = true
+****0                 return
+****0             elseif option == '--output' or option == '-o' then
+****0                 state = SET_OUTPUT
+****0                 return state
+****0             elseif option == '--name' or option == '-n' then
+****0                 state = SET_FNAME
+****0                 return state
+****0             elseif option == '--repeat' or option == '-r' then
+****0                 state = SET_REPEAT
+****0                 return state
+****0             elseif option == '--pattern' or option == '-p' then
+****0                 state = SET_PATTERN
+****0                 return state
+****0             elseif option == '--exclude' or option == '-x' then
+****0                 state = SET_EXCLUDE
+****0                 return state
+                  end
+****0             error('Unknown option: '..option,3)
+              end
+
+              local function setArg( cmdArg, state )
+****0             if state == SET_OUTPUT then
+****0                 result['output'] = cmdArg
+****0                 return
+****0             elseif state == SET_FNAME then
+****0                 result['fname'] = cmdArg
+****0                 return
+****0             elseif state == SET_REPEAT then
+****0                 result['exeRepeat'] = tonumber(cmdArg)
+****0                                      or error('Malformed -r argument: '..cmdArg)
+****0                 return
+****0             elseif state == SET_PATTERN then
+****0                 if result['pattern'] then
+****0                     table.insert( result['pattern'], cmdArg )
+                      else
+****0                     result['pattern'] = { cmdArg }
+                      end
+****0                 return
+****0             elseif state == SET_EXCLUDE then
+****0                 local notArg = '!'..cmdArg
+****0                 if result['pattern'] then
+****0                     table.insert( result['pattern'],  notArg )
+                      else
+****0                     result['pattern'] = { notArg }
+                      end
+****0                 return
+                  end
+****0             error('Unknown parse state: '.. state)
+              end
+
+
+    1         for i, cmdArg in ipairs(cmdLine) do
+****0             if state ~= nil then
+****0                 setArg( cmdArg, state, result )
+****0                 state = nil
+                  else
+****0                 if cmdArg:sub(1,1) == '-' then
+****0                     state = parseOption( cmdArg )
+                      else
+****0                     if result['testNames'] then
+****0                         table.insert( result['testNames'], cmdArg )
+                          else
+****0                         result['testNames'] = { cmdArg }
+                          end
+                      end
+                  end
+              end
+
+    1         if result['help'] then
+****0             M.LuaUnit.help()
+              end
+
+    1         if result['version'] then
+****0             M.LuaUnit.version()
+              end
+
+    1         if state ~= nil then
+****0             error('Missing argument after '..cmdLine[ #cmdLine ],2 )
+              end
+
+    1         return result
+          end
+
+    2     function M.LuaUnit.help()
+****0         print(M.USAGE)
+****0         os.exit(0)
+          end
+
+    2     function M.LuaUnit.version()
+****0         print('LuaUnit v'..M.VERSION..' by Philippe Fremy <phil@freehackers.org>')
+****0         os.exit(0)
+          end
+
+      ----------------------------------------------------------------
+      --                     class NodeStatus
+      ----------------------------------------------------------------
+
+    1     local NodeStatus = { __class__ = 'NodeStatus' } -- class
+    1     local NodeStatus_MT = { __index = NodeStatus } -- metatable
+    1     M.NodeStatus = NodeStatus
+
+          -- values of status
+    1     NodeStatus.PASS  = 'PASS'
+    1     NodeStatus.FAIL  = 'FAIL'
+    1     NodeStatus.ERROR = 'ERROR'
+
+    2     function NodeStatus.new( number, testName, className )
+   32         local t = { number = number, testName = testName, className = className }
+   32         setmetatable( t, NodeStatus_MT )
+   32         t:pass()
+   32         return t
+          end
+
+    2     function NodeStatus:pass()
+   32         self.status = self.PASS
+              -- useless but we know it's the field we want to use
+   32         self.msg = nil
+   32         self.stackTrace = nil
+          end
+
+    1     function NodeStatus:fail(msg, stackTrace)
+****0         self.status = self.FAIL
+****0         self.msg = msg
+****0         self.stackTrace = stackTrace
+          end
+
+    2     function NodeStatus:error(msg, stackTrace)
+****0         self.status = self.ERROR
+****0         self.msg = msg
+****0         self.stackTrace = stackTrace
+          end
+
+    2     function NodeStatus:isPassed()
+   96         return self.status == NodeStatus.PASS
+          end
+
+    2     function NodeStatus:isNotPassed()
+              -- print('hasFailure: '..prettystr(self))
+   32         return self.status ~= NodeStatus.PASS
+          end
+
+    2     function NodeStatus:isFailure()
+****0         return self.status == NodeStatus.FAIL
+          end
+
+    2     function NodeStatus:isError()
+****0         return self.status == NodeStatus.ERROR
+          end
+
+    2     function NodeStatus:statusXML()
+****0         if self:isError() then
+****0             return table.concat(
+****0                 {'            <error type="', xmlEscape(self.msg), '">\n',
+****0                  '                <![CDATA[', xmlCDataEscape(self.stackTrace),
+                       ']]></error>\n'})
+****0         elseif self:isFailure() then
+****0             return table.concat(
+****0                 {'            <failure type="', xmlEscape(self.msg), '">\n',
+****0                  '                <![CDATA[', xmlCDataEscape(self.stackTrace),
+                       ']]></failure>\n'})
+              end
+****0         return '            <passed/>\n' -- (not XSD-compliant! normally shouldn't get here)
+          end
+
+          --------------[[ Output methods ]]-------------------------
+
+          local function conditional_plural(number, singular)
+              -- returns a grammatically well-formed string "%d <singular/plural>"
+    1         local suffix = ''
+    1         if number ~= 1 then -- use plural
+    1             suffix = (singular:sub(-2) == 'ss') and 'es' or 's'
+              end
+    1         return string.format('%d %s%s', number, singular, suffix)
+          end
+
+    2     function M.LuaUnit.statusLine(result)
+              -- return status line string according to results
+    1         local s = {
+    2             string.format('Ran %d tests in %0.3f seconds',
+    1                           result.runCount, result.duration),
+    1             conditional_plural(result.passedCount, 'success'),
+    1         }
+    1         if result.notPassedCount > 0 then
+****0             if result.failureCount > 0 then
+****0                 table.insert(s, conditional_plural(result.failureCount, 'failure'))
+                  end
+****0             if result.errorCount > 0 then
+****0                 table.insert(s, conditional_plural(result.errorCount, 'error'))
+                  end
+              else
+    1             table.insert(s, '0 failures')
+              end
+    1         if result.nonSelectedCount > 0 then
+****0             table.insert(s, string.format("%d non-selected", result.nonSelectedCount))
+              end
+    1         return table.concat(s, ', ')
+          end
+
+    2     function M.LuaUnit:startSuite(testCount, nonSelectedCount)
+    1         self.result = {
+    1             testCount = testCount,
+    1             nonSelectedCount = nonSelectedCount,
+    1             passedCount = 0,
+    1             runCount = 0,
+    1             currentTestNumber = 0,
+    1             currentClassName = "",
+    1             currentNode = nil,
+    1             suiteStarted = true,
+    1             startTime = os.clock(),
+    1             startDate = os.date(os.getenv('LUAUNIT_DATEFMT')),
+    1             startIsodate = os.date('%Y-%m-%dT%H:%M:%S'),
+    1             patternIncludeFilter = self.patternIncludeFilter,
+    1             tests = {},
+    1             failures = {},
+    1             errors = {},
+    1             notPassed = {},
+    1         }
+
+    1         self.outputType = self.outputType or TextOutput
+    1         self.output = self.outputType.new(self)
+    1         self.output:startSuite()
+          end
+
+    2     function M.LuaUnit:startClass( className )
+    1         self.result.currentClassName = className
+    1         self.output:startClass( className )
+          end
+
+    2     function M.LuaUnit:startTest( testName  )
+   32         self.result.currentTestNumber = self.result.currentTestNumber + 1
+   32         self.result.runCount = self.result.runCount + 1
+   64         self.result.currentNode = NodeStatus.new(
+   32             self.result.currentTestNumber,
+   32             testName,
+   32             self.result.currentClassName
+   64         )
+   32         self.result.currentNode.startTime = os.clock()
+   32         table.insert( self.result.tests, self.result.currentNode )
+   32         self.output:startTest( testName )
+          end
+
+    2     function M.LuaUnit:addStatus( err )
+              -- "err" is expected to be a table / result from protectedCall()
+   32         if err.status == NodeStatus.PASS then
+   32             return
+              end
+
+****0         local node = self.result.currentNode
+
+              --[[ As a first approach, we will report only one error or one failure for one test.
+
+              However, we can have the case where the test is in failure, and the teardown is in error.
+              In such case, it's a good idea to report both a failure and an error in the test suite. This is
+              what Python unittest does for example. However, it mixes up counts so need to be handled carefully: for
+              example, there could be more (failures + errors) count that tests. What happens to the current node ?
+
+              We will do this more intelligent version later.
+              ]]
+
+              -- if the node is already in failure/error, just don't report the new error (see above)
+****0         if node.status ~= NodeStatus.PASS then
+****0             return
+              end
+
+****0         if err.status == NodeStatus.FAIL then
+****0             node:fail( err.msg, err.trace )
+****0             table.insert( self.result.failures, node )
+****0         elseif err.status == NodeStatus.ERROR then
+****0             node:error( err.msg, err.trace )
+****0             table.insert( self.result.errors, node )
+              end
+
+****0         if node:isFailure() or node:isError() then
+                  -- add to the list of failed tests (gets printed separately)
+****0             table.insert( self.result.notPassed, node )
+              end
+****0         self.output:addStatus( node )
+          end
+
+    2     function M.LuaUnit:endTest()
+   32         local node = self.result.currentNode
+              -- print( 'endTest() '..prettystr(node))
+              -- print( 'endTest() '..prettystr(node:isNotPassed()))
+   32         node.duration = os.clock() - node.startTime
+   32         node.startTime = nil
+   32         self.output:endTest( node )
+
+   32         if node:isPassed() then
+   32             self.result.passedCount = self.result.passedCount + 1
+****0         elseif node:isError() then
+****0             if self.quitOnError or self.quitOnFailure then
+                      -- Runtime error - abort test execution as requested by
+                      -- "--error" option. This is done by setting a special
+                      -- flag that gets handled in runSuiteByInstances().
+****0                 print("\nERROR during LuaUnit test execution:\n" .. node.msg)
+****0                 self.result.aborted = true
+                  end
+****0         elseif node:isFailure() then
+****0             if self.quitOnFailure then
+                      -- Failure - abort test execution as requested by
+                      -- "--failure" option. This is done by setting a special
+                      -- flag that gets handled in runSuiteByInstances().
+****0                 print("\nFailure during LuaUnit test execution:\n" .. node.msg)
+****0                 self.result.aborted = true
+                  end
+              end
+   32         self.result.currentNode = nil
+          end
+
+    2     function M.LuaUnit:endClass()
+    1         self.output:endClass()
+          end
+
+    2     function M.LuaUnit:endSuite()
+    1         if self.result.suiteStarted == false then
+****0             error('LuaUnit:endSuite() -- suite was already ended' )
+              end
+    1         self.result.duration = os.clock()-self.result.startTime
+    1         self.result.suiteStarted = false
+
+              -- Expose test counts for outputter's endSuite(). This could be managed
+              -- internally instead, but unit tests (and existing use cases) might
+              -- rely on these fields being present.
+    1         self.result.notPassedCount = #self.result.notPassed
+    1         self.result.failureCount = #self.result.failures
+    1         self.result.errorCount = #self.result.errors
+
+    1         self.output:endSuite()
+          end
+
+    2     function M.LuaUnit:setOutputType(outputType)
+              -- default to text
+              -- tap produces results according to TAP format
+****0         if outputType:upper() == "NIL" then
+****0             self.outputType = NilOutput
+****0             return
+              end
+****0         if outputType:upper() == "TAP" then
+****0             self.outputType = TapOutput
+****0             return
+              end
+****0         if outputType:upper() == "JUNIT" then
+****0             self.outputType = JUnitOutput
+****0             return
+              end
+****0         if outputType:upper() == "TEXT" then
+****0             self.outputType = TextOutput
+****0             return
+              end
+****0         error( 'No such format: '..outputType,2)
+          end
+
+          --------------[[ Runner ]]-----------------
+
+    2     function M.LuaUnit:protectedCall(classInstance, methodInstance, prettyFuncName)
+              -- if classInstance is nil, this is just a function call
+              -- else, it's method of a class being called.
+
+              local function err_handler(e)
+                  -- transform error into a table, adding the traceback information
+****0             return {
+                      status = NodeStatus.ERROR,
+                      msg = e,
+****0                 trace = string.sub(debug.traceback("", 3), 2)
+                  }
+              end
+
+              local ok, err
+   32         if classInstance then
+                  -- stupid Lua < 5.2 does not allow xpcall with arguments so let's use a workaround
+****0             ok, err = xpcall( function () methodInstance(classInstance) end, err_handler )
+              else
+   64             ok, err = xpcall( function () methodInstance() end, err_handler )
+              end
+   32         if ok then
+   32             return {status = NodeStatus.PASS}
+              end
+
+              local iter_msg
+****0         iter_msg = self.exeRepeat and 'iteration '..self.currentCount
+
+****0         err.msg, err.status = M.adjust_err_msg_with_iter( err.msg, iter_msg )
+
+****0         if err.status == NodeStatus.PASS then
+****0             err.trace = nil
+****0             return err
+              end
+
+              -- reformat / improve the stack trace
+****0         if prettyFuncName then -- we do have the real method name
+****0             err.trace = err.trace:gsub("in (%a+) 'methodInstance'", "in %1 '"..prettyFuncName.."'")
+              end
+****0         if STRIP_LUAUNIT_FROM_STACKTRACE then
+****0             err.trace = stripLuaunitTrace(err.trace)
+              end
+
+****0         return err -- return the error "object" (table)
+          end
+
+
+    2     function M.LuaUnit:execOneFunction(className, methodName, classInstance, methodInstance)
+              -- When executing a test function, className and classInstance must be nil
+              -- When executing a class method, all parameters must be set
+
+   32         if type(methodInstance) ~= 'function' then
+****0             error( tostring(methodName)..' must be a function, not '..type(methodInstance))
+              end
+
+              local prettyFuncName
+   32         if className == nil then
+   32             className = '[TestFunctions]'
+   32             prettyFuncName = methodName
+              else
+****0             prettyFuncName = className..'.'..methodName
+              end
+
+   32         if self.lastClassName ~= className then
+    1             if self.lastClassName ~= nil then
+****0                 self:endClass()
+                  end
+    1             self:startClass( className )
+    1             self.lastClassName = className
+              end
+
+   32         self:startTest(prettyFuncName)
+
+   32         local node = self.result.currentNode
+   64         for iter_n = 1, self.exeRepeat or 1 do
+   32             if node:isNotPassed() then
+                      break
+                  end
+   32             self.currentCount = iter_n
+
+                  -- run setUp first (if any)
+   32             if classInstance then
+****0                 local func = self.asFunction( classInstance.setUp ) or
+****0                              self.asFunction( classInstance.Setup ) or
+****0                              self.asFunction( classInstance.setup ) or
+****0                              self.asFunction( classInstance.SetUp )
+****0                 if func then
+****0                     self:addStatus(self:protectedCall(classInstance, func, className..'.setUp'))
+                      end
+                  end
+
+                  -- run testMethod()
+   32             if node:isPassed() then
+   32                 self:addStatus(self:protectedCall(classInstance, methodInstance, prettyFuncName))
+                  end
+
+                  -- lastly, run tearDown (if any)
+   32             if classInstance then
+****0                 local func = self.asFunction( classInstance.tearDown ) or
+****0                              self.asFunction( classInstance.TearDown ) or
+****0                              self.asFunction( classInstance.teardown ) or
+****0                              self.asFunction( classInstance.Teardown )
+****0                 if func then
+****0                     self:addStatus(self:protectedCall(classInstance, func, className..'.tearDown'))
+                      end
+                  end
+              end
+
+   32         self:endTest()
+          end
+
+    2     function M.LuaUnit.expandOneClass( result, className, classInstance )
+              --[[
+              Input: a list of { name, instance }, a class name, a class instance
+              Ouptut: modify result to add all test method instance in the form:
+              { className.methodName, classInstance }
+              ]]
+****0         for methodName, methodInstance in sortedPairs(classInstance) do
+****0             if M.LuaUnit.asFunction(methodInstance) and M.LuaUnit.isMethodTestName( methodName ) then
+****0                 table.insert( result, { className..'.'..methodName, classInstance } )
+                  end
+              end
+          end
+
+    2     function M.LuaUnit.expandClasses( listOfNameAndInst )
+              --[[
+              -- expand all classes (provided as {className, classInstance}) to a list of {className.methodName, classInstance}
+              -- functions and methods remain untouched
+
+              Input: a list of { name, instance }
+
+              Output:
+              * { function name, function instance } : do nothing
+              * { class.method name, class instance }: do nothing
+              * { class name, class instance } : add all method names in the form of (className.methodName, classInstance)
+              ]]
+    1         local result = {}
+
+   33         for i,v in ipairs( listOfNameAndInst ) do
+   32             local name, instance = v[1], v[2]
+   32             if M.LuaUnit.asFunction(instance) then
+   32                 table.insert( result, { name, instance } )
+                  else
+****0                 if type(instance) ~= 'table' then
+****0                     error( 'Instance must be a table or a function, not a '..type(instance)..' with value '..prettystr(instance))
+                      end
+****0                 local className, methodName = M.LuaUnit.splitClassMethod( name )
+****0                 if className then
+****0                     local methodInstance = instance[methodName]
+****0                     if methodInstance == nil then
+****0                         error( "Could not find method in class "..tostring(className).." for method "..tostring(methodName) )
+                          end
+****0                     table.insert( result, { name, instance } )
+                      else
+****0                     M.LuaUnit.expandOneClass( result, name, instance )
+                      end
+                  end
+              end
+
+    1         return result
+          end
+
+    2     function M.LuaUnit.applyPatternFilter( patternIncFilter, listOfNameAndInst )
+    1         local included, excluded = {}, {}
+   33         for i, v in ipairs( listOfNameAndInst ) do
+                  -- local name, instance = v[1], v[2]
+   32             if  patternFilter( patternIncFilter, v[1] ) then
+   32                 table.insert( included, v )
+                  else
+****0                 table.insert( excluded, v )
+                  end
+              end
+    1         return included, excluded
+          end
+
+    2     function M.LuaUnit:runSuiteByInstances( listOfNameAndInst )
+              --[[ Run an explicit list of tests. Each item of the list must be one of:
+              * { function name, function instance }
+              * { class name, class instance }
+              * { class.method name, class instance }
+              ]]
+
+    1         local expandedList = self.expandClasses( listOfNameAndInst )
+    1         if self.shuffle then
+****0             randomizeTable( expandedList )
+              end
+    2         local filteredList, filteredOutList = self.applyPatternFilter(
+    1             self.patternIncludeFilter, expandedList )
+
+    1         self:startSuite( #filteredList, #filteredOutList )
+
+   33         for i,v in ipairs( filteredList ) do
+   32             local name, instance = v[1], v[2]
+   32             if M.LuaUnit.asFunction(instance) then
+   32                 self:execOneFunction( nil, name, nil, instance )
+                  else
+                      -- expandClasses() should have already taken care of sanitizing the input
+****0                 assert( type(instance) == 'table' )
+****0                 local className, methodName = M.LuaUnit.splitClassMethod( name )
+****0                 assert( className ~= nil )
+****0                 local methodInstance = instance[methodName]
+****0                 assert(methodInstance ~= nil)
+****0                 self:execOneFunction( className, methodName, instance, methodInstance )
+                  end
+   32             if self.result.aborted then
+                      break -- "--error" or "--failure" option triggered
+                  end
+              end
+
+    1         if self.lastClassName ~= nil then
+    1             self:endClass()
+              end
+
+    1         self:endSuite()
+
+    1         if self.result.aborted then
+****0             print("LuaUnit ABORTED (as requested by --error or --failure option)")
+****0             os.exit(-2)
+              end
+          end
+
+    2     function M.LuaUnit:runSuiteByNames( listOfName )
+              --[[ Run LuaUnit with a list of generic names, coming either from command-line or from global
+                  namespace analysis. Convert the list into a list of (name, valid instances (table or function))
+                  and calls runSuiteByInstances.
+              ]]
+
+              local instanceName, instance
+    1         local listOfNameAndInst = {}
+
+   33         for i,name in ipairs( listOfName ) do
+   32             local className, methodName = M.LuaUnit.splitClassMethod( name )
+   32             if className then
+****0                 instanceName = className
+****0                 instance = _G[instanceName]
+
+****0                 if instance == nil then
+****0                     error( "No such name in global space: "..instanceName )
+                      end
+
+****0                 if type(instance) ~= 'table' then
+****0                     error( 'Instance of '..instanceName..' must be a table, not '..type(instance))
+                      end
+
+****0                 local methodInstance = instance[methodName]
+****0                 if methodInstance == nil then
+****0                     error( "Could not find method in class "..tostring(className).." for method "..tostring(methodName) )
+                      end
+
+                  else
+                      -- for functions and classes
+   32                 instanceName = name
+   32                 instance = _G[instanceName]
+                  end
+
+   32             if instance == nil then
+****0                 error( "No such name in global space: "..instanceName )
+                  end
+
+   32             if (type(instance) ~= 'table' and type(instance) ~= 'function') then
+****0                 error( 'Name must match a function or a table: '..instanceName )
+                  end
+
+   32             table.insert( listOfNameAndInst, { name, instance } )
+              end
+
+    1         self:runSuiteByInstances( listOfNameAndInst )
+          end
+
+    2     function M.LuaUnit.run(...)
+              -- Run some specific test classes.
+              -- If no arguments are passed, run the class names specified on the
+              -- command line. If no class name is specified on the command line
+              -- run all classes whose name starts with 'Test'
+              --
+              -- If arguments are passed, they must be strings of the class names
+              -- that you want to run or generic command line arguments (-o, -p, -v, ...)
+
+    1         local runner = M.LuaUnit.new()
+    1         return runner:runSuite(...)
+          end
+
+    2     function M.LuaUnit:runSuite( ... )
+
+    1         local args = {...}
+    1         if type(args[1]) == 'table' and args[1].__class__ == 'LuaUnit' then
+                  -- run was called with the syntax M.LuaUnit:runSuite()
+                  -- we support both M.LuaUnit.run() and M.LuaUnit:run()
+                  -- strip out the first argument
+****0             table.remove(args,1)
+              end
+
+    1         if #args == 0 then
+    1             args = cmdline_argv
+              end
+
+    1         local options = pcall_or_abort( M.LuaUnit.parseCmdLine, args )
+
+              -- We expect these option fields to be either `nil` or contain
+              -- valid values, so it's safe to always copy them directly.
+    1         self.verbosity     = options.verbosity
+    1         self.quitOnError   = options.quitOnError
+    1         self.quitOnFailure = options.quitOnFailure
+    1         self.fname         = options.fname
+
+    1         self.exeRepeat            = options.exeRepeat
+    1         self.patternIncludeFilter = options.pattern
+    1         self.shuffle              = options.shuffle
+
+    1         if options.output then
+****0             if options.output:lower() == 'junit' and options.fname == nil then
+****0                 print('With junit output, a filename must be supplied with -n or --name')
+****0                 os.exit(-1)
+                  end
+****0             pcall_or_abort(self.setOutputType, self, options.output)
+              end
+
+    1         self:runSuiteByNames( options.testNames or M.LuaUnit.collectTests() )
+
+    1         return self.result.notPassedCount
+          end
+      -- class LuaUnit
+
+      -- For compatbility with LuaUnit v2
+    1 M.run = M.LuaUnit.run
+    1 M.Run = M.LuaUnit.run
+
+    2 function M:setVerbosity( verbosity )
+****0     M.LuaUnit.verbosity = verbosity
+      end
+    1 M.set_verbosity = M.setVerbosity
+    1 M.SetVerbosity = M.setVerbosity
+
+
+    1 return M
+
+==============================================================================
+.\test\playerTest.lua
+==============================================================================
+
+    1 h = require "test.testHelper"
+    1 io.read = h.read
+
+    1 local Player = require "entity.Player"
+    1 local ClassicPlayer = require "behavior.ClassicPlayer"
+    1 local ConsoleInputHandler = require("input.ConsoleInputHandler"):getInstance()
+    1 local testPlayerObserver = require "test.testPlayerObserver"
+    1 local Card = require "entity.Card"
+
+    1 local testDealer = {
+    1     deckPool = {}
+      }
+    1 function testDealer:giveCard()
+   44     return table.remove(self.deckPool, 1)
+      end
+
+    1 function setUp(player) 
+
+   11     player.dealer.deckPool = {
+   11         Card("KING", "DIAMONDS", 11),
+   11         Card("KING", "HEARTS", 11),
+   11         Card("NINE", "CLUBS", 9),
+   11         Card("FOUR", "CLUBS", 4),
+   11         Card("QUEEN", "SPADES", 11)
+   11     }
+
+   11     player:changeDeck(0)
+
+      end
+
+
+    1 function testDoubleCheck()
+
+    1     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
+    1     setUp(player)
+    1     h.input = {"10"}
+    1     h.cnt = 0
+
+    1     player:raise()
+    1     player:receiveFirstCards()
+          
+    1     lu.assertEquals(player:showMoney(), 90.0)
+          
+    1     player:double(player:showDeck())
+          
+    1     lu.assertEquals(player:showDeck().money, 20.0)
+          
+    1     lu.assertEquals(player:showMoney(), 80.0)
+
+      end
+
+
+    1 function testMultipleDouble()
+
+    1     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
+    1     setUp(player)
+    1     h.input = {"10"}
+    1     h.cnt = 0
+
+    1     player:raise()
+    1     player:receiveFirstCards()
+          
+    1     lu.assertEquals(player:showMoney(), 90.0)
+
+    1     player:double(player:showDeck())
+    1     player:double(player:showDeck())
+          
+    1     lu.assertEquals(player:showDeck().money, 40.0)
+    1     lu.assertEquals(player:showMoney(), 60.0)
+
+      end
+
+
+    1 function testCheckMaximumDouble()
+
+    1     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
+    1     setUp(player)
+    1     h.input = {"40"}
+    1     h.cnt = 0
+
+    1     player:raise()
+    1     player:receiveFirstCards()
+
+    1     lu.assertEquals(player:showMoney(), 60.0)
+
+    1     player:double(player:showDeck())
+    1     player:double(player:showDeck())
+
+    1     lu.assertEquals(player:showDeck().money, 100.0)
+    1     lu.assertEquals(player:showMoney(), 0.0)
+
+      end
+
+
+    1 function testPlayAndQuit()
+
+    1     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
+    1     setUp(player)
+    1     h.input = {"40", "s", "d", "h", "e", "h", "q" }
+    1     h.cnt = 0
+
+    1     player:raise()
+    1     player:receiveFirstCards()
+
+    1     player:play()
+
+    1     lu.assertNotEquals(player:showMoney(), 100.0)
+
+      end
+
+
+    1 function testPlayAndNewGame()
+
+    1     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
+    1     setUp(player)
+    1     h.input = {"40", "s", "d", "h", "e", "h", "n", "500"}
+    1     h.cnt = 0
+
+    1     player:raise()
+    1     player:receiveFirstCards()
+
+    1     player:play()
+
+    1     lu.assertNotEquals(player:showMoney(), 500)
+
+      end
+
+    1 function setUp2(player)
+
+    3     player.dealer.deckPool = {
+    3         Card("TEN", "DIAMONDS", 10),
+    3         Card("THREE", "HEARTS", 3),
+    3         Card("FOUR", "SPADES", 4),
+    3         Card("ACE", "CLUBS", 11),
+    3         Card("JACK", "DIAMONDS", 11),
+    3         Card("ACE", "DIAMONDS", 11)
+    3     }
+
+    3     player:changeDeck(0)
+
+      end
+
+
+    1 function testSimpleHit()
+
+    1     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
+    1     setUp2(player)
+    1     h.input = {"10"}
+    1     h.cnt = 0
+
+    1     player:raise()
+    1     player:receiveFirstCards()
+
+    1     player:hit(player:showDeck())
+
+    1     lu.assertEquals(#player:showDeck().cards, 3)
+
+      end
+
+
+    1 function testMultipleHit()
+
+    1     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
+    1     setUp2(player)
+    1     h.input = {"10"}
+    1     h.cnt = 0
+
+    1     player:raise()
+    1     player:receiveFirstCards()
+
+    1     player:hit(player:showDeck())
+    1     player:hit(player:showDeck())
+    1     player:hit(player:showDeck())
+
+    1     lu.assertEquals(#player:showDeck().cards, 5)
+
+      end
+
+
+    1 function testCheckMaximumHit()
+
+    1     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
+    1     setUp2(player)
+    1     h.input = {"10"}
+    1     h.cnt = 0
+
+    1     player:raise()
+    1     player:receiveFirstCards()
+
+    1     player:hit(player:showDeck())
+    1     player:hit(player:showDeck())
+    1     player:hit(player:showDeck())
+
+    1     player:hit(player:showDeck())
+
+    1     lu.assertEquals(#player:showDeck().cards, 5)
+
+      end
+
+
+    1 function testSplitTwoCardsAndWithTheSameValue()
+
+    1     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
+    1     setUp(player)
+    1     h.input = {"10"}
+    1     h.cnt = 0
+
+    1     player:raise()
+    1     player:receiveFirstCards()
+
+    1     player:split(player:showDeck())
+
+    1     lu.assertEquals(#player:showDeck().cards, 1)
+    1     lu.assertEquals(player:showDeck().money, 5.0)
+
+    1     player:changeDeck(player.numberOfUsedDecks)
+
+
+    1     lu.assertEquals(#player:showDeck().cards, 1)
+    1     lu.assertEquals(player:showDeck().money, 5.0)
+
+    1     lu.assertEquals(player:showDeck().cards[1].value, "KING")
+    1     lu.assertEquals(player:showDeck().cards[1].color, "DIAMONDS")
+      end
+
+
+    1 function testSplitWithTwoCardsButNotTheSameValue()
+
+    1     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
+    1     setUp(player)
+    1     h.input = {"10"}
+    1     h.cnt = 0
+
+          --A két ugyan olyan kártya kivétele (az egységes kezelés és a boiler text csökkentése miatt)
+    1     player.dealer:giveCard()
+    1     player.dealer:giveCard()
+
+
+    1     player:raise()
+    1     player:receiveFirstCards()
+
+    1     local currentUsedDeckNumber = player.numberOfUsedDecks
+
+    1     player:split(player:showDeck())
+
+    1     lu.assertEquals(#player:showDeck().cards, 2)
+    1     lu.assertEquals(player:showDeck().money, 10.0)
+
+    1     player:changeDeck(currentUsedDeckNumber + 1)
+
+
+    1     lu.assertEquals(#player:showDeck().cards, 0)
+    1     lu.assertEquals(player:showDeck().money, 0.0)
+
+      end
+
+
+    1 function testSplitButNotWithTwoNumber()
+
+    1     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
+    1     setUp(player)
+    1     h.input = {"10"}
+    1     h.cnt = 0
+
+          --A két ugyan olyan kártya kivétele (az egységes kezelés és a boiler text csökkentése miatt)
+    1     player.dealer:giveCard()
+    1     player.dealer:giveCard()
+
+    1     player:raise()
+    1     player:receiveFirstCards()
+
+    1     local currentUsedDeckNumber = player.numberOfUsedDecks
+
+    1     player:hit(player:showDeck())
+
+    1     player:split(player:showDeck())
+
+    1     lu.assertEquals(#player:showDeck().cards, 3)
+    1     lu.assertEquals(player:showDeck().money, 10.0)
+
+    1     player:changeDeck(currentUsedDeckNumber + 1)
+
+
+    1     lu.assertEquals(#player:showDeck().cards, 0)
+    1     lu.assertEquals(player:showDeck().money, 0.0)
+
+      end
+
+
+    1 function testMultipleSplitAndPreparation()
+
+    1     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
+    1     setUp(player)
+    1     h.input = {"10"}
+    1     h.cnt = 0
+
+    1     player.dealer.deckPool = {
+    1         Card("JACK", "DIAMONDS", 11),
+    1         Card("JACK", "HEARTS", 11),
+    1         Card("JACK", "SPADES", 11),
+    1         Card("JACK", "CLUBS", 11),
+    1         Card("JACK", "DIAMONDS", 11)
+    1     }
+
+    1     player:raise()
+    1     player:receiveFirstCards()
+
+    1     player:split(player:showDeck())
+
+    1     lu.assertEquals(#player:showDeck().cards, 1)
+    1     lu.assertEquals(player:showDeck().money, 5.0)
+
+
+    1     player:hit(player:showDeck())
+
+    1     player:split(player:showDeck())
+
+    1     lu.assertEquals(#player:showDeck().cards, 1)
+    1     lu.assertEquals(player:showDeck().money, 2.5)
+
+    1     player:hit(player:showDeck())
+
+    1     player:split(player:showDeck())
+
+    1     lu.assertEquals(#player:showDeck().cards, 2)
+    1     lu.assertEquals(player:showDeck().money, 2.5)
+
+    1     player:changeDeck(player.numberOfUsedDecks)
+
+    1     lu.assertEquals(#player:showDeck().cards, 1)
+    1     lu.assertEquals(player:showDeck().money, 2.5)
+
+          -- ---------------------------------------------------------
+          -- Itt talán a legjobb tesztelni a preparation függvényt
+          -- ---------------------------------------------------------
+
+    4     for i = 1, player.numberOfUsedDecks, 1 do
+
+    3         player:changeDeck(i)
+    3         if(i == 1) then lu.assertEquals(#player:showDeck().cards, 2)
+              else
+    2             lu.assertEquals(#player:showDeck().cards, 1)
+              end
+
+          end
+
+    1     lu.assertEquals(player.numberOfUsedDecks, 3)
+
+    1     player:preparation()
+
+    1     lu.assertEquals(player.numberOfUsedDecks, 1)
+
+    4     for i = 1, player.behavior:getMaximumNumberOfDecks(), 1 do
+
+    3         player:changeDeck(i)
+    3         lu.assertEquals(#player:showDeck().cards, 0)
+    3         lu.assertEquals(player:showDeck().money, 0.0)
+
+          end
+
+      end
+
+
+    1 function testRaise()
+
+    1     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
+    1     setUp(player)
+    1     h.input = {"1a", "100.1", "100"}
+    1     h.cnt = 0
+
+    1     player:raise()
+
+    1     lu.assertEquals(player:showMoney(), 0.0)
+    1     lu.assertEquals(player:showDeck().money, 100.0)
+
+    3     for i = 2, player.behavior:getMaximumNumberOfDecks(), 1 do
+
+    2         player:changeDeck(i)
+    2         lu.assertEquals(player:showDeck().money, 0.0)
+
+          end
+
+      end
+
+
+    1 function testReceiveFirstCards()
+
+    1     local player = Player(100.0, testDealer, ClassicPlayer(), ConsoleInputHandler, testPlayerObserver)
+    1     setUp(player)
+
+    1     player:receiveFirstCards()
+
+    1     lu.assertEquals("KING", player:showDeck().cards[1].value)
+    1     lu.assertEquals("DIAMONDS", player:showDeck().cards[1].color)
+    1     lu.assertEquals("KING", player:showDeck().cards[2].value)
+    1     lu.assertEquals("HEARTS", player:showDeck().cards[2].color)
+
+
+      end
+
+==============================================================================
+.\test\tableTest.lua
+==============================================================================
+
+    1 h = require "test.testHelper"
+    1 io.read = h.read
+
+    1 local Card = require "entity.Card"
+    1 local Table = require "entity.Table"
+    1 local ConsoleInputHandler = require("input.ConsoleInputHandler"):getInstance()
+
+
+    1 local testDealer = {
+    1     deckPool = {}
+      }
+    1 function testDealer:giveCard()
+   27     return table.remove(self.deckPool, 1)
+      end
+
+
+    1 function testGameWithWinByBlackJackAndStopAndQuit()
+
+    1     local table = Table( 5, ConsoleInputHandler)
+    1     table.dealer = testDealer
+          -- Csinálok egy olyan osztót, aminek gyorsan megadom a felhasználandó kártyákat.
+          -- Itt csak az értékekből gyorsan csinálok egy teszt paklit.
+    1     table.dealer.deckPool = deckMaker({"10", "j", "3", "7", "q", "8"})
+
+          -- Beállítom mind a player mind a bank dealerjét újra a test dealernek
+    1     table.player.dealer, table.bank.dealer = table.dealer, table.dealer
+
+          -- Először kér rossz input az alapösszegre, amjd a jó adat.
+          -- Aztán egy rossz input a kezdésre, majd egy indítás.
+          -- Ezután megint rossz adat tesztelése az emelésnél, majd 10-es érték bevitele.
+          -- Menet elindul majd megáll, aztán kilép
+    1     h.input = {"100e", "100", "o", "n", "j10", "10", "e", "q", "q"}
+    1     h.cnt = 0
+
+    1     table:startGame()
+
+    1     lu.assertEquals(table.player:showMoney(), 115.0)
+    1     lu.assertEquals(table.winCount, 1)
+    1     lu.assertEquals(table.loseCount, 0)
+
+      end
+
+
+    1 function testGameWithLoseByBlackJackAndStopAndQuit()
+
+    1     local table = Table( 5, ConsoleInputHandler)
+    1     table.dealer = testDealer
+    1     table.dealer.deckPool = deckMaker({"3", "7", "10", "j", "q", "8"})
+
+    1     table.player.dealer, table.bank.dealer = table.dealer, table.dealer
+
+    1     h.input = {"10e", "10", "o", "n", "j10", "10", "e", "q", "q"}
+    1     h.cnt = 0
+
+    1     table:startGame()
+
+    1     lu.assertEquals(table.player:showMoney(), 0.0)
+    1     lu.assertEquals(table.winCount, 0)
+    1     lu.assertEquals(table.loseCount, 1)
+
+      end
+
+
+    1 function testGameWithTwoTimesThanNewGameAndThenStop()
+
+          -- Egy sor egy kör kártyáinak felel meg.
+          -- Ezzel tesztelek egy győztes, egy vesztes egy döntetlen kört.
+          -- Az utolsó sor pedig csak a teszt befejezéséhez kell.
+    1     local table = Table( 5, ConsoleInputHandler)
+    1     table.dealer = testDealer
+    2     table.dealer.deckPool = deckMaker({"3", "7", "10", "10", "q",
+    1                                        "k", "4", "4", "5", "j",
+    1                                        "j", "6", "7", "10",
+    2                                        "k", "q", "j", "10"})
+
+    1     table.player.dealer, table.bank.dealer = table.dealer, table.dealer
+
+          -- Először kér rossz input az alapösszegre, amjd a jó adat.
+          -- Aztán egy rossz input a kezdésre, majd egy indítás.
+          -- Ezután megint rossz adat tesztelése az emelésnél, majd 10-es érték bevitele.
+          -- Aztán húz -> megáll -> folytatja -> emel 5-öt -> megáll -> abbahagyja.
+          -- Újat kezd -> 200 az alapösszeg -> új játék start -> 10-et emel -> megáll -> folytatja
+          -- -> 10-et emel -> új játékot kezd -> 500 az alapösszeg majd nem indít, hanem egyből kilép.
+    1     h.input = {"10e", "100", "o", "n", "j20", "10", "h", "e", "i", "5", "e", "q", "n", "200", "n", "10", "e", "i", "10", "n", "500", "q"}
+    1     h.cnt = 0
+
+    1     table:startGame()
+
+    1     lu.assertEquals(table.player:showMoney(), 500.0)
+    1     lu.assertEquals(table.winCount, 0)
+    1     lu.assertEquals(table.loseCount, 0)
+
+      end
+
+    1 function deckMaker(cards)
+
+    3     local result = {}
+
+   33     for _, k in pairs(cards) do
+
+   30         if(k == "1") then Card("ACE", "DIAMONDS", 11)
+   30         elseif (k == "2") then table.insert(result, Card("TWO", "DIAMONDS", 2))
+   30         elseif (k == "3") then table.insert(result, Card("THREE", "DIAMONDS", 3))
+   27         elseif (k == "4") then table.insert(result, Card("FOUR", "DIAMONDS", 4))
+   25         elseif (k == "5") then table.insert(result, Card("FIVE", "DIAMONDS", 5))
+   24         elseif (k == "6") then table.insert(result, Card("SIX", "DIAMONDS", 6))
+   23         elseif (k == "7") then table.insert(result, Card("SEVEN", "DIAMONDS", 7))
+   19         elseif (k == "8") then table.insert(result, Card("EIGHT", "DIAMONDS", 8))
+   17         elseif (k == "9") then table.insert(result, Card("NINE", "DIAMONDS", 9))
+   17         elseif (k == "10") then table.insert(result, Card("TEN", "DIAMONDS", 10))
+   11         elseif (k == "j") then table.insert(result, Card("JACK", "DIAMONDS", 11))
+    6         elseif (k == "q") then table.insert(result, Card("QUEEN", "DIAMONDS", 11))
+    2         elseif (k == "k") then table.insert(result, Card("KING", "DIAMONDS", 11))
+              end
+
+          end
+
+    3     return result
+
+      end
+
+==============================================================================
+.\test\testHelper.lua
+==============================================================================
+    1 local M = {}
+
+    1 M.old = io.read
+    1 M.input = {}
+    1 M.cnt = 0
+
+      M.read = function()
+   81     M.cnt = M.cnt+1
+   81     return M.input[M.cnt]
+      end
+
+    1 return M
+
+
+==============================================================================
+.\test\testPlayerObserver.lua
+==============================================================================
+
+
+    1 local testPlayerObserver = {}
+
+   32 function testPlayerObserver:noticeUpdate() end
+
+    2 function testPlayerObserver:noticeNewGame() end
+
+    2 function testPlayerObserver:noticeEndGame() end
+
+    1 return testPlayerObserver
+
+
+==============================================================================
+.\test\unitTests.lua
+==============================================================================
+
+
+    1 lu = require "test.luaunit"
+
+
+      ----------------- Calculator unit tests -----------------------------
+
+    1 require "test.calculatorTest"
+
+      ----------------- Card Maker unit tests -----------------------------
+
+    1 require "test.cardMakerTest"
+
+      ----------------- Dealer unit tests ---------------------------------
+
+    1 require "test.dealerTest"
+
+      ----------------- ConsoleInputHandler unit tests --------------------
+
+    1 require "test.consoleInputHandlerTest"
+
+      ----------------- Bank unit tests -----------------------------------
+
+    1 require "test.bankTest"
+
+      ----------------- Player unit tests ---------------------------------
+
+    1 require "test.playerTest"
+
+      ----------------- Table unit tests ----------------------------------
+
+    1 require "test.tableTest"
+
+      ----------------- Execute tests -------------------------------------
+
+    1 os.exit( lu.LuaUnit.run() )
+
+==============================================================================
+.\type\ActionType.lua
+==============================================================================
+
+    1 local ActionType = {
+
+    1     HIT = 1,
+    1     STAND = 2,
+    1     DOUBLE = 3,
+    1     SPLIT = 4,
+    1     END = 5,
+    1     NEW = 6,
+    1     ERROR = 7
+
+      }
+
+    1 return ActionType
+
+==============================================================================
+.\type\CardType.lua
+==============================================================================
+
+    1 local CardType = {
+    1     TWO = 2,
+    1     THREE = 3,
+    1     FOUR = 4,
+    1     FIVE = 5,
+    1     SIX = 6,
+    1     SEVEN = 7,
+    1     EIGHT = 8,
+    1     NINE = 9,
+    1     TEN = 10,
+    1     JACK = 11,
+    1     QUEEN = 11,
+    1     KING = 11,
+    1     ACE = 11;
+      }
+
+    1 return CardType
+
+
+==============================================================================
+.\type\ColorType.lua
+==============================================================================
+
+    1 local ColorType = {
+    1     SPADES = 1,
+    1     HEARTS = 2,
+    1     DIAMONDS = 3,
+    1     CLUBS = 4
+      }
+
+    1 return ColorType
+
+==============================================================================
+.\type\GameState.lua
+==============================================================================
+
+    1 local GameState = {
+    1     NEW = 1,
+    1     RUNNING = 2,
+    1     END = 3,
+    1     QUIT = 4
+      }
+
+    1 return GameState
+
+==============================================================================
+.\type\ResultType.lua
+==============================================================================
+
+    1 local ResultType =  {
+
+    1     WIN = 1,
+    1     WINBYJACK = 2,
+    1     TIE = 3,
+    1     LOSE = 4,
+    1     LOSEBYJACK = 5
+      }
+
+    1 return ResultType
+
+==============================================================================
+main.lua
+==============================================================================
+
+
+      require "luacov"
+
+    1 require "test.unitTests"
+
+
+      --local InputHandler = require("input.ConsoleInputHandler"):getInstance()
+      --local Table = require "entity.Table"
+
+      --Table(6, InputHandler):startGame()
+
+
+==============================================================================
+Summary
+==============================================================================
+
+File                               Hits Missed Coverage
+-------------------------------------------------------
+.\behavior\ClassicBank.lua         9    0      100.00%
+.\behavior\ClassicBehavior.lua     12   4      75.00%
+.\behavior\ClassicPlayer.lua       17   0      100.00%
+.\entity\Bank.lua                  24   0      100.00%
+.\entity\Calculator.lua            38   0      100.00%
+.\entity\Card.lua                  12   0      100.00%
+.\entity\Dealer.lua                35   0      100.00%
+.\entity\Deck.lua                  10   0      100.00%
+.\entity\Participant.lua           18   1      94.74%
+.\entity\Player.lua                86   0      100.00%
+.\entity\Table.lua                 130  8      94.20%
+.\gfx\CardMaker.lua                28   0      100.00%
+.\gfx\ClassicBankView.lua          14   0      100.00%
+.\gfx\ClassicPlayerView.lua        21   0      100.00%
+.\gfx\ClassicTableView.lua         15   0      100.00%
+.\input\ConsoleInputHandler.lua    19   0      100.00%
+.\test\bankTest.lua                36   0      100.00%
+.\test\calculatorTest.lua          179  0      100.00%
+.\test\cardMakerTest.lua           18   0      100.00%
+.\test\consoleInputHandlerTest.lua 24   0      100.00%
+.\test\dealerTest.lua              18   0      100.00%
+.\test\luaunit.lua                 565  790    41.70%
+.\test\playerTest.lua              221  0      100.00%
+.\test\tableTest.lua               62   0      100.00%
+.\test\testHelper.lua              7    0      100.00%
+.\test\testPlayerObserver.lua      5    0      100.00%
+.\test\unitTests.lua               9    0      100.00%
+.\type\ActionType.lua              9    0      100.00%
+.\type\CardType.lua                15   0      100.00%
+.\type\ColorType.lua               6    0      100.00%
+.\type\GameState.lua               6    0      100.00%
+.\type\ResultType.lua              7    0      100.00%
+main.lua                           1    0      100.00%
+-------------------------------------------------------
+Total                              1676 803    67.61%
