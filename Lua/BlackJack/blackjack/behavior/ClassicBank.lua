@@ -11,20 +11,8 @@ setmetatable(ClassicBank, {
     end
 })
 
-function ClassicBank:getMaximumNumberOfDecks()
-    return 3
-end
-
 function ClassicBank:hit(cards)
     return Calculator.evaluate(cards) <= 16
-end
-
-function ClassicBank:double()
-    return false
-end
-
-function ClassicBank:split()
-    return false
 end
 
 return ClassicBank
