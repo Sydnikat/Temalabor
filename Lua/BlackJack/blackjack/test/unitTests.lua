@@ -19,6 +19,10 @@ require "test.dealerTest"
 
 require "test.consoleInputHandlerTest"
 
+----------------- Bank unit tests -----------------------------------
+
+require "test.bankTest"
+
 ----------------- Execute tests -------------------------------------
 
 os.exit( lu.LuaUnit.run() )
