@@ -13,7 +13,7 @@ function CardMaker:getInstance()
         else
             local type
 
-            if(card.color == "SPADE") then type = "A"
+            if(card.color == "SPADES") then type = "A"
             elseif(card.color == "HEARTS") then type = "B"
             elseif(card.color == "DIAMONDS") then type = "C"
             else type = "D"
@@ -40,6 +40,8 @@ function CardMaker:getInstance()
         end
 
         io.write(utf8.char(tonumber(cardString,16)))
+
+        return cardString
     end
 
     return{
