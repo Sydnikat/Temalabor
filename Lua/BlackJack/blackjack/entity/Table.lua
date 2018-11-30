@@ -156,11 +156,6 @@ function Table:calculateResult()
             playerOdds = 2.5
             bankOdds = -1.5
             self.winCount = self.winCount + 1
-        elseif(result == ResultType.LOSEBYJACK) then
-            print("You lost!")
-            playerOdds = 0
-            bankOdds = 1.5
-            self.loseCount = self.loseCount + 1
         elseif(result == ResultType.TIE) then
             print("It's tie!")
             playerOdds = 1
@@ -170,10 +165,19 @@ function Table:calculateResult()
             playerOdds = 0
             bankOdds = 1
             self.loseCount = self.loseCount + 1
+        elseif(result == ResultType.LOSEBYJACK) then
+            print("You lost!")
+            playerOdds = -0.5
+            bankOdds = 1.5
+            self.loseCount = self.loseCount + 1
         else print("error")
         end
 
-        self.player:takeMoney(playerMoney * playerOdds)
+        if(self.player:showMoney() >= math.abs(playerMoney * playerOdds)) then
+            self.player:takeMoney(playerMoney * playerOdds)
+        else
+            self.player:takeMoney(self.player:showMoney() * -1)
+        end
 
         self.bank:takeMoney(playerMoney * bankOdds)
 
