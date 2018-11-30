@@ -4,15 +4,15 @@ lu = require "test.luaunit"
 
 --------------------- Cell unit tests -------------------------------
 
- local _ = require "test.cellUnitTest"
+require "test.cellUnitTest"
 
 ----------------- FrameMaker unit tests -----------------------------
 
-local _ = require "test.frameMakerUnitTest"
+require "test.frameMakerUnitTest"
 
 ----------------- Frame unit tests ----------------------------------
 
-local _ = require "test.frameTest"
+require "test.frameTest"
 
 ----------------- Execute tests -------------------------------------
 
