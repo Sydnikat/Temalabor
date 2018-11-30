@@ -1,7 +1,7 @@
 
 
 
-require "luacov"
+--require "luacov"
 
 require "test.unitTests"
 
