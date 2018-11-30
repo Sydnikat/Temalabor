@@ -3,14 +3,7 @@ h = require "test.testHelper"
 io.read = h.read
 
 local Player = require "entity.Player"
-local Dealer = require "entity.Dealer"
-local ActionType = require "type.ActionType"
-local GameState = require "type.GameState"
-local ResultType = require "type.ResultType"
-local ClassicTableView = require "gfx.ClassicTableView"
 local ClassicPlayer = require "behavior.ClassicPlayer"
-local ClassicBank = require "behavior.ClassicBank"
-local Calculator = require("entity.Calculator"):getInstance()
 local ConsoleInputHandler = require("input.ConsoleInputHandler"):getInstance()
 local testPlayerObserver = require "test.testPlayerObserver"
 local Card = require "entity.Card"
