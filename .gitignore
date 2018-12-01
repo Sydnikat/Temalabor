@@ -98,3 +98,4 @@ fabric.properties
 *.tex
 *.log
 *.gz
+*.out
