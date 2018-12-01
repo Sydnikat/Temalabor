@@ -91,3 +91,10 @@ fabric.properties
 /BlackJack/.idea/kotlinc.xml
 /BlackJack/.idea/workspace.xml
 /BlackJack/.idea/workspace.xml
+
+# LateX
+*.aux
+*.toc
+*.tex
+*.log
+*.gz
