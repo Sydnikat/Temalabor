@@ -99,3 +99,6 @@ fabric.properties
 *.log
 *.gz
 *.out
+
+#Lua unit testing
+.out
