@@ -1,0 +1,1351 @@
+
+\definecolor{olivegreen}{rgb}{0.23, 0.5, 0.19}
+
+\lstdefinestyle{myLuastyle}
+{
+	language=[5.1]Lua,
+	basicstyle=\ttfamily,
+	keywordstyle=\color{orange},
+	stringstyle=\color{olivegreen},
+	commentstyle=\color{black!50}
+}
+
+\lstset{style=myLuastyle}
+
+\chapter{A Lua nyelv és sajátosságai}
+\label{chap:02_lua}
+
+\section{Kicsit a Lua-ról}
+\label{sec:about_lua}
+
+A Lua egy programozási nyelv, amit 1993-ban Roberto Ierusalimschy, Luiz Henrique de Figueiredo és Waldemar Celes fejlesztett a Pontifical Catholic University of Rio de Janeiro egyetemen Brazíliában. A Lua portugálul holdat jelent és a helyes kiejtése ''LOO-ah''. 
+
+A Lua előnyei a bővíthetőség, egyszerűség, hatékonyság és hordozhatóság. Könnyű hozzá új metódusokat/funkciókat és modulokat. Gyakori szkript nyelv játék programokhoz. Az egyszerűsége ellenére a Lua nagyon erős ún. ''multi-paradigm'' programozási nyelv. Ezálzal több stípust is támogat, legyen az imperatív, funkcionális vagy objektum-orientált. Emellett a Lua-ban nem kell foglalkozni a memóriakezeléssel, ugyanis egy nagyon jó inkrementális garbage collector-ral rendelkezik. A Lua Pascal szerű szintaxist követ.
+
+A másik nagy előnye a Lua-nak, hogy rendkívül gyors. A virtuális gép, amin a Lua 5.1-t használnak, az egyik leggyorsabb az olyan programoknál, amik szkript nyelveket használnak. Van még egy ''just-in-time'' fordítja is (a Lua-t a számítógép natív gépi kódjára fordítja le miközben fut a program), amely az x86 architektúrák számára lett tervezve és emiatt még gyorsabb.
+
+
+\section{Adattípusok és változók}
+\label{sec:lTypes}
+
+\subsection{Változók}
+\label{subsec:l_variables}
+A változó jelentése itt is annyit tesz, hogy egy érték tárolható benne, amire a neve segítségével lehet hivatkozni pl:
+\scriptsize
+\begin{lstlisting}
+ done = false
+\end{lstlisting}
+\normalsize
+Az értékadás hasonló, mint a legtöbb nyelv esetében. Változó név szinte lehet bármi, de hasznos, ha beszédes nevet kapnak. Vannak azonban kulcs szavak a Lua-ban is, amelyeket nem szabad használni:
+\scriptsize
+\begin{table}[hbt]
+	\centering
+	\begin{tabular}{|c|c|c|}
+		\hline
+		and & for & or \\
+		\hline
+		break & function & repeat \\
+		\hline
+		do & if & return \\
+		\hline
+		else & in & then \\
+		\hline
+		elseif & local & true \\
+		\hline
+		end & nil & until \\
+		\hline
+		false & not & while \\
+		\hline
+	\end{tabular}
+\end{table}
+
+Ami még érdekes (bár ez majd a többi rész után egyértelmű lesz), hogy ezeken a kulcsszavakon kívül a Lua nem használ mást. Nagyon érdekes, hogy ezekkel szinte mindent le tudunk írni. Emellett a változók kis és nagybetű érzékenyek, ami szintén hasznos tulajdonság.
+
+\subsection{Típusok}
+\label{subsec:l_types}
+
+A Lua-ban alapértelmezetten 7 típus van (mondhatni ezek a beépített típusok): \textbf{nil, number, string, boolean, table, function és thread}. Szintén érdekesség, hogy ezzel a 7 típussal szinte mindent le tud fedni. Gyorsan vegyük sorra az egyes típusokat és jellemzőiket.
+
+\bigskip
+
+\Large nil \normalsize
+
+\bigskip
+
+A nil típus lényegében azt jelenti, hogy valaminek nincs hasznos értéke. Például, ha egy változó nincs inicializálva, akkor az alapértelmezett típusa nil. 
+\scriptsize
+\begin{lstlisting}
+...
+ person
+ print(typeof(person)) --> nil
+ person = 5  
+ print(typeof(person)) --> number
+...
+\end{lstlisting}
+\normalsize
+Egy másik eset például egy függvény meghívásánál, ha nem adunk át elég paramétert egy függvénynek (pl: 3 paramétert vár és csak 2-t kap), akkor az a változó nil típusú lesz. Ez a típus tényleg a ''különleges állatfajok'' világába tartozik, ugyanis nem egyenértékű például a Java vagy a C++ null típusával. Ugyanakkor Nem is tekinthető default value-nak, mivel a nil típus csak a nil értéket értelmezi. 
+
+Talán a JavaScript tudná a legjobban körülírni. Ott ugyanis egy közeli fogalom létezik:~\mbox{\textbf{undefined}}. Az undefined az inicializálatlan változót jelenti. A nil vegyíti a null és az undefined fogalmát és használatát (mondhatni ez a két fogalom nem vált ketté a Lua-ban).
+
+
+ \bigskip
+ 
+ \Large number \normalsize
+ 
+ \bigskip
+
+A number is szintén egy érdekesen viselkedő típus. Míg más nyelvekben, mint például a C\verb|++| vagy a Java külön típusok vannak az egész és a tört számokra, addig a Lua-ban ezek mondhatni egyesítve vannak a number típusban. Ha kell Integer-ként viselkedik, ha kell, akkor Double vagy Float-ként. Alapértelmezésben minden szám Double ( $ -1.79 * 10^{308}$ és $ 1.79 * 10^{308}$ közötti értékek). 
+
+Akárcsak a Java-ban vagy a C\verb|#|-ban, itt is lehetőség van szövegből számot csinálni. Erre való a \textbf{tonumber(str)} függvény.
+\scriptsize
+\begin{lstlisting}
+...
+print(tonumber("5")) --> 5
+print(tonumber("-100")) --> -100
+print(tonumber("0.5")) --> 0.5
+print(tonumber("-3e5")) --> -300000
+...
+\end{lstlisting}
+\normalsize
+
+ \bigskip
+
+\Large string \normalsize
+
+\bigskip
+
+A string teljesen hasonlóan viselkedik a Java vagy a C\verb|#| stringjéhez képest. Azokhoz hasonlóan itt is ''immutable''-ö, azaz módosíthatatlanok. Itt is a Lua a szövegeket egy string pool-ban tárolja. A változó sosem tárolja az értéket, csupán a referenciát a string poolra. Az escape karakterek teljesen ugyanúgy működnek, mint más nyelvekben. Talán ez a típus a legsablonosabb mind közül, hisz a Lua-ban nincs plusz feladata.
+
+Fontos még kitérnem egy tipikus tulajdonságra, amely sok nyelvbe eltérő: két string összeadása. Maga az a tény, hogy egy új string jön létre, az majdnem minden nyelvben ugyanaz ( a Lua-ban is), viszont az összeadás módja eltér. Nem véletlenül használom az 'összeadás' kifejezést, hiszen a legtöbb nyelvben (pl. Java, Kotlin, C\verb|#|) két stringet az összeadás operátorral kötünk össze. Lua-ban viszont ez eltér. Itt érdekes módon nem szokás az összeadás operátort használni. Helyette a \textbf{..} operátort használja:
+\scriptsize
+\begin{lstlisting}
+str = "hello".."world"
+print(str) --> hello world
+\end{lstlisting}
+\normalsize
+Valamint fontos megjegyezni, hogy a Lua-ban ez az operátor impliciten átalakítja a nem string típusú változókat string-gé (ha lehet, pl. number-t igen). Így mindenféle probléma nélkül lefut a következő kód is:
+\scriptsize
+\begin{lstlisting}
+str = "hello "..1.." world"
+print(str) --> hello 1 world
+\end{lstlisting}
+\normalsize
+Ez igen kényelmes és hasznos funkció, amely sok nyelvben gyakran plusz függvények meghívásával tudunk elérni. Illetve komplexebb típusoknál (kifejezetten table objektumokra értem), ha felül van definiálva a \textbf{\_tostring} operátor (erről a \ref{subsec:l_metaM}. fejezetben fogok részletesebben beszélni.) , akkor automatikusan átalakítja string típusúvá.
+
+Utoljára még megemlíteném a hossz operátort, amely Lua-ban kicsit eltér a más nyelvekben megszokottaktól. Java-ban vagy C\verb|++|-ban egy külön függvényt definiálunk erre és nem operátort. Míg C\verb|#|-ban property segítségével tudjuk lekérdezni egy string hosszát. Lua-ban erre a \verb|#| operátort használjuk.
+
+\bigskip
+
+\Large boolean \normalsize
+
+\bigskip
+
+Érdemben teljesen hasonlóan működik ez a típus, mint minden más nyelvben. Két értéke lehet: a \textbf{true} és a \textbf{false}.
+
+
+\bigskip
+
+\Large function \normalsize
+
+\bigskip
+
+A function típus követi a szkript nyelvek közös vonásait. Függvény kétféleképpen lehet megadni:
+\scriptsize
+\begin{lstlisting}
+function foo(arg1, arg2)
+	print(arg1)
+	print(arg2)
+end
+\end{lstlisting}
+\normalsize
+vagy 
+\scriptsize
+\begin{lstlisting}
+foo = function(arg1, arg2)
+	print(arg1)
+	print(arg2)
+end
+\end{lstlisting}
+\normalsize
+Igazából az első példa csak egy egyszerűbb leírása a másodiknak. Valamint az első példa alapján azt feltételeznénk, hogy van egy függvény, amit foo-nak hívnak. Valójában a második példa alapján jól látszik hogy egy változót hozunk létre, amely tárol egy függvényt. Magának a függvénynek nincs neve, mert a Lua-ban az összes függvény anonymus function. 
+\scriptsize
+\begin{lstlisting}
+
+foo = function(arg1, arg2)
+	print(arg1)
+	print(arg2)
+end
+
+bar = foo
+\end{lstlisting}
+\normalsize
+Így már két változó mutat ugyanarra a függvényre. De fontos, hogy a függvény soha nem másolódik, csupán a referencia (az ilyen dolgot megszokottak pl. a Java és a C\verb|#| világában, hiszen ott csak referencia típusú átadás van, de a C és C\verb|++|-ban előfordul érték szerinti átadás). A függvények viselkedéséről még a későbbiekben (\ref{sec:l_more_fun}) kitérek.
+
+\bigskip
+
+\Large thread \normalsize
+
+\bigskip
+
+A thread név ennek a típusnak kicsit csalóka lehet, ugyanis merőben eltér a Java vagy a C\verb|#| Thread típusaitól. Lua-ban ugyanis nem valósul meg a többszálúság\dots~Egy sokkal jobb megnevezés a \textbf{corutine} (cooperating routine). Egy corutine tulajdonképpen egy függvénynek felel meg 1 különbséggel Két plusz tulajdonsággal rendelkezik: tudnak \textbf{yield}-elni és vissza lehet tölteni őket. A yield függvény nagyjából a Java-ban a Sleep metódusnak felel meg, míg a visszatöltés automatikusan megtörténik, azzal nem kell foglalkozni. 
+
+A különbségre a magyarázat már a névből is kikövetkeztethető valamint a számítógépek ütemezőivel lehet jellemezni. Kétféle típusú lehet egy ütemező: preemptív, azaz elveheti egy száltól a futás jogát (ezzel megszakítva a jelenlegi futását), vagy kooperatív, ebben az esetben az ütemezőnek nincs joga elvenni a futás jogát. 
+
+Igazából a Lua-ban az utóbbi valósul meg, tehát nem igazán beszélhetünk többszálúságról, hiszen a szálak nem küzdenek a processzorért, ugyanakkor, ha épp nincs szükség, átadhatják a futás jogát (yield) és majd visszatérnek, ha nincs más várakozó. A corutine-ok menedzselésére a Lua-nak van egy beépített könyvtára: \textbf{corutine} névvel. Egy példa segítségével megpróbálom gyorsan bemutatni, hogy mik is ezek a corutine-ok:
+\scriptsize
+\begin{lstlisting}
+
+foo = function()
+	for i = 1, math.huge do
+		corutine.yield(i)
+	end
+end
+
+local co = corutine.wrap(foo)
+print(co()) --> 1
+print(co()) --> 2
+print(co()) --> 3
+
+\end{lstlisting}
+\normalsize
+Ismételten hasznos megjegyezni, hogy nincs többszálúság, az a fogalom, hogy a főprogram szála, nem létezik. Ugyanakkor meg lehet valósítani többszálúsági problémákat, mint például egy consumer-producer problémát, bár a Lua nem erre lett kitalálva. Azonban jó látni, hogy ha kell, erre is nyújt egyfajta lehetőséget a nyelv (sajnos elég gyorsan túlkomplikált és nehezen érthető lesz miattuk a kód).
+
+\bigskip
+
+\Large table \normalsize
+
+\bigskip
+
+A végére marad a Lua talán legérdekesebb és leghasznosabb, valamint legfontosabb típusa. A table típus segítségével tudunk implementálni bármiféle adatstruktúrát. Az alapokat itt felvázolom, de a későbbi részekben (\ref{sec:l_meta}) kitérek még a sajátos viselkedésére. 
+
+Nagyon leegyszerűsítve a table egy kulcs-érték párokat tároló tömb. Nagyon hasonlít a map-re és az array-re, de valójában egyik sem és mindkettő egyszerre. Rendkívül különleges már csak az adattárolási lehetőségei. 
+\scriptsize
+\begin{lstlisting}
+table = {"a", 7, false, -1}
+\end{lstlisting}
+\normalsize
+Ha egy table-t szeretnénk megadni, akkor azt evvel = \{ \} a módon adhatjuk meg. A példában jól látható, hogy nem számít mit tárolunk egy table-ben. Ugyanakkor működik természeten az index operátor:
+\scriptsize
+\begin{lstlisting}
+print(table[1]) --> a
+print(table[3]) --> false
+print(table[5]) --> nil
+\end{lstlisting}
+\normalsize
+Itt két érdekesség figyelhető meg. Az első, hogy a számozás nem 0-tól, hanem 1-től indul. Ez tipikusan zavaró tud lenni a C, C\verb|++|, Java vagy akár Kotlin nyelvek után, de nem egyedi (pl.: FORTRAN, SASL, MATLAB, Erlang). A másik, hogy míg csak 4 elem volt a táblában meg tudtam hívni az 5. indexűt. Mivel értelmes értéket nem tároltam benne így nil típusú az az érték, amit visszaadott és az értéke is nil.
+
+Ami viszont érdekesség, az a következő példán látszik:
+\scriptsize
+\begin{lstlisting}
+table[1000] = "z"
+print(table[1000]) --> z
+\end{lstlisting}
+\normalsize
+Ekkor azt gondolnánk, hogy a table újraméretezte magát, de valójában ben ez történt. És itt mutatkozik meg a table szépsége és sokoldalúsága. Ekkor ugyanis a table szétválik két részre. Egy iterálható és egy tisztán kulcs-érték párokon alapuló részre. Hogy mit is értek kulcs-érték párokon, azt a következő példa megmutatja:
+\scriptsize
+\begin{lstlisting}
+table = { key1 = "a", ["egy kulcs szokozokkel"] = "b",
+	 [5] = 1, [print] = false }
+\end{lstlisting}
+\normalsize
+A táblám tartalmaz egy key1 kulcsot, aminek az értéke 'a', ez még szinte alap is, de a többi példa már érdekesebb. A [5] nem ugyanaz, mintha egy szöveg lenne. Így tudok explicit indexet létrehozni. De akár függvénynevet (azaz egy változó nevet) is megadhatok kulcsként.
+\scriptsize
+\begin{lstlisting}
+print(table["key1"]) --> a
+print(table.key1) --> a
+print(table[print]) --> false
+\end{lstlisting}
+\normalsize
+A kulcs-érték párokat a fenti példán látva kétféle módon tudom meghívni. Míg az iterálható elemeket a szokásos módon. Visszatérve a korábbi példára, ahol az 1000-ik indexet adtam meg, már jobban érthető, hogy hogyan is lehetséges ez és hogy valójában mit is jelent. 
+
+Az iterálás lehetősége ezekben a table típusú objektumokban kétféle módon lehetséges. Az első a jól megszokott index szerinti iterálás. Csak ezzel van egy kis probléma. Ugyanis, ha az indexek valahogy így néznek ki: 1,2,3,5,7,1000\dots~akkor mi is a szabály. Ez pedig nagyon frappánsan van kitalálva a Lua-ban. 
+
+Amíg tud egyesével iterálni, azaz vannak indexek, amiken végig tud menni, addig azokon az elemeken végigmegy, amíg tud. Ha azt akarom, hogy az első 5 elemet iterálja, akkor a 4.~indexűnek is értéket kell adni. Ekkor már el tudok iterálni az 5.~indexűig is. Ekkor felmerül a kérdés, hogy mi lesz a többi elemmel? Például azokkal, amik kulcs-értékként vannak tárolva. Mivel a table hátterében igazából egy hash map áll, így azokon az elemeken is végig tudunk menni. Ez a példa bemutatja először az index majd a hash map szerinti iterálást:
+\scriptsize
+\begin{lstlisting}
+table = {1, 2, 3, key1 = "a", ["egy kulcs szokozokkel"] = "b",
+	 [5] = 1, [print] = false, [1000] = "k" }
+
+for k,v in ipairs(table) do
+	print(k, v) --> [1] 1, [2] 2, [3] 3
+end
+
+for k,v in pairs(table) do
+	print(k, v) --> [key1] a, [2] = 2, ...
+end
+\end{lstlisting}
+\normalsize
+Az első for ciklusnál jól látható, hogy csak az indexelt elemek jelennek meg. A többit így nem tudjuk kilistázni. Ahhoz a másik for ciklusra van szükség. A kettő szinte teljesen megegyezik 1 különbséggel: az elsőben ipairs, míg a másikban pairs a függény neve. A kettő lényegében, annyiban különbözik, hogy az ipairs az iterálható elemek tömbjén megy végig, míg a sima pairs a hash mapen. Azért nem írtam a másodikhoz a teljes kimenetet, mert ez előre nem meghatározható. Ugyanis ez a hash sorrendjében járja be a table elemeit és az a sorrend nem feltétlenül egyezik meg az én deklarációmmal. 
+
+Az értékadás hasonlóan működik, akárcsak a stringeknél. Itt is referencia szerinti átadás történik. Fontos megjegyezni, hogy ettől még a Lua-ban nem csak referencia szerinti átadás van. Például a number típusú változók értékeit másolja. Mondhatnánk, hogy a number primitív típus, de ezt már megtárgyaltuk, hogy ez nem teljesen lenne igaz. 
+
+
+\subsection{Összegzés}
+
+Annyit még mindenképpen meg kell említenem, hogy az egyes változók a nincsenek egy konkrét típushoz kötve. Ez azt jelenti, hogy a Lua egy ''dynamically typed'' nyelv. Ellentétben a C, C\verb|++|, Java vagy Kotlin nyelvektől, amik erősen típusosak. A dinamikus típusosság jellemző a szkript nyelvekre, amely rendkívül nagy rugalmasságot biztosít, ugyanakkor megvannak a hátulütői. Ugyanis nagyon könnyű elveszni, hogy egy változó mögött mi is áll (egyen talán áll-e valami). Szerencsére a Lua-nak van egy egész hasznos error generálója, amely értelmes üzenetek tud adni és egy backtrace-t is nyújt.
+
+
+
+\section{Kifejezések}
+\label{sec:l_expr}
+
+A kifejezés nagyjából annyit jelent, hogy operátorokat használ különböző értékeken és kiértékeli egy értékké. Lua-ban bárhol lehet használni kifejezéseket, ahol a Lua egy értéket vár. Pl. változó értékadásakor vagy függvény paramétereként.
+
+\subsection{Aritmetikai operátorok}
+
+Lua-ban is megvannak az alap aritmetikai operátorok: \verb|+| összeadás, \verb|-| kivonás, \verb|*| szorzás, \verb|^| hatványozás, \verb|/| osztás és a \verb|%| moduló operátorok. Ezek csak number\ref{subsec:l_types} típusú változókkal és értékekkel működnek. Ezen kívül még létezik a negációs operátor, amely szinte teljesen megegyezik a mínusz operátorral, de ennek csak egy paramétere lehet:
+\scriptsize
+\begin{lstlisting}
+a = 5
+print(0 - a) --> -5, normal minusz
+print(-a) --> -5, unary
+\end{lstlisting}
+\normalsize
+Elsőre ennek nincs jelentősége, de a precedenciáknál fontos különbségnek számít.
+
+\subsection{Relációs operátorok}
+
+Lua-ban a relációs operátorok nagyjából teljesen megegyeznek más nyelvek operátoraival: \verb|==| egyenlőség, \verb|<=| kisebb-egyenlő, \verb|>| nagyobb, stb. Ugyanúgy boolean\ref{subsec:l_types} értéket adnak vissza. Egyedül a nem egyenlő operátor tér el Java-tól vagy a C, C\verb|++|-tól megszokottaktól (ami a \verb|!=| forma). Itt ugyanis \verb|~=| a jelölés. De ez csak jelölésben tér el, használatban teljesen azonos.
+
+\subsection{Logikai operátorok}
+
+Az operátorok harmadik típusába három logikai operátor tartozik: \verb|and, or| és \verb|not|. Ami érdekes, hogy az \verb|and| és az \verb|or| operátor bármilyen típus között működik és bármilyen típust vissza tud adni, míg a \verb|not| csak boolean típust ad vissza. Ezek az operátorok minden értékhez igazat rendelnek, kivéve a false-t és a nil-t. Ez a szkript nyelveknél gyakori, de abban általában eltérnek, hogy melyik értéket tekintik false-nak és melyiket true-nak. Pl a JavaScript-ben a 0 false-ként viselkedik és az üres string is, míg a Lua-ban ezek mind true-ként. De talán a legérdekesebb a 0 értelmezése, hiszen a legtöbb nyelv (min pl a C) gyakran kihasználja, hogy a 0-t false-nak tekinti. 
+
+Még egy érdekesség a ''logikai rövidzár'' fogalma. Azaz a logikai operátor második tagját nem értékeljük ki, ha nincs rá szükség. Ez az \verb|and| operátornál azt jelenti, hogy ha az első értéke false, akkor a másikat már ki sem kell értékelni, hiszen a kifejezés biztos false lesz. Az \verb|or| esetében, ha az első kiértékelés után true-val tér vissza, akkor szintén nem kell a másikkal foglalkozni, hiszen a kifejezés értéke biztos igaz lesz. Ez a legtöbb nyelvben ugyanúgy jelen van és gyakran ki is használják, a Lua-ban pedig különösen.
+
+Az alapértelmezett érték (default value) fogalmát a legtöbb nyelv kihasználja. Ennek egy tipikus esete a függvények meghívásánál jön elő. A lényeg, hogy a függvény egyes paramétereinek értékét nem feltétlenül szükséges megadnunk vagy szinte minden esetben ugyanazok, emiatt hasznos dolog lenne, hogy egy alapértelmezett értéket be tudjunk nekik állítani, így a függvény meghívásánál ha nem szükséges, akkor nem kell megadni. 
+
+A legtöbb nyelv ezt támogatja, de megvalósítása gyakran eltérő. C\verb|++| és C\verb|#| egyszerűen a változó mellé egy egyenlőségjel után odaírjuk az alapértéket, addig például a Java-ban erre nincs lehetőség. Ott function overload-ot használják ki, ami nagyjából abból áll, hogy meghívják a kevesebb paraméterű függvényt, ami továbbhívja a teljes paraméterlistával rendelkező alapfüggvényt, csak már kiegészítve a hiányzó paraméterek alapértékével. De vannak olyan nyelvek, mint például a C, ami nem támogatja ad default értéket függvényeknél. Ott külön függvényeket kell létrehozni minden esetre.
+
+A Lua-ban alapértelmezett értéket a függvény fejlécében nem tudunk megadni, de ezzel ellentétben ki tudjuk használni a logikai operátorokat és az eddigi ismereteinket a függvények paramétereiről. Ha egy függvény paraméterének nem adunk értéket, akkor az attól még meghívódik. Ekkor felmerül a kérdés, hogy mi lesz annak a paraméternek az értéke. Erre használjuk tipikusan a nil típust. Azaz minden ''undefined'' paraméter értéke nil lesz. Ezt pedig a logikai operátor használja ki. Ugyanis a nil értéke false-nak minősül.
+\scriptsize
+\begin{lstlisting}
+function new(value, color, number, hidden)
+	local newCard {}
+	newCard.value = value
+	newCard.color = color
+	newCard.number = number
+	newCard.hidden = hidden or false
+	return newCard
+end
+
+card = new("KING", "SPADES", 11)
+\end{lstlisting}
+\normalsize
+Ebben az esetben a hidden értéke nil lesz. Amit az értékadásnál a logikai operátor kihasznál, így bármi is áll a jobb oldalon, az az érték fog beleíródni a table ''hidden'' attribútumába. Ha a függvényt 4 paraméterrel hívjuk meg, akkor pedig a logikai rövidzár miatt az átadott paraméter hívódik meg. Itt fontos megjegyezni, hogy egy kivételes esetre komolyan fel kell készíteni a függvényt. Ha false értéket adunk át, jól látszik, hogy a rövidzár akár kellemetlenül is hathat az értékre. Ezt egyedül jó meggondolással lehet csak kiküszöbölni (azaz mit írjunk az kifejezés jobb oldalára).
+
+\section{Vezérlő struktúrák}
+\label{sec:l_control}
+
+\subsection{Elágazások}
+\label{subsec:l_if}
+
+A Lua elágazások és ciklusok terén eléggé szűkre szabott. Elágazásokból az if-else állítás értelmezett, de körülbelül ennyi. A gyakran használt switch-case megoldásra nincs külön típus, sajnos esle if-ek segítségével lehet csak megoldani. Mindazonáltal fontos megemlíteni a szintaxist.
+\scriptsize
+\begin{lstlisting}
+i = 5
+
+if i > 2 then 
+ --> do smoething
+end
+
+if i < 4 then
+ --> if statement is true
+else
+ --> if false
+end
+\end{lstlisting}
+\normalsize
+Látható, hogy nem kapcsos zárójeleket használ, hanem \verb|then - end| párokat. Valamint, ha a kifejezés nem összetett, akkor a feltétel zárójelezése is elhagyható. 
+
+Fontos különbség azonban, hogy az \verb|else if| és az \verb|elseif| nem egyezik meg. Ugyanis az \verb|else if| egy új blokkot nyit, míg az \verb|elseif| az eredetit használhatja:
+\scriptsize
+\begin{lstlisting}
+i = 5
+
+if i > 2 then 
+--> do smoething
+end
+
+if i < 4 then
+-->  if statement is true
+elseif i > 6 then
+--> ha hamis
+			--> nincs 'end' tag
+end
+
+if i < 4 then
+-->  if statement is true
+else --> az 'else if' szebb alakja
+	if i > 6 then
+		--> ha hamis
+	end --> kell 'end' tag
+end
+\end{lstlisting}
+\normalsize
+\newpage
+Így látható, hogy a switch-case megoldást a Lua az \verb|elseif| segítségével tudja megvalósítani:
+\scriptsize
+\begin{lstlisting}
+if(result == ResultType.WIN) then
+	print("You win!")
+	playerOdds = 2
+	bankOdds = -1
+	self.winCount = self.winCount + 1
+elseif(result == ResultType.WINBYJACK) then
+	print("BlackJack! You win!")
+	playerOdds = 2.5
+	bankOdds = -1.5
+	self.winCount = self.winCount + 1
+elseif(result == ResultType.TIE) then
+	print("It's tie!")
+	playerOdds = 1
+	bankOdds = 1
+elseif(result == ResultType.LOSE) then
+	print("You lost!")
+	playerOdds = 0
+	bankOdds = 1
+	self.loseCount = self.loseCount + 1
+elseif(result == ResultType.LOSEBYJACK) then
+	print("You lost!")
+	playerOdds = -0.5
+	bankOdds = 1.5
+	self.loseCount = self.loseCount + 1
+else print("error")
+end
+\end{lstlisting}
+\normalsize
+
+\subsection{Ciklusok}
+\label{subsec:l_loop}
+
+A Lua-ban jelen van a három megszokott ciklus: a \textbf{for, while, do -- while}. Habár az utóbbi szintaxisa kicsit eltér a megszokottól. Itt is, mint az elágazásoknál, kicsit rendhagyó a szintaxis a megszokott kacsos zárójelektől, ami tipikusan jellemző a C, C\verb|++|, Java vagy akár a Kotlin világában.
+\scriptsize
+\begin{lstlisting}
+for i = 1, i <= 10, 1 do
+	print(i)
+end
+\end{lstlisting}
+\normalsize
+Itt is felvehetünk egy ciklusváltozót, amely lokálisan lesz jelen a ciklus törzsében, akárcsak a megszokott módon pl. C\verb|++|-ban. Itt is a második a megállási feltétel, míg a harmadik az iteráció nagysága. A zárójelezést a ciklusok esetében a \textbf{do -- end} páros alkotja. Valamint fontos megjegyezni, hogy az elválasztások itt nem \verb|;|-t használnak, mint a legtöbb nyelvben (C, C\verb|++|, Java), hanem csak sima vesszőt.
+
+Így néz ki a tipikus for ciklus, de persze megannyi módon tudjuk változtatni. Alapesetben, ha egyesével iterálunk növekvő számokkal, akkor elhagyható a harmadik tag:
+\scriptsize
+\begin{lstlisting}
+for i = 1, i <= 10 do
+	print(i)
+end
+\end{lstlisting} 
+\normalsize
+Emellett még egyszerűsíteni is lehet a megállási feltételen, ha a ciklusváltozó és a feltétel típusa megegyezik:
+\scriptsize
+\begin{lstlisting}
+for i = 1, 10 do
+	print(i)
+end
+\end{lstlisting}
+\normalsize
+Legtöbbször persze a for ciklust arra használjuk, hogy egy listán/tömbön végig iteráljunk. Egy korábbi példában már utaltam arra, hogy ez lehetséges:
+\scriptsize
+\begin{lstlisting}
+for key, value in pairs(table) do
+	print(key, value)
+end
+\end{lstlisting}
+\normalsize
+\newpage
+Ez a példa tipikusan a ''foreach'' megfelelője. A ''pairs'' függvény visszaad egy kulcs-érték párokat tartalmazó table-t és az ''in'' kulcsszó segítségével kulcs-érték párokat ad értékül a ''key'' és ''value'' változóknak. Ezt annyiszor teszi meg, ahány elemmel tér vissza a pairs függvény által visszakapott table. Azt, hogy a két értéknek hogyan adhat így értéket, arra a későbbiekben visszatérünk\ref{sec:l_assign}.
+
+A \textbf{while} ciklus teljesen hasonlóan viselkedik a C, C\verb|++| vagy a Java-s barátaihoz képest:
+\scriptsize
+\begin{lstlisting}
+i = 1
+while i <= 10 do
+	print(i)
+end
+\end{lstlisting} 
+\normalsize
+Azonban a \textbf{do -- while} kicsit eltér. Lua-ban ugyanis a \textbf{repeat -- until} kulcsszavakat használjuk. Ezen kívül a logika tejesen megegyezik a megszokott viselkedéssel:
+\scriptsize
+\begin{lstlisting}
+i = 1
+repeat
+	print(i)
+until i > 10
+\end{lstlisting} 
+\normalsize
+Fontos megjegyezni, hogy itt nincsen \verb|do -- end| blokk.
+
+Még egy fontos dolog a ciklusokkal kapcsolatban, hogy értelmezzük a \textbf{break} fogalmát Lua-ban is. Teljesen hasonlóan viselkedik, mint a többi nyelvben: megszakítja a ciklust és kilép belőle az adott ponton:
+\scriptsize
+\begin{lstlisting}
+table = {"a", "b", 5, 10, 100}
+for k, v in pairs(table) do
+	if(v == 5) then
+		key = k
+		break
+	end
+end
+print(key) --> 3
+\end{lstlisting}
+\normalsize
+Itt két dolgot érdemes megfigyelni. Az egyik, amely a legszembetűnőbb, hogy nincsenek pontosvesszők a sorok végén. Ez már korábban is előjött, de talán itt érzem már fontosnak megemlíteni, hogy miért is lehet elhagyni őket. Mivel a Lua egy szkript nyelv, a fordítása interpretálva történik, azaz sorról sorra (pontosabban kifejezésről kifejezésre) futtat. Így egy sor vége elég jelzés , nem kell külön pontosvesszővel jelezni.
+
+A másik, nem annyira szembetűnőbb, hogy a ''key'' változót ott hoztam létre a cikluson belül, mégis látszik azon kívül. Ennek okára szintén később kitérek\ref{sec:l_lovalV}.
+
+
+\section{Értékadás és visszatérési érték}
+\label{sec:l_assign}
+
+Az értékadásra azért térnék ki részletesebben, mert a Lua támogat egy plusz ''feature''-t a többi nyelvekhez képest. Ez pedig a többszörös értékadás fogalma. Fontos megjegyeznem, hogy ez a fogalom nem idegen a C, C\verb|++| és Java nyelveknél sem, de ott a jelentése, hogy ott ugyanazt az értéket több változónak egyszerre megadhatjuk. Lua-ban viszont kicsit eltér a jelentése. Ugyanis Lua-ben több változónak több különböző értéket adhatunk meg egyszerre. 
+\scriptsize
+\begin{lstlisting}
+var1, var2, var3 = 1, "a", true
+print(var1)  --> 1
+print(var2)  --> a
+print(var3)  --> true
+\end{lstlisting}
+\normalsize
+Ha több értéket akarunk megadni a kevesebb változónak, akkor egyszerűen a fel nem használt értékek elvesznek. Nem íródnak be sehova. Ha több a változó, mint az érték, amit értékül adnánk, akkor a változó értéke alapértelmezetten nil lesz.
+\scriptsize
+\begin{lstlisting}
+var1, var2 = 1, 1+1, 1+2, 1+3
+print(var1)  --> 1
+print(var2)  --> 2
+\end{lstlisting}
+\begin{lstlisting}
+var1, var2, var3 = 1, "a"
+print(var1)  --> 1
+print(var2)  --> a
+print(var3)  --> nil
+\end{lstlisting}
+\normalsize
+És ez hol tud hasznos lenni? Hát például a függvények visszatérési értékeinél. A legtöbb nyelvben egy függvény csak egy dolgot tud visszaadni, legyen primitív típus vagy egy objektum (C\verb|#|-ban például data objectet is visszaadhatunk, ami adatbázis entitások lekérdezés eredményhalmazát alkothatja, amelyeket dinamikusan is létrehozhatunk, előre nem definiált adatstruktúraként), de attól az még 1 elemnek számít. Lua-ban viszont ez nem kikötés. Felfoghatjuk, hogy értékek listáját adja vissza egy függvény.
+
+Használata rendkívül kényelmes:
+\scriptsize
+\begin{lstlisting}
+function foo()
+	return 1,2,3
+end
+
+var1, var2, var3 = foo()
+print(var2, var3) --> 2  3
+\end{lstlisting}
+\normalsize
+Egy dologgal azonban tisztában kell lenni: hogy az a függvény hány paraméterrel tér vissza. Erre általában a függvény magírója figyelmezteti a használót, így elkerülendő a rossz/nem-kívánt használat.
+
+Viszont emellett vannak további kényelmi funkciói. Például, ha nincs szükségünk minden értékre, amit visszaad egy függvény. Ezeket kétféle módon is megoldhatjuk. Az egyik eset, ha a nemszükséges értékek az utolsók. Ebben az esetben egyszerűen nem veszünk fel annyi változót. Csak a szükségeseket:
+\scriptsize
+\begin{lstlisting}
+function foo()
+	return 1,2,3
+end
+
+var1, var2 = foo()
+print(var1, var2) --> 1   2
+\end{lstlisting}
+\normalsize
+Ebben az esetben a '3' elveszik. 
+
+A másik eset, amikor a köztes értékekre nincs szükségünk. Ekkor persze tisztában kell lennünk a visszatérési értékek sorrendjével. De emellett a Lua úgy oldja meg a fölösleges értékek kezelését, hogy bevezet egy ún. \textbf{anonymus} változót (dummy varialbe). Ezt ''\_'' szokás jelölni (ilyen jelölést a Kotlin lambda kifejezéseinél szokás használni a nem használt változók jelölésére).
+\scriptsize
+\begin{lstlisting}
+function foo()
+	return 1,2,3
+end
+
+var1, _, var3 = foo()
+print(var1, var3) --> 1   3
+\end{lstlisting}
+\normalsize
+Kiemelném még egyszer, hogy ez rendkívül hasznos tulajdonság mind változó értékadás, mind függvény visszatérési értékével kapcsolatban. Hiszen evvel lehetőség nyílik, hogy egy függvény több dolgot is végezzen egyszerre és a különböző (rész)eredményeket egyszerre adja vissza. Az eredményt pedig aszerint szortírozza a használó, amire éppen szüksége van (nem OO megközelítés, de mivel a Lua multi-paradigm nyelv\ref{sec:about_lua}, ezért van ilyen lehetőség is).
+
+\subsection{Kiértékelés sorrendje}
+
+Muszáj kitérnem erre a részre is egy kicsit. Habár a Lua kiértékelési sorrendje teljesen megegyezik a megszokottakkal (először a jobb oldal értékelődik ki, majd a az értékadás a balnak), az előbbi téma tekintetében enne nagyon fontos jelentés van.
+
+Legszebb példa erre két változó értékének a cseréje.
+\scriptsize
+\begin{lstlisting}
+function shuffle()
+	size = #deckPool --> deckPool is a table 
+	for i = size, 1, -1 do
+		rand = math.random(size)
+		deckPool[i], deckPool[rand] = deckPool[rand], deckPool[i]
+	end
+end
+\end{lstlisting}
+\normalsize
+\newpage
+Ezen a példán nagyon szépen látszik a hasznossága a többszörös értékadásnak. Először a jobb oldal kiértékelődik és csak utána történik meg az értékadás. Ezzel lehetőségünk van az értékcserét egy sorban megoldni. Ez a legtöbb nyelvben kn. így nézne ki:
+\scriptsize
+\begin{lstlisting}
+				a = 1, b = 2
+				temp = a
+				a = b
+				b = temp
+				-- in lua:
+				a, b = b, a
+\end{lstlisting}
+\normalsize
+
+\section{Lokális Változók}
+\label{sec:l_lovalV}
+
+Az eddigi példákban ügyeltem arra, hogy csak egyfajta változót mutassak be. Tehát az eddigi változók mind globális változóként voltak használva. Ez a fogalom teljesen azonos a C, C\verb|++| világában megszokottaktól. De persze ezeket tipikusan szeretik elkerülni csaknem minden program írásakor a programozók, ha lehet. Lua-ban is ez a tipikus helyzet. 
+
+Az általános ''konvenció'' erre az, hogy csak a könyvtárak és a közös használatra szán modulok legyenek globálisak. Minden más lehetőleg legyen lokális változó. Ennek okai kb. megegyeznek a C, C\verb|++| nyelv problémáival: szabadon írhatók, így az egyes objektumok állapotát elronthatják, stb. Ráadásul lua-ban még a típus sem ismert, így lehet, hogy egy teljesen más dolgot ír át az ember, mint amit akar (erre egy megoldás lehet a beszédes változónév, de még ez sem teljes megoldás). 
+
+Tehát ha lehet akkor használjunk lokális változókat. De hogy ez mit is jelent? A fogalom teljesen azonos a más nyelvekben használt lokális változó fogalmával (csak egy bizonyos blokkon/környezeten belül definiált és használható változó). Ide legtöbb esetben függvények scope-ját értjük. De Lua-ban értelmezhetünk saját scope-ot is a \textbf{do -- end} szintaxis segítségével, ha szeretnénk.
+\scriptsize
+\begin{lstlisting}
+local x = 5
+if x == 5 then
+	print(x) --> 5
+	local x = 1
+	print(x) --> 1
+end
+print(x) --> 5
+\end{lstlisting}
+\normalsize
+Mivel Lua-ban sorról sorral olvasunk, így nem tudjuk minden esetben a függvény scope-ját kihasználni, hogy felismerje, hogy az ott létrehozott változó legyen lokális vagy sem. Ehelyett a \textbf{local} kulcsszóval mondjuk meg Lua-ban, ha egy változót lokálisnak tekintünk.
+
+Jól látszik, hogy az if-en belül definiált 'x' értéke az if scope-ján kívül nem marad meg. Csakúgy, mint más nyelvekben:
+\scriptsize
+\begin{lstlisting}
+if expression then
+	local x = 1
+end
+print(x) --> nil
+\end{lstlisting}
+\normalsize
+Egy másik nagyon fontos megjegyzés a függvények használata. Függvényt kétféle módon tudunk definiálni\ref{sec:lTypes}~és azt is tudjuk, hogy az egyik igazából a másik egy egyszerűbb alakja. Viszont, van egy nagy eltérés, ha lokális függvényt definiálunk:
+\scriptsize
+\begin{lstlisting}
+
+local function foo()
+end
+
+local foo = function()
+end
+\end{lstlisting}
+\normalsize
+Az első esetben a függvény neve a függvény scope-jába tartozik, míg a második esetben nem. Ez például egy rekurzív függvénynél rendkívül fontos dolog, amelyre figyelni kell. Hiszen, ha a második módon írjuk meg, akkor hibát fogunk kapni, mert a függvény törzsében a foo-t globális változónak veszi és mivel a jobb oldali érték előbb értékelődik ki, így a foo meghívása még egy olyan változó használatát jelentené, ami eddig lokálisan még nem létezik, így automatikusan globálisnak veszi. Ekkor viszont nem tudja, hogy ez egy függvényt tárol.
+
+\subsection{Változók listája}
+
+Ha már egyszer újra elővettük a változókat, akkor érdemes még egy nagyon fontos dolgot megemlíteni, ez pedig a váltorúk listája (varargs).
+\scriptsize 
+\begin{lstlisting}
+local function foo(...)
+end
+	print(...)
+end
+local a,b,c = 1,2,3
+print(foo(a,b,c)) --> 1   2   3
+\end{lstlisting}
+\normalsize
+Ez a fogalom létezik C\verb|++| világában, ott a template meta-programozásnál játszik fontos szerepet, de megjelenik Java-ban is. Ez igazából egy változó, ami mondhatni ismeretlen hosszúságú változók listáját kezeli egy elemként. Ahogy az említett nyelvekben, a Lua-ban is ugyanaz a szerepe. Lokális változóként van kezelve és a használata nagyban függ attól, hogy a programozó mit is szeretne vele csinálni. Ugyanis, ha csak ezt a paramétert kapja, akkor pontosan tudnia kell, hogy mit takar.
+
+Kicsit hasonló az értékadáshoz\ref{sec:l_assign}. Tekinthetjük úgy, mint egy hosszú listát, amiből szeretnénk lecsípni valamennyit. Erre segítségül a Lua egy ún. \textbf{select(i, ...)} függvényt ad. Ez az első 'i' darab változót adja vissza a \textbf{'...'}-ból, így már tudjuk, hogy hány változónak fogunk értéket adni. Viszont az még mindig programozási kérdés, hogy mik ezek a változók.
+
+A leggyakoribb használata mégis a függvénydelegálásnál jelenik meg. Hiszen ekkor a meghívott függvénynek a célja nem feltétlenül kapcsolódik a megkapott paraméterekhez, így azokat minden további nélkül továbbadja egy másik függvénynek, aki majd használja őket és tudja is, hogy miket kap.
+\scriptsize
+\begin{lstlisting}
+foo = function(table,...)
+... 
+	--> do something
+...
+	return table:new(...)
+end
+\end{lstlisting}
+\normalsize
+A példán jól láthatjuk, hogy a kapott paraméteren meghívunk egy további függvényt, melynek továbbadjuk a nem használt paramétereket. A kettőspont operátorra majd később kitérünk (\ref{subsec:l_colon}), egyenlőre fogadjuk el, hogy egy table típusú változónak egy new kulcsú elemét hívtuk meg, mivel az egy függvény.
+
+\section{Lua standard könyvtárai}
+\label{sec:l_libs}
+
+Korábban már volt szó arról, hogy mit használunk lokális\ref{sec:l_lovalV} és mit globális változóként. Akkor említettem, hogy a kivételes esetek közé tartoznak a Lua beépített könyvtárai. Ezekről említenék meg egy gyors összefoglalást.
+
+\newpage
+
+\Large Math library \normalsize
+
+\bigskip
+
+Ez teljesen azonos a más nyelvekben használatos Math könyvárakhoz. Itt nem kell sem \#include-olni (mint C\verb|++|-ban) vagy importálni (mint Java-ban), hanem alapból használhatjuk a \textbf{math} globális változón keresztül.
+
+Minden tipikus és gyakran használt függvény definiálva van:
+\begin{itemize}
+	\item math.abs
+	\item math.exp
+	\item math.deg
+	\item math.cos
+	\item math.sin
+	\item math.log
+	\item \dots
+\end{itemize}
+De vannak konstansok is, mint pl. a \textbf{math.pi}. De ide tartozik a \textbf{math.random(x, y)} függvény is (x és y között generál egy random egészet, ha x = 0 és y = 1, akkor pedig float-ot generál). 
+
+\bigskip
+
+\Large String library \normalsize
+
+\bigskip
+
+A \textbf{string} típusú változókat a legkönnyebb és legpraktikusabb a string könyvtárral manipulálni. Ez is teljesen megegyezik pl. a C-ben használt tipikus függvényekkel:
+\begin{itemize}
+	\item string.len
+	\item string.lower
+	\item string.upper
+	\item string.match
+	\item string.join
+	\item string.reverse
+	\item string.split
+	\item \dots
+\end{itemize}
+Egy nagyon gyakran használandó függvény a \textbf{string.sub(str, i, j)}. Ez természetesen a substring megfelelője, de azért fontos megemlíteni, mivel a string nem indexelhető, ezért az egyetlen módja, hogy visszakapjuk a string egy karakterét, ha ezt a függvényt alkalmazzuk (ebben az esetben az i = j). Később (\ref{subsec:l_metaM}) még lesz szó az index operátorról, amikor is kis csellel és némi következmény árán megoldható egy string indexelése.
+
+\bigskip
+
+\Large Table library \normalsize
+
+\bigskip
+
+Talán ez egyik legfontosabb könyvár a \textbf{table} library, amellyel strukturálisan tudjuk manipulálni a table objektumokat. Mivel a table, mint korábban kiderült\ref{subsec:l_types}, egy különös állatfaj, mégis leginkább egy list/map-hez lehet hasonlítani. Más OO nyelvek gyakran definiálnak tömb-manipuláló függvényeket és Lua-ban erre szolgál a table könyvtár:
+\begin{itemize}
+	\item table.insert
+	\item table.remove
+	\item table.wipe
+	\item table.sort
+	\item \dots
+\end{itemize}
+Ez a könyvár elsősorban az 'insert' és 'remove' függvények miatt hasznos. Ezek ugyanis elrejtik előlünk a táblaindexelés aggasztó ismeretét. Tehát nem kell tudni, hogy egy tábla meddig van indexelve és onnan folytassuk tovább a következő index megadásával. Ezek a függvények pont arra jók, hogy ne nekünk kelljen számon tartani az egyes táblák jelenlegi indexeit (ameddig végig iterálhatunk rajtuk index, nem pedig hash szerint). Így utána kényelmesen használhatjuk az \textbf{ipairs} függvényt, ami azért hasznos, mert ha egy table-t tényleg listaként szeretnénk értelmezni, a sorrend gyakran fontos lehet.
+
+\bigskip
+
+\Large Debug és System és IO library-k \normalsize
+
+\bigskip
+
+Pár szó erejéig érdemes megemlíteni ezt a két könyvárat. A \textbf{debug} library-t gyakran segítségül hívhatjuk egy problémás kód hibájának megfejtésére (pl. a debug.traceback függvény). Ez hasznos tud lenni, hiszen fordítási nincs lehetőség jelezni a programozónak, viszont ezzel sokat tud segíteni, ha a minimálisnál több adatot ír ki hibaüzenetként.
+
+ A másik a \textbf{os} könyvtár. Az os library-hoz fordulhatunk például az idő lekérdezése végett, de akár írhatunk eseményeket, amiket szeretnénk, hogy a program kilépése során hívjon meg, mint például a biztos fájl bezárás (\textbf{os.exit(files.close())}).
+
+A harmadik és talán leghasznosabb könyvtár az \textbf{io} library. E könyvtár segítségével tudunk fájlból olvasni és fájlba írni. Valamint a konzolra tudunk vele írni és olvasni is.
+\begin{itemize}
+	\item io.open
+	\item io.close
+	\item io.flush
+	\item io.write
+	\item io.read
+	\item io.lines
+\end{itemize}
+A 'write' függvény annyiban tér el a megszokott print-től, hogy a print mindig rak egy sorvége karaktert ha lefutott, míg az io.write nem. Az io.read függvényről még annyit kell tudni, hogy string-ként olvas egy egész sort. Ez majdnem minden más nyelvben így van, ahol dinamikus az olvasás (C-ben például meg kell adni az elvárt bemeneteket típussal pontosítva). A 'lines' függvényt pedig gyakran használjuk fálj sorainak beolvasására. Fontos, hogy nem soronként olvasunk vele. A lines először beolvassa az egész fájlt, és visszaad egy listát, amin végigiterálhatunk. 
+
+\newpage
+
+\section{A függvények további sajátosságai}
+\label{sec:l_more_fun}
+
+\subsection{Static scoping}
+
+A Lua-ban a függvények mindig a saját kontextusukra hivatkoznak. Hogy ez mit is jelent, tekintsük a következő példát:
+\scriptsize
+\begin{lstlisting}
+do
+	local x = 5
+	function foo()
+		print(x)
+	end
+end
+x = 1 --> 'x' global variable
+foo() --> 5
+\end{lstlisting}
+\normalsize
+Jól látszik, hogy hiába létezik egy globális változó ugyanavval a névvel, a függvény a saját környezete változóját használja. Azaz sosem arra a környezetre hivatkozik, ahol meg lett hívva. 
+
+A függvényeknél általánosságban igaz, hogy mindig ''belülről kifele'' halad. Azaz először a saját környezetében keresi a változókat, amiket használ és csak utána a globálisakat. Más nyelvekben, mint például C\verb|++| vagy Koltin, is hasonló működést tapasztalhatunk.
+
+\subsection{Closure}
+\label{subsec:l_closure}
+
+Még mielőtt belekezdenénk ebbe a témába, muszáj kitérnem, még egyszer a függvények visszatérési értékére. Az eddig bemutatottak mellett kiegészítem avval a tulajdonsággal, hogy függvény képes visszaadni egy másik függvényt is. Elsőre ez nem meglepő, hiszen a 'function' is egy típus és eddigi tudásunk alapján a függvény bármilyen típus(oka)t visszaadhat. 
+
+Nézzük a következő példát:
+\scriptsize
+\begin{lstlisting}
+function counter()
+	local x = 0
+	return function()
+		x = x + 1
+		print(x)
+	end
+end
+\end{lstlisting}
+\normalsize  
+Itt a függvényünk létrehoz egy lokális változót majd visszatér egy függvénnyel. Mint azt az előző témában is bemutattuk, egy függvény a saját kontextusát használja ki.
+\scriptsize
+\begin{lstlisting}
+c1 = counter()
+print(c1()) --> 1
+print(c1()) --> 2
+\end{lstlisting}
+\normalsize
+Ezen a példán tejesen jól látszik a static scoping jelentősége. 
+\scriptsize
+\begin{lstlisting}
+c2 = counter()
+print(c2 == c1) --> false 
+\end{lstlisting}
+\normalsize
+Érdekes megfigyelni, hogy a két változó értéke nem ugyanaz. De vajon miért? Hiszen ugyanazt a függvényt kapták vissza nem? Igazából nem. A \textbf{function() \dots end} meghívása után egy új függvény jön létre mindig. Fontos megjegyezni, hogy ez nem ugyanaz az eset, mint a következő:
+\scriptsize
+\begin{lstlisting}
+c3 = counter
+\end{lstlisting}
+\normalsize
+Ekkor ugyanis nem fut le a function, csak a referencia másolódik. 
+
+Tehát a függvény meghívása egy teljesen új függvényt hoz létre. És vajon a környezete is új? 
+\scriptsize
+\begin{lstlisting}
+print(c2()) --> 1
+print(c1()) --> 3
+\end{lstlisting}
+\normalsize
+Ezen a példán jól látszik, hogy a számláló is különbözik a két függvénynél. Tehát nem csak egy új függvényt, hanem egy új lokális változót is létrehozott a Lua. Mind a két függvény különböző környezetet lát. Azokat a függvényeket, amik megőrzik a kontextusukat, \textbf{closure}-nek hívjuk. És azok a változók, amik ''megőrződnek'' a closure-ök által az ún. \textbf{upvalues} a Lua-ban. Mivel igazából a \textbf{function() \dots end} meghívása után mindig egy új closure keletkezik, ezért valójában az összes függvény a lua-ban closure-ként viselkedik.
+
+\label{l_ref_proto}
+Térjünk újra vissza arra, hogy egy függvény akár több dolgot is visszaadhat (akár több függvényt is), vagy akár egy table típusú objektumot, aminek az elemei a függvényünkben létrehozott újabb függvények. Ezek mind ugyanazt a kontextust látják, azaz ugyanahhoz a scope-hoz vannak kötve. Erre a tulajdonságra később visszatérünk (\ref{subsec:l_classNobj}) és akkor bemutatom mekkora szerepe van ennek például az objektum-orientáltságban.
+
+\subsection{Hooking}
+
+A függvények egy további hasznos tulajdonsága a hooking. Nyersen lefordítva nagyjából azt jelenti, hogy ''beleakaszkodik''. Ahhoz, hogy eszt megértsük egy egyszerű példán bemutatom a működését és így egyből értelmet nyer a jelentés:
+\scriptsize
+\begin{lstlisting}
+do
+
+	local old = print
+	print = function(...) --> redefine print command
+		return old(os.date("%H:%M:%S", os.time()), ...) --> new print 
+	end
+
+end
+
+print("Hi") --> 12:54:15 Hi
+\end{lstlisting}
+\normalsize
+Tehát a hookingot arra használhatjuk, hogy meglévő függvényeink feladatát kiegészíthessük, plusz funkciókkal bővítsük. Ha jól megfigyeljük, ezzel akár a 'function overload'-ot is megvalósíthatjuk. 
+
+És az a szép a Lua-ban, hogy ezt bárhol megírhatjuk, ahol épp szükségünk van rá. Csak elmentjük egy lokális változóban az eddig használt függvényt, újradefiniáljuk a hooking segítségével és ha már nem használjuk, akkor visszaállítjuk a régit. Vagy, ha csak egy helyen akarjuk kihasználni, akkor az még egyszerűbb, hiszen a lokális környezett miatt máshol úgy sem látja a Lua ezt a ''kiegészítést'', így ott az eredetit használja. Viszont fontos, hogy tényleg lokális környezetben (akár closure-ban) legyenek és nem globálisan írjuk meg. Ezt a módszert akár wrapper függvényként is értelmezhetjük, de inkább egy függvény viselkedésének kiegészítésére használjuk. 
+
+
+\section{Meta-táblák és meta-metódusok}
+\label{sec:l_meta}
+
+Lua-ban minden értéknek van egy úgynevezett \textbf{metatable}-je. A metatable egy tipikus table objektum, ami képes különböző dolgok tárolására. A metatable-ket arra használják, hogy az egyes értékek vielkedését módosítsák. HOgy ez mit is jelent? Minden típusnak megvannak a maga standard operátorai és, hogy ehhez milyen függvények tartoznak. Ezeket az információkat tartalmazzák a metatable-ök. 
+
+Magán a table típuson kívül viszont minden más típus metatable-je megegyezik. Ez annyit jelent, hogy ha egy bizonyos string típusú változó összeadó operátorát akarná az ember átírni, akkor összes string operátorát megváltoztatja. A table típusú változók esetében minden table-nek saját metatable-je van (emlékeztető: a t = { }, leírása mindig új table-t hoz létre, egyúttal új metatable-t is).
+
+A Lua beépített függvényekkel teszi lehetővé a metatable-ök elérését: \mbox{\textbf{setmetatable(table, metatable), és getmetatable(table)}}. A függvények kinézete a C nyelvre emlékeztet leginkább, ahol még nem voltak önálló objektumok saját viselkedéssel (függvényekkel). A 'setmetatable' segítségével az első paraméterként megadott table metatable-jét állítjuk be a második paraméterként megadott table-lel. Sajnos jól látszik, hogy ilyenkor az egész metatable-t felülírja (kicseréli). Tehát érdemes odafigyelni, hogy nem lehet sorba fűzni újabb és újabb operátor overload-okat ezzel a módszerrel. 
+
+\newpage
+\scriptsize
+\begin{lstlisting}
+local Player = {}
+
+setmetatable(Player, {
+		__call = function(class,...)
+			local newPlayer = class:new(...)
+			newPlayer.currentDeckIndex = 1
+			newPlayer.numberOfUsedDecks = 1
+			newPlayer.decks = class:createDecks(newPlayer)
+
+			return newPlayer
+		end
+})
+setmetatable(Player, {
+		__index = Participant
+})
+
+print( Player() ) --> error, attempt to call a table value (upvalue 'Player')
+\end{lstlisting} 
+\normalsize
+\scriptsize
+\label{code:l_call}
+\begin{lstlisting}
+local Player = {}
+
+setmetatable(Player, {
+	__call = function(class,...)
+			local newPlayer = class:new(...)
+			newPlayer.currentDeckIndex = 1
+			newPlayer.numberOfUsedDecks = 1
+			newPlayer.decks = class:createDecks(newPlayer)
+
+			return newPlayer
+		end,
+	__index = Participant
+})
+\end{lstlisting}
+\normalsize
+Jól látható a probléma az első esetben, hiszen a \textbf{\_call} operátor nem volt inicializálva a második setmetatable után, így a függvényhívás hatására nem volt semmi sem beállítva, ami hibát eredményezett.
+
+\newpage
+
+\subsection{Alapértelmezett meta-metódusok}
+\label{subsec:l_metaM}
+
+Mint ahogy az előbbiekben elmagyaráztam a metatable-ben vannak az ún. meta-metódusok (továbbiakban metamethod). A metatable-ben speciális elemek vannak, amelyek tárolják a megszokott operátorok alapvető viselkedéseit. Ezeket a viselkedéseket függvények formájában értjük és őket hívjuk \textbf{metamethods}-nak. 
+
+A speciális kulcsokat a table-ben két aláhúzás karakterrel kezdjük és aztán jön a neve, amely utal arra, hogy milyen alapvető viselkedést definiál. A Lua a következő alap metamethod-okat szolgáltatja  (ezek a metódusok két paramétert várnak):
+\begin{itemize}
+	\item \_add: + operátor
+	\item \_concat: a .. operátor (összefűzés)
+	\item \_div: / operátor
+	\item \_eq: == operátor
+	\item \_lt: < operátor 
+	\item \_le: <= operátor 
+	\item \_mul: * operátor 
+	\item \_mod: \% operátor
+	\item \_pow: \^~operátor 
+	\item \_sub: -- operátor 
+	\item \_unm: negálás operátor
+	\item \_add: + operátor
+	\item \dots
+\end{itemize} 
+Ezeken kívül van még 4 különleges operátor, amiket érdemes külön-külön kicsit jobban megismerni:
+\begin{itemize}
+	\item \_len: a \verb|#| operátor. Ahogy a string-nél is megmutattam ez a hossz operátor, ami a string-ek esetében a szöveg hosszát adja meg (valószínűleg a string-len függvényt használva). Viszont gyakran szokás table típusú változóknál is használni, ugyanis alapértelmezetten visszaadja egy table-ben tárolt kulcs-érték párok számát. Azonban van egy fontos szabály: table objektum metatable-jére nem használható, mivel metatable-öket csak table-ökhöz csatolva tudunk használni.
+	\item \_call: a függvényhívás operátor. Fontos tulajdonság, hogy ez a függvény első paramétereként a table-t kapja és utána a többit, amit a függvénynek átadtak (a fenti példában \ref{code:l_call}~ez szemléletesen látszik).
+	\item \_newindex: ez a metódus akkor hívódik meg, ha megpróbálunk értékül adni egy új értéket egy olyan mezőnek, ami nincs a table-ben. Ez persze nem hívódik meg újra, ha már létezik az a ''kulcs''. Fontos megjegyzés, hogy az új mező felvétele megtörténik mindenképp, ha eddig nem létezett. Ez a függvény mint egy event-ként viselkedik (hasonlót C\verb|#|-ban láthattunk).
+	\item \_index: ez a metódus akkor hívódik meg, ha hozzá akarunk férni a table egy mezőjéhez, ami még nem létezik. Fontos különbség a '\_newindex'-hez képest, hogy itt nem történik értékadás, azaz nem is hoz létre új kulcs-érték párt. Itt megpróbálja elérni a ''kulcs'' által meghatározott értéket, és ha nincs ilyen kulcs a table-ben, akkor hívódik meg.
+\end{itemize}
+
+\section{Objektum-orientáltság}
+\label{sec:l_OO}
+
+Mint tudjuk, a Lua-ban megvalósítható az objektum-orientált programozás. A Lua támogatja az ún. prototipikus objektum-orientált programozást. Ezt pedig az \_index metametódus segítségével éri el. 
+
+Nézzük, hogy mit is értünk prototipikus objektum-orientáltságon. Először is definiálunk egy table (továbbiakban táblaként is hívom), amiben függvényeket és különböző értékeket (attribútumokat) fogunk tárolni. Ez a táblát tekintjük az ún. \textbf{prototípus}nak.
+
+\subsection{Kettőspont operátor}
+\label{subsec:l_colon}
+
+Még mielőtt belekezdenénk, hogy hogyan is lehet megvalósítani az OO stílust Lua-ban, először térjünk ki egy fontos dologra a táblákkal kapcsolatban. Ez pedig a kettőspont operátor. Az eddigiekben, ha szerettünk volna egy függvényt felvenni a táblába, akkor egy változóban eltároltuk és így hivatkoztunk rá:
+\scriptsize
+\begin{lstlisting}
+table = {}
+table.foo = function()
+	print(Hello)
+end
+
+table.foo() --> Hello
+\end{lstlisting}
+\normalsize
+Mint egy tábla adattagja. Viszont van egy másik módszer, hogy definiálni tudjunk egy függvényt egy tábla attribútumaként:
+\scriptsize
+\begin{lstlisting}
+Table = {
+	tableView
+}
+function Table:noticeUpdate()
+	self.tableView:update()
+end
+
+Table:noticeUpdate()
+\end{lstlisting}
+\normalsize
+Itt láthatjuk, hogy a másik módszerben már a kettőspont operátort használjuk. Ez egy plusz tulajdonsággal ruházza fel a függvényt. Ebben az esetben, amikor meghívjuk a függvényt, impliciten megkapja paraméterként a táblát, mint paraméter. És a \textbf{self} kulcsszó segítségével tudjuk felhasználni.
+
+Jól érezhető, hogy ez mennyire hasonlít az OO nyelvekben megszokott \textbf{this} kulcsszóra. Igazából lényegében azzal egyenértékű, hiszen így a táblát elérve hozzáférünk minden más függvényhez, illetve attribútumhoz. A példában pl. így el tudjuk érni a 'tableView' adattagot és az, hogy rajta is meghívunk egy függvényt a kettőspont operátorral, már következtethetünk arra, hogy az is egy tábla.
+
+Talán már lehet érezni, hogy ez mennyire segít majd nekünk az OO-s szemlélet megvalósításában. Habár érdemes fejben tartani, hogy ez is csak egy egyszerűbb írásmód, semmi más. Valójában ennek a megfelelője:
+\scriptsize
+\begin{lstlisting}
+function Table.noticeUpdate(self)
+	self.tableView:update()
+end
+
+Table.noticeUpdate(Table)
+\end{lstlisting}
+\normalsize
+Itt talán érdemes megjegyezni, hogy az ilyen ''megoldások'' mennyire hasonlítanak a C nyelvben megszokott ''adjuk át paraméterként a \dots' függvénymegadásokhoz. Ez nem véletlen. A Lua ugyanis nagyban kötődik a C nyelvcsaládhoz. Megfelelő libraryk segítségével akár a lua kódunkat C kódra is át tudjuk írni és ezek a megoldások a könnyű olvasást és ''átírást'' teszik lehetővé.
+
+\subsection{Konstruktor}
+\label{subsec:l_constructor}
+
+Azt már a függvények visszatérési értékeinél \ref{sec:l_assign}~is megtudtuk, hogy egy függvény visszatérhet több dologgal is, gyakran szeretjük ezeket egy közös halmazban tenni ha az adatok úgyis összetartoznak. Erre kényelmesen használhatjuk a table típust. Így ezzel nagyjából már el is tudjuk képzelni, hogy hogyan is néz ki egy konstruktorhívás. Kicsit pontosabban a C nyelvben megszokott módszer rövid összefoglalója volt ez. Lényegében bármilyen objektumot létre tudunk hozni és a függvény visszatérési értékét elmentjük egy változóba. 
+
+Azonban mi nem szeretnénk egy 'createXXX()' függvény írni, hanem a C\verb|++| és Kotlin nyelvekben megszokott módon szeretnénk létrehozni az új objektumokat:
+\scriptsize
+\begin{lstlisting}
+cell = CreateCell() --> C style constructor
+
+cell = Cell() --> C++, Kotlin, ... style constructor
+\end{lstlisting}
+\normalsize
+A következőkben ezt az elképzelést valósítjuk meg.
+
+\subsection{Prototípus és objektum}
+\label{subsec:l_classNobj}
+
+Először is meg kell tervezni a prototípust, amit majd felhasználunk az objektumok létrehozásához.
+\scriptsize
+\begin{lstlisting}
+local Cell = {
+	state = "",
+	changeState = 0
+}
+
+function Cell:die()
+	if(self.changeState == ChangeType.DIE) then
+		self.state = StateType.DEAD
+	end
+end
+
+function Cell:birth()
+	if(self.changeState == ChangeType.BIRTH) then
+		self.state = StateType.ALIVE
+	end
+end
+
+...
+\end{lstlisting}
+\normalsize
+Most pedig a következő lépés: megcsinálni a konstruktorunkat:
+\scriptsize
+\begin{lstlisting}
+function CreateCell(state)
+	local newCell = {}
+	newCell.state = state
+	newCell.neighbors = {}
+	return newCell
+end
+\end{lstlisting}
+\normalsize
+Ez így viszont még nincs teljesen kész. Hiszen ez még csak annyit csinál, hogy létrehoz egy táblát, hozzáad pár attribútumot és visszaadja azt. A prototípust még valahogy hozzá kell kötni ehhez az új táblához. Nézzük a következő kódot:
+\scriptsize
+\begin{lstlisting}
+local metatable = {
+	__index = Cell
+}
+
+function CreateCell(state)
+local newCell = setmetatable({}, metatable)
+newCell.state = state
+newCell.neighbors = {}
+return newCell
+end
+\end{lstlisting}
+\normalsize
+Itt ami elsőre szembetűnik, hogy az \_index metamethod nem függvényt kapott hanem egy táblát (jelen esetünkben a prototípust). Ezt azért tehetjük meg, mert a Lua ad erre támogatást (a függvényhívás teljesítmény visszaeséssel járhat így ez egy egyszerűbb megoldás). De vajon mit is jelent ez valójában:
+\scriptsize
+\begin{lstlisting}
+local metatable = {
+__index = function(t, k)
+		return Cell[k]
+	end
+}
+\end{lstlisting}
+\normalsize
+\newpage
+Csupán ennek a függvénynek a rövidítését. Ahol a 't' az az a tábla, amin az \_index metódus meghívódott és a 'k' pedig a kulcs, amivel meghívták.
+
+így már nagyon egyszerű értelmezni ezt:
+\scriptsize
+\begin{lstlisting}
+local metatable = {
+	__index = Cell
+}
+\end{lstlisting}
+\normalsize
+Tehát, ha egy tábla egy nemlétező attribútumát (ami alatt függvényt tároló változót is érthetünk) hívjuk meg, akkor az \_index metódus által megnézi a prototípusunkban és ha talál, akkor meghívja azt. Ezzel a példánkban elérhetővé váltak a prototípus függvényei és előre definiált attribútumai.
+
+Most már csak meg kéne valósítani, hogy úgy viselkedjen, mint egy tipikus konstruktor. Erre felhasználhatjuk a \_call metamethod-ot. Azaz beállítjuk, hogy ha valaki meghívja a táblán a () operátort, akkor hívja meg a konstruktorunkat. Ezzel elrejtve azt.
+\scriptsize
+\begin{lstlisting}
+local Cell = {
+	state = "",
+	changeState = 0
+}
+
+setmetatable(Cell, {
+	__call = function(class, ...)
+		return CreateCell(...)
+	end
+})
+
+local metatable = {
+__index = Cell
+}
+
+function CreateCell(state)
+	local newCell = setmetatable({}, metatable)
+	newCell.state = state
+	newCell.neighbors = {}
+	return newCell
+end
+
+local cell = Cell()
+\end{lstlisting}
+\normalsize
+Ezen jól látható, hogy a prototípusnak beállítottuk, hogy ha függvényhívás operátort használják, akkor hozzon létre egy új táblát és használja a prototípus függvényeit.
+
+Ezzel nagyjából készen is lennénk, de elég sok plusz kódot kéne írni. Nem mellesleg maga a konstruktor nem tartozik magához a prototípushoz. És azt sem használtuk ki, hogy valójában a \_call hívásánál mi átadtuk magát a prototípust. Kicsit alakítva a kódot a következő, komplexebb, de mindenképp szebb kódot kapjuk:
+\scriptsize
+\begin{lstlisting}
+local Cell = {
+	state = "",
+	changeState = 0
+}
+
+setmetatable(Cell, {
+	__call = function(class, ...)
+		return class:CreateCell(...)
+	end
+})
+
+function Cell:CreateCell(state)
+	local newCell = setmetatable({}, self)
+	self.__index = self
+	newCell.state = state
+	newCell.neighbors = {}
+	return newCell
+end
+
+local cell = Cell()
+\end{lstlisting}
+\normalsize
+Vizsgáljuk meg, hogy mi is történt. Először is kihasználtuk, hogy a \_call metódus megkapja a prototípust. Ezt fel tudjuk használni, hogy a konstruktorunkat a prototípushoz kössük, mint függvényt, hiszen meg tudjuk hívni. Ráadásul tovább is tudjuk adni a kettőspont operátor segítségével. Így a konstruktor már rendelkezik a prototípussal és nem kell egy globális változót csinálnunk, hogy elérjük azt. Ha viszont már megvan a prototípus, nem kell mást csinálni, csak beállítani az új objektum metatable-jeként. Így a prototípus metatable-je megegyezik az új objektum metatable-jével. 
+
+A következő sor elsőre furán olvasható, de ha egyszerűen odaképzeljük a self helyett a Cell-t, akkor máris megértjük, hogy a 'metatable' létrehozását oldjuk meg egy sorban. Ekkor persze a prototípus \_index-ét is beállítjuk magára a prototípusra, de ez teljesen jó (hiszen így érjük el, hogy az új objektum elérhesse a prototípust). Nem csak az új objektum, de a prototípus is saját magát látja és az ő attribútumai között keres. Van még egy további haszna is, de ezt majd az öröklésnél kifejtem.
+
+Végeredményként teljesen ugyanazt a kódok kapjuk, de mégis szebb és kompaktabb a második, hiszen kihasználunk minden lehetőséget amit a metametódusok és a kettőspont operátor biztosítanak. 
+
+Még egy fontos dolog, amire mindenképp oda kell figyelni, amikor a konstruktorokat írja az ember. Először is: a prototípus inkább a közös viselkedésre való. Azaz a függvények legyenek elsősorban a prototípusban. Az egyéb változókat, mivel úgyis új objektum jön létre, nyugodtan létrehozhatjuk ott is, nem kell feltétlen a prototípusban felvenni őket. Sőt, a table-öket kifejezetten tilos. Ugyanis, ilyenkor minden új objektum ugyanazt a table-t látja és írja/olvassa (úgy viselkedik, mintha static addatagja lenne egy osztálynak pl. C\verb|++|-ban). Ezt inkább el szeretnénk kerülni. Így a megoldás, hogy ezeket mindig a konstruktorban, az új objektumnak hozzuk létre.
+
+\subsection{Öröklés}
+\label{subsec:l_inherit}
+
+Az utolsó dolog az OO világában, amire ki kell térnem az az öröklődés. A Lua erre szintén biztosít lehetőséget, méghozzá egy nagyon egyszerű módon. Csupán az előbbi gondolatmenetet kell kiegészíteni.
+
+Vegyünk fel egy ősosztályt:
+\scriptsize
+\begin{lstlisting}
+local Participant = {}
+
+setmetatable(Participant, {
+	__call = function(class,...)
+		return class:new(...)
+	end
+})
+
+function Participant:new(amountOfMoney, dealer, behavior, inputHandler, observer)
+	local newParticipnat = setmetatable({}, self)
+	self.__index = self
+	newParticipnat.amountOfMoney = amountOfMoney or 100
+	newParticipnat.behavior = behavior
+	newParticipnat.dealer = dealer
+	newParticipnat.inputHandler = inputHandler
+	newParticipnat.observer = observer
+	return newParticipnat
+end
+\end{lstlisting}
+\normalsize
+Ez teljesen hasonló módon tesszük meg, mint az előző példa esetén. Ezután nézzük meg, hogy hogyan néz ki egy leszármazottja:
+\scriptsize
+\begin{lstlisting}
+local Player = {}
+
+setmetatable(Player, {
+	__call = function(class,...)
+	local newPlayer = class:new(...)
+	newPlayer.currentDeckIndex = 1
+	newPlayer.numberOfUsedDecks = 1
+	return newPlayer
+	end,
+	
+	__index = Participant
+})
+
+player = Player()
+print(player.amountOfMoney) --> 100
+\end{lstlisting}
+\normalsize
+Nézzük meg mi is történt itt valójában, illetve mik is a változások az előző kódhoz képest. Az első szembetűnő dolog, hogy amikor a \_call metódust felülírjuk, akkor látjuk, hogy a meghívjuk a \textbf{new} függvényt, holott a Player prototípus-nak nincs is ilyen függvénye. Ezt azért teheti meg, mert az \_index-et is felüldefiniáltuk, mégpedig az ős prototípusával. Így már meg tudja hívni a 'new' függvényt. 
+
+Viszont érdemes megfigyelni, hogy a 'new' meghívásánál a 'class' igazából maga a Player prototípus. Tehát a 'self' paraméter már nem a 'Participant' tábla lesz, hanem a Player. Beállítjuk , hogy az új játékos metatable-je legyen a Player prototípus. Utána pedig az \_index-et is beállítjuk, hogy a Player prototípusra mutasson. Ugye ekkor felmerül a kérdés, hogy ez mind szép és jó, de hogyan tudom akkor használni a Participant adattagjait? Egyszerűen úgy, hogy a Player \_index-e pedig a Participant prototípusra mutat. Ez ezt jelenti, hogy először a Player táblában keresi és, ha ott nincs, akkor megnézi a Participant táblában. Ez a példa pedig szépen bemutatja, hogy a prototipikus öröklés hogyan valósul meg.
+
+Pár fontos észrevétel azonban elengedhetetlen. Az első és szembetűnőbb, hogy a Player objektum mennyire értelmezhető Participant-nak is egyszerre. Igazából egy új Participant objektum nem jön létre, csak egy Player, ami tudja használni az őse függvényeit/attribútumait. De a Participant \_call metódusa meg sem hívódott. Más OO nyelvekben az ős konstruktora is lefut (sőt tipikusan meg kell hívni azt). Itt nem. 
+
+\label{comment1}
+Ez a gondolatmenet továbbvíve felveti az absztrakció és az interfész hiányának problémáját egyaránt. Lua-ban nem tudunk ilyen dolgokat definiálni. Egy későbbi fejezetben megmutatok egy lehetséges ''megoldást' \ref{subsec:p_observer}, amellyel interfész szerű viselkedést el tudunk érni. 
+
+A másik fontos dolog pedig, hogy a Player prototípus metatable-jének beállítása során egyszerre két metódust is definiálni kell jelen esetben. Hiszen egy korábbi példán \ref{sec:l_meta} bemutattam, hogy milyen következményei vannak, ha külön-külön próbálnánk beállítani őket. 
+
+
+Zárásul még egy dologgal szeretném kiegészíteni az öröklést, mégpedig, hogy a Lua-ban lehetőség van a többszörös öröklésre (ezt csak nagyon kevés nyelv tudja elmondani magáról pl.  C\verb|++|). És annak ellenére, hogy ahol ezt egyen talán meg lehet valósítani, ott rendkívül sok odafigyelése és szabályra kell odafigyelni, addig Lua-ban ez rendkívül egyszerű módon megoldható.
+\scriptsize
+\begin{lstlisting}
+local Driver = {}
+
+setmetatable(Driver, {
+	__index = Driver
+})
+
+function Driver:canDrive(age)
+	if(age > 17) then 
+		return true
+	else
+		return false
+	end
+end
+
+local Player = {}
+
+setmetatable(Player, {
+__call = function(class,...)
+local newPlayer = class:new(...)
+newPlayer.currentDeckIndex = 1
+newPlayer.numberOfUsedDecks = 1
+return newPlayer
+end,
+
+__index = function(t, k)
+		return Participant[k] or Driver[k]
+	end
+})
+
+player = Player()
+print(player.amountOfMoney) --> 100
+print(player:canDrive(16)) --> false
+\end{lstlisting}
+\normalsize
+Látható, hogy csak az \_index metódus változott meg. Mivel nem egyértelmű, hogy melyik prototípust használjuk, így a rövidítés nem lehetséges, tehát egy függvényt kell megvalósítani. Ez viszont egy elég egyszerű függvény és a megértése szinte evidens. Ha nem találja a meghívott attribútumot a Participant-ban, akkor megnézi a Driver-ben. Ilyen egyszerű az egész. 
+
+Persze felmerülhet olyan kérdés, hogy a logikai vesztegzár miatt, ha mind a kettő rendelkezik egy ugyanolyan nevű függvénnyel, akkor sosem érjük el a második függvényét. De ekkor inkább az a kérdés merül fel, hogy ha mind a kettő használ azonos függvényt, akkor vajon jó-e maga a modell. Ez alatt azt értem, hogy lehetséges, hogy a Participant és a Driver egy közös ősből származik és a kérdéses függvényt az öröklési szinten feljebb kellene tolni (tipikus OO szemlélet). A többszörös öröklődés lehetősége viszont nem szokott ösztönző példa lenni. Csak jó tudni, hogy ez is megvalósítható, méghozzá nagyon egyszerű módon.
+
+\subsection{Modularitás}
+\label{subsec:l_modul}
+
+Utoljára az OO stílussal kapcsolatban ki szeretnék térni a modulokra való bontás témájára. Lua-ban ugyanis hasonló lehetőségünk van a prototípusokat külön modulokba szervezni, akár külön szkript-be kiszervezni őket. Ezzel lehetőségünk van egy szebb strukturális kezelhetőségre, illetve átláthatóbb lesz a kód. 
+
+Ahhoz, hogy egy szkriptet egy másik szkriptben fel tudjunk használni, arra a \textbf{require} függvény lesz a segítségünkre.
+\scriptsize
+\begin{lstlisting}
+local ColorType = require("type.ColorType")
+local CardType = require("type.CardType")
+local Card = require "entity.Card"
+
+local Dealer = {}
+
+setmetatable(Dealer, {
+	__call = function(class,...)
+		return class:new(...)
+	end
+})
+
+function Dealer:createDeck()
+
+local deck = {}
+
+local usedDecks = self.numberOfUsedDecks
+
+	for i = 1, usedDecks, 1 do
+		for color, _ in pairs(ColorType) do
+			for value, number in pairs(CardType) do
+				table.insert(deck, Card(value, color, number))
+		end
+	end
+end
+
+return deck
+
+end
+...
+\end{lstlisting}
+\normalsize
+Ez hasonlóan működik, mint a C\verb|++|-ban megszokott '\verb|#|include', vagy a Java-s 'import'. Egy hasznos dologra felhívnám a figyelmet. Látszik hogy a 'Card' modul csatolásánál a require függvénynél elhagytam a zárójeleket. Lua-ban az egy paraméteres függvények esetében a primitív típusok esetében (legfőképp string) elhagyható a zárójel.
+
+Most már talán csak az a kérdés merülhet fel, hogy miért kell elmenteni ezt egy változóba? Erre akkor kapunk magyarázatot, ha megvizsgáljuk pl a Card modult:
+\newpage
+\scriptsize
+\begin{lstlisting}
+local Card = {}
+
+setmetatable(Card, {
+	__call = function(class,...)
+		return class:new(...)
+	end
+})
+
+function Card:new(value, color, number, hidden)
+	local newCard = setmetatable({}, self)
+	self.__index = self
+	newCard.value = value
+	newCard.color = color
+	newCard.number = number
+	newCard.hidden = hidden or false
+	return newCard
+end
+
+return Card
+\end{lstlisting}
+\normalsize
+Látható, hogy az utolsó sor visszaadja a prototípust. Így lehet könnyedén modulokat kapcsolni másik modulokhoz. Egyúttal még egyszer kitérnék a 'require' függvény használati módjára. Ugyanis két dologra használhatjuk. Az egyik, amit a példa is mutat. Azaz, ha egy szkript visszatér pl. egy prototípussal, akkor a require-nek van visszatérési értéke. Azonban, ha nincs 'return' a modul végén, akkor úgy viselkedik, mintha az egészet bemásolta volna abba a modulba, ahol meghívták a függvényt (csak úgy, mint C\verb|++|-ban az '\verb|#|include').
+
+A végére pedig egy érdekes dolgot hagytam. Lua-ban ugyanis lehetséges a privát adattagok megvalósítása. Ez elég furcsán hathat, hiszen nincs kulcsszó rá, és az eddigiekben egyszer sem került elő még a lehetősége sem. Valójában impliciten mégis használtuk. Ha emlékszünk még a függvények sajátosságaira, megbeszéltük a \textbf{closure} \ref{subsec:l_closure}~fogalmát. Tulajdonképpen a closure segítségével tudjuk megvalósítani a privát adattagokat. Egyszerűen írunk egy függvényt, amelyben létrehozzuk a lokális környezetben a változókat, függvényeket és a visszatérési értékben csak azokat adjuk vissza, amelyeket szeretnénk publikusnak kezelni. Tipikusan egy table-t adunk vissza, hiszen azt szeretnénk, hogy egy egységként lehessen bánni vele, akárcsak egy osztály objektumával.
+
+Fontos megjegyezni, hogy ebben az esetben, amit eddig az prototipikus OO-ról és öröklésről bemutattunk, azt jelen esetben nem használhatjuk.
+\scriptsize
+\begin{lstlisting}
+local ConsoleInputHandler = {}
+
+function ConsoleInputHandler:getInstance()
+	local readNumber = function()
+		return tonumber(read())
+	end
+	
+	local readKey = function()
+		local line = string.upper(read())
+		local result
+		
+		if(line == "S") then result = ActionType.SPLIT
+		elseif(line == "D") then result = ActionType.DOUBLE
+		elseif(line == "Q") then result = ActionType.END
+		elseif(line == "H") then result = ActionType.HIT
+		elseif(line == "E") then result = ActionType.STAND
+		elseif(line == "N" or line == "I") then result = ActionType.NEW
+		else result = ActionType.ERROR
+	end
+	
+	return result
+	
+	end
+	
+	return {
+		readNumber = readNumber,
+		readKey = readKey
+	}
+	end
+
+return ConsoleInputHandler
+\end{lstlisting}
+\normalsize
+Jól látható, hogy ez egy table-t ad vissza. Igazából, azzal, hogy a 'getInstance' függvényt meghívjuk már létrejön egy példány, így lényegében kiváltottuk a konstruktorunkat. És ahogy a closure témában már beláttuk, minden új objektum a saját, új környezetét látja, elszeparálva a másiktól. Ha az öröklés akarnánk megvalósítani, akkor nncs egyéb dolgunk, mint felvenni egy \_index változót a visszaadandó table-be. 
+
+Látható, hogy ez talán egy egyszerűbb módja, hogy objektumokat hozzunk létre. Ugyanakkor lemondunk a 'konstruktoros' megoldásról egyaránt (valamit valamiért). Illetve lesz egy indirekt hívásunk is, hiszen a closure függvény még magában nem az, amit mi használnánk. Viszont nagyon kényelmesen megoldhatjuk ezt a require függvénynél:
+\scriptsize
+\begin{lstlisting}
+local InputHandler = require("input.ConsoleInputHandler"):getInstance()
+
+-- or like this
+local InputHandler = require "input.ConsoleInputHandler":getInstance()
+...
+\end{lstlisting}
+\normalsize
+Így már tényleg a használni kívánandó objektummal dolgozhatunk. Azért érdemes megemlíteni, hogy ha több példányt szeretnénk létrehozni (itt jelen esetben inkább singleton objektumként van használva), akkor érdemes elmenteni a modult és ahol kell, meghívni a példányosító függvényt.
+

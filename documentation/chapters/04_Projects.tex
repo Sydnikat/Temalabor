@@ -1,0 +1,1244 @@
+
+\lstdefinelanguage{Kotlin}{
+	keywords={package, as, typealias, this, super, val, var, fun, for, null, true, false, is, in, throw, return, break, continue, object, if, try, else, while, do, when, yield, typeof, yield, typeof, class, interface, enum, object, override, public, private, get, set, import, abstract, },
+	keywordstyle=\color{NavyBlue}\bfseries,
+	ndkeywords={@Deprecated, Iterable, Int, Integer, Float, Double, String, Runnable, dynamic},
+	ndkeywordstyle=\color{BurntOrange}\bfseries,
+	emph={println, return@, forEach,},
+	emphstyle={\color{OrangeRed}},
+	identifierstyle=\color{black},
+	sensitive=true,
+	commentstyle=\color{gray}\ttfamily,
+	comment=[l]{//},
+	morecomment=[s]{/*}{*/},
+	stringstyle=\color{ForestGreen}\ttfamily,
+	morestring=[b]",
+	morestring=[s]{"""*}{*"""},
+}
+
+\definecolor{olivegreen}{rgb}{0.23, 0.5, 0.19}
+
+\lstdefinestyle{Lua}
+{
+	language=[5.1]Lua,
+	basicstyle=\ttfamily,
+	keywordstyle=\color{orange},
+	stringstyle=\color{olivegreen},
+	commentstyle=\color{black!50}
+}
+
+
+
+\chapter{Projektek összehasonlítása}
+\label{chap:04_porjects}
+
+\section{Kicsit a projektekről}
+\label{sec:p_about}
+
+Még mielőtt elkezdeném a sajátos megvalósítások és különbségek összehasonlítását, szeretnék egy gyors összefoglalást mondani a projektek elkészülésével és sorrendjével kapcsolatban. Mivel alapvetően eddig csak OO nyelvekkel foglalkoztam eddigi tanulmányaim során, így teljesen egyértelmű volt, hogy a két nyelv közül melyikkel fogom kezdeni. Így nem csak könnyebben tudtam elképzelni a feladatok tervezését és megoldását, de egyúttal reméltem, hogy az OO szemléletben megírt projektek egy jó alapot biztosítanak majd a Lua projekteknél.
+
+Emellett már az elején az volt a célom, hogy megvalósításban a két nyelv projektjei minél jobban hasonlítsanak egymásra. Így biztosítva, hogy ugyanazon feladatot megvalósító részek az egyes nyelvekben mennyire hasonlóak vagy éppen különbözőek lesznek. A végeredmény pedig mind a két feladatban szinte majdnem teljesen azonos lett. Ez azért figyelemre méltó és elsőre talán meglepő is, hogy a Lua is képes arra, hogy viszonylag teljesen azonos megoldást adjon ilyen típusú feladatokra (BlackJack, életjáték), mint a Kotlin.
+
+A projektek bemutatásának szintén célja, hogy megismerhessük az egyes nyelvek előnyeit és hátrányait. Illetve az egyes részeknél arra is szeretnék majd kitérni, hogy a sajátosságokat és kényelmi szempontokat figyelembe véve az egyes helyzetekben melyik megoldást volt könnyebb megvalósítani/használni.
+
+
+
+\section{Életjáték}
+\label{sec:p_gameoflife}
+
+\subsection{A játékról}
+\label{subsec:p_aboutL}
+
+
+Az életjáték egy egyszerű állapotgépet valósít meg. Játékként való megnevezése megtévesztő lehet, mivel ''nullszemélye'' játék; és a ''játékos'' szerepe mindössze annyi, hogy megad egy kezdőalakzatot, és azután csak figyeli az eredményt. Matematikai szempontból az ún. sejtautomaták közé tartozik. 
+
+A négyzetrács mezőit celláknak, a korongokat sejteknek nevezzük. Egy cella környezete a hozzá legközelebb eső 8 mező (tehát a cellához képest „átlósan” elhelyezkedő cellákat is figyelembe vesszük, feltesszük hogy a négyzetrácsnak nincs széle). Egy sejt/cella szomszédjai a környezetében lévő sejtek. A játék körökre osztott, a kezdő állapotban tetszőleges számú (egy vagy több) cellába sejteket helyezünk. Ezt követően a játékosnak nincs beleszólása a játékmenetbe. Egy sejttel (cellával) egy körben a következő három dolog történhet:
+\begin{enumerate}
+	\item A sejt túléli a kört, ha két vagy három szomszédja van.
+	\item A sejt elpusztul, ha kettőnél kevesebb (elszigetelődés), vagy háromnál több (túlnépesedés) szomszédja van.
+	\item Új sejt születik minden olyan cellában, melynek környezetében pontosan három sejt található.
+\end{enumerate}
+
+\smallskip
+A sejt túléli a kört, ha két vagy három szomszédja van.
+A sejt elpusztul, ha kettőnél kevesebb (elszigetelődés), vagy háromnál több (túlnépesedés) szomszédja van.
+Új sejt születik minden olyan cellában, melynek környezetében pontosan három sejt található.
+
+Fontos, hogy a változások csak a kör végén következnek be, tehát az „elhalálozók” nem akadályozzák a születést és a túlélést (legalábbis az adott körben), és a születések nem mentik meg az „elhalálozókat”. A gyakorlatban ezért a következő lépéseket célszerű ilyen sorrendben végrehajtani:
+\begin{enumerate}
+	\item Az elhaló sejtek megjelölése
+	\item A születő sejtek elhelyezése
+	\item A megjelölt sejtek eltávolítása
+\end{enumerate}
+
+\subsection{Sejtek}
+
+Lua-ban a sejt modul létrehozása:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+local Cell = {
+	state = "",
+	changeState = 0
+}
+
+setmetatable(Cell, {
+	__call = function(class, ...)
+		return class:CreateCell(...)
+	end
+})
+
+function Cell:CreateCell(state)
+	local newCell = setmetatable({}, self)
+	self.__index = self
+	newCell.state = state
+	newCell.neighbors = {}
+	return newCell
+end
+\end{lstlisting}
+\normalsize
+Kotlin ban:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+class Cell(var state: StateType){
+
+	var change = ChangeType.NOTHING
+	private set
+	
+	val neighbors = ArrayList<Cell>()
+}
+\end{lstlisting}
+\normalsize
+Mint azt gondolhattuk, Kotlin-ban sokkal kompaktabb módon tudunk leírni dolgokat. Ez egyen talán nem meglepő, hiszen, mint már említettem\ref{sec:k_} ez a Kotlin egyik nagy előnye (minimális boiler plate). Azonban a Lua is minimalizálja a felesleges kódokat. Ezt leginkább a szkript nyelv sajátosságai miatt teheti meg, de ennek köszönhetően itt sem kell felesleges getter/setter metódusokkal telíteni az osztályt.
+
+\newpage
+
+Mivel ez egy egyszerű osztály, a legtöbb dologban megegyezik mind a két megoldás:
+Lua-ban:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+function Cell:die()
+	if(self.changeState == ChangeType.DIE) then
+		self.state = StateType.DEAD
+	end
+end
+
+function Cell:birth()
+	if(self.changeState == ChangeType.BIRTH) then
+		self.state = StateType.ALIVE
+	end
+end
+\end{lstlisting}
+\normalsize
+Kotlin ban:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+fun die() {
+	if(change == ChangeType.DIE)
+	state = StateType.DEAD
+}
+
+fun birth() {
+	if(change == ChangeType.BIRTH)
+	state = StateType.ALIVE
+}
+\end{lstlisting}
+\normalsize
+Látható, hogy 1-2 apróságtól eltekintve a kettő szinte azonos. Azonban az állapotváltoztató függvényben van egy nagyobb eltérés:
+Lua-ban:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+function Cell:checkState()
+	local livingNeighbors = 0
+	
+	for _, cell in ipairs(self.neighbors) do
+		if(cell.state == StateType.ALIVE) then
+			livingNeighbors = livingNeighbors + 1
+		end
+	end
+	
+	if(livingNeighbors > 3 or livingNeighbors < 2) then
+		if(self.state == StateType.ALIVE) then
+			self.changeState = ChangeType.DIE
+		else
+			self.changeState = ChangeType.NOTHING
+		end
+	else
+		if(self.state == StateType.DEAD and livingNeighbors == 3) then
+			self.changeState = ChangeType.BIRTH
+		else
+			self.changeState = ChangeType.NOTHING
+	end
+end
+
+end
+\end{lstlisting}
+\normalsize
+Kotlin ban:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+fun checkState() {
+	val livingNeighbors = neighbors.count { it.state == StateType.ALIVE }
+	
+	change = when {
+	 livingNeighbors > 3 || livingNeighbors < 2 -> {
+		if(state == StateType.ALIVE) ChangeType.DIE
+		else ChangeType.NOTHING
+	 }
+	 else -> {
+		if(state == StateType.DEAD && livingNeighbors == 3) ChangeType.BIRTH
+		else ChangeType.NOTHING
+	 }
+	}
+
+}
+\end{lstlisting}
+\normalsize
+Itt jól látszik, hogy Lua-ban sokkal kisebb a lehetőségek tárháza. A \textbf{switch -- case} megoldást Lua-ban csak 'ifelse'-ekkel lehet megvalósítani, míg Kotlinban már a switch-case többszörös elágazást is kompaktabb módon tudjuk felírni. Ezzel nemcsak, hogy rövidebb lesz a kód, de olvashatóbb is.
+
+Összegezve, az egyszerűbb osztályokat Kotlin-ban sokkal könnyebb megvalósítani, bár Lua-ban sem bonyolult. Ezen az osztályon is remekül látszanak a Kotlin lényegi alapelvei: olvashatóság, kompaktság, egyszerűség. Bár a Lua is minimális kódmennyiséget használ, sajnos a szűk lehetőségei miatt nem tudja utolérni a Kotlin-t.
+
+\subsection{Váz}
+
+Megvalósításában szinte teljesen ugyanaz a két kód. Csupán pár helyen térnek el, de ott megvan a maga oka:
+Lua-ban:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+function Frame:simulate()
+	self:printResult()
+	
+	while(self.generationCounter < self.duration) do
+		self:wait(self.timeBetweenGens / 1000)
+		self:createNextGen()
+	end
+
+end
+
+function Frame:wait(seconds)
+	local time = os.clock()
+	while os.clock()-time < seconds do  end
+end
+\end{lstlisting}
+\normalsize
+Kotlin ban:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+override fun run() {
+
+	state = GameState.RUNNING
+	
+	generationCounter = 0
+	
+	while (state != GameState.STOP){
+	
+		while (state == GameState.RUNNING)
+			createNextGen()
+		
+		Thread.sleep(1000)
+	}
+}
+\end{lstlisting}
+\normalsize
+Jól látszik, hogy a Kotlin projektben egy állapotgép maga a játék, míg a Lua projekt egy egyszeri lefutású megvalósítás történik. Ennek az egyedüli oka a szálkezelés. Lua-ban nincs többszálúság, míg Kotlin-ban van. Emiatt nem tudtam egy örök ciklust írni Lua-ban, ott a while ciklus egy előre meghatározott ideig dolgozik, míg a Kotlin projektben a felhasználó állíthatja le a modellezést.
+
+Emellett jól látható, hogy a ''szünet'' megoldás a szálak segítségével mennyire egyszerű Kotlin-ban, míg a Lua-ban ehhez egy sajátos (nem épp számításigényes) megoldást kellett alkalmazni. 
+
+Ezen kívül viszont csak a kompaktabb leírásban és a sejtek létrehozásában tér el a két kód:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+function Frame:init()
+
+	math.randomseed(os.time())
+	for i = 1, self.height, 1 do
+		for j = 1, self.width, 1 do
+			local isAlive = (math.random(100000) % chanceGen) == 0
+	
+			local cellState = StateType.ALIVE
+			
+			if(isAlive == false) then
+			cellState = StateType.DEAD
+		end
+	
+		table.insert(self.cells[i], Cell(cellState))
+	end
+end
+
+\end{lstlisting}
+\normalsize
+\newpage
+Kotlin ban:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+init{
+
+	val random = Random()
+	val chanceGen = if(chance < 2) 2 else chance
+	
+	cells.forEach {
+	 (0 until width).forEach { _ ->
+		it.add(
+		Cell( if(fillWithRandom && random.nextInt() % chanceGen == 0) 
+			StateType.ALIVE 
+			else 
+			StateType.DEAD)
+		)
+	 }
+	}
+
+	...
+}
+\end{lstlisting}
+ 
+ 
+\subsection{Fájlból való olvasás}
+\normalsize
+Ahogy vártuk, itt is a Kotlin kompaktabb lehetőségeket biztosít. Bár magában a két kód ugyanazt csinálja, ami külön érdem a Lua szempontjából, sajnos a plusz sorok és függvények miatt sokkal időigényesebb volt a megírása, annak ellenére, hogy akkor már megvolt a Kotlin-os változat és volt honnan kiindulni. 
+\scriptsize
+\begin{lstlisting}[style=Lua]
+...
+if(instance.file_exists() == false) then return error("file not found.") end
+
+instance.lines = instance.getLines()
+
+
+local firstLine = instance.split(instance.lines[1], " ")
+
+local error = assert( #firstLine == 3,
+	"The context of the file is incorrect! PLease make sure to give a correct matrix definition!")
+if(type(error) == string) then
+	print(error)
+end
+...
+
+instance.split = function(s, delimiter)
+	local result = {};
+	for match in (s..delimiter):gmatch("(.-)"..delimiter) do
+		table.insert(result, match);
+	end
+	return result;
+end
+
+\end{lstlisting}
+Kotlin ban:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+...
+ val lines = if(relative) File("testMaps/$fileName.txt").readLines()
+	else File(fileName).readLines()
+
+val firstLine = lines[0].split(" ")
+
+if(firstLine.count() != 3)
+	throw Exception("Nem megfelelo a fajl tartalma! A matrix megadasa helytelen!")
+...
+\end{lstlisting}
+\normalsize
+Látszik, hogy a Lua-ban még külön függvényeket kellet létrehozni, hogy ugyanazt az eredményt elérjük. Első sorban kellett egy 'split' függvényt, amely a Kotlin-ban beépített volt. Emellett a fájlkezeléshez is kellett két plusz függvény, amelyeket még fel sem tüntettem: 'getLines' és a 'file\_exists'. Ez a kettő teljesen hasonló dolgot végez, mint a Kotlinos megfelelője, de sajnos nem alapértelmezett, ezért szintén meg kellett írnom őket:
+\newpage
+\scriptsize
+\begin{lstlisting}[style=Lua]
+instance.getLines = function()
+	if(instance.relative) then
+		instance.fileName = "testMaps/".. instance.fileName ..".txt"
+	end
+
+	local lines = {}
+	for line in io.lines(instance.fileName) do
+		lines[#lines + 1] = line
+	end
+	
+	return lines
+end
+
+instance.split = function(s, delimiter)
+	local result = {};
+	for match in (s..delimiter):gmatch("(.-)"..delimiter) do
+		table.insert(result, match);
+	end
+	return result;
+end
+
+\end{lstlisting}
+\normalsize
+Nem mellesleg a a Lua-ban nincs lehetőség a fájlrendszer nézegetésére, mindenféle engedély nélkül (ez a szkriptnyelvek gyakori hátulütője). Emiatt persze egy egyszerű fájlkilistázás, mint Kotlin-ban, a Lua-ban már nemhogy nem egyszerű, hanem nem lehetséges. Tehát ez a kód/függvény csak a Kotlin projektben használható:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+fun listMaps() { File("testMaps/").list().forEach { println(it) } }
+\end{lstlisting}
+És itt is látszik, hogy mennyire egyszerű és kényelmes használni.
+
+\subsection{Input olvasó}
+\normalsize
+Végre elérkeztünk ahhoz a ponthoz, hogy kimondhassam, hogy a Lua valamiben praktikusabb. Ez pedig a különböző inputok beolvasása. A Kotlin projektben a többszöri beolvasás miatt célszerű volt ezt a feladatot egy singleton osztályra bízni, ami még az ellenőrzést is elvégzi:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+object InputReader {
+	fun readNumber(): Int? {
+	
+		val line = readLine()
+		var isNumber = true
+		
+		if(line == null || line == "") return null
+			line.forEach {
+			if(!it.isDigit())  isNumber = false
+		}
+		if(isNumber){
+			return line.toInt()
+		}
+		return null
+	}
+}
+\end{lstlisting}
+\normalsize
+Látható, hogy milyen komoly ellenőrzéseket kell végeznünk egy egyszerű szám beolvasása végett. Lua-ban ez ennyire egyszerűen megoldható:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+ value = tonumber(io.read())
+\end{lstlisting}
+\normalsize
+Ahogy a Lua-s részben már korábban bemutattam \ref{subsec:l_types}, a \textbf{tonumber} függvény egy string-et vár és visszaad vagy egy number-t vagy nil-t (ha nem lehet számmá alakítani). Tehát ezzel az egy sorral megoldottuk a problémát, amire a Kotlinban egy singleton osztályt kellett írni.
+
+\newpage
+
+Egy dolgot azonban meg kell említenem. A szálkezelés hiánya miatt a Lua-ban a simuláció megkezdése után nincs lehetőség felhasználói inputra, míg a Koltin projektben van. Ezt szintén egy osztállyal oldottam meg:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+class ManualInputHandler(private val observer: GameObserver) : Runnable {
+	override fun run() {
+		var done = false
+		while (!done){
+		
+			val command = readLine()
+			when (command) {
+				"" -> {
+				observer.noticePause()
+				println("c - continue\t s - stop")
+				}
+				"c" -> observer.noticeContinue()
+				"s" -> {
+				observer.noticeStop()
+				done = true
+				}
+			}
+		}
+	}
+
+}
+\end{lstlisting}
+\normalsize
+Látható, hogy ezt kifejezetten egy szál függvényének írtuk meg. Emellett, hogy képes legyen befolyásolni a játékot, egy 'observer'-t is tartalmaz. Ez teljesen hiányzik a Lua projektből. 
+
+\subsection{Pálya (váz) létrehozása}
+
+Mindkettő projektben létrehoztam egy segédosztályt, ami a váz létrehozásáért felelős. Ebben valósul meg a fájlból való beolvasás alkalmazása. Mivel ezek egyszerű függvények, nem meglepő, hogy a két megoldás szinte teljesen azonos. Nem kellett semmilyen extrém dolgot megvalósítani (csak azokat az elemeket használják fel, amelyek megvalósítása azonban eltér, ahogy az előző részekben bemutattam). Példíil a váz létrehozása szinte szóról-szóra megegyezik:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+instance.createIndividual = function(frame)
+	print("\nI - Individual settings\t G - General settings")
+
+  if(string.upper(read()) == "G") then
+  frame = Frame(
+	  instance.getValue("Please enter the width of the testframe (integer value):"),
+	  instance.getValue("Please enter the height of the testframe (integer value):")
+          )
+  else
+  frame = Frame(
+	instance.getValue("Please enter the width of the testframe (integer value):"),
+	instance.getValue("Please enter the height of the testframe (integer value):"),
+	instance.getValue("Please enter the elapsed time between two generations (in millisec)!"), 
+	instance.getValue("Please enter the rate of the living cells (choose at least 2)!")
+        )
+  end
+
+	return frame
+end
+\end{lstlisting}
+Kotlin ban:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+private fun createIndividual(): Frame {
+
+  println("\nE - Egyeni beallitasok\t A - Altalanos")
+
+  return if(readLine() == "a")
+      Frame(  height = getValue("Kerem adja meg a vaz magassagat (egesz ertek):"),
+	      width = getValue("Kerem adja meg a vaz szelesseget (egesz ertek):"))
+
+  else Frame(  
+   getValue("Kerem adja meg a vaz magassagat (egesz ertek):"),
+   getValue("Kerem adja meg a vaz szelesseget (egesz ertek):"),
+   setGenTime("Kerem adja meg, hogy milyen gyorsan jojjon letre az uj generacio (milisec-ben)!"),
+   setLivingChance("Kerem adja meg, hogy kb. minden hanyadik sejt eljen (az ertek egesz es legalabb 2 legyen)")
+   )
+}
+\end{lstlisting}
+\normalsize
+Még az ellenőrzés is szinte teljesen megegyezik (nem a szintaxisra értve):
+\scriptsize
+\begin{lstlisting}[style=Lua]
+instance.getValue = function(msg)
+	local correct = false
+	local value
+	
+	while(correct ~= true) do
+		print("\n"..msg.."\t")
+		value = tonumber(read())
+		if(type(value) == type(0)) then
+			correct = true
+		else
+		   print("Type error! Please use integer value!")
+		end
+	end
+
+return value
+end
+\end{lstlisting}
+Kotlin ban:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+private fun getValue(message: String): Int {
+	var value: Int? = 0
+	var correct = false
+	
+	while (!correct){
+		print("\n$message\t")
+		value = InputReader.readNumber()
+		if(value != null) 
+			correct = true
+		else
+		   println("Tipushiba! Kerem adjon meg egy egesz erteket!")
+	}
+	return value!!
+}
+\end{lstlisting}
+\normalsize
+Érdemes megfigyelni, hogy míg a Kotlin kódban \textbf{'null check'} van, addig a Lua a \textbf{'type check'} -et használja ki. 
+
+\subsection{Játékmag}
+
+Utoljára pedig szeretnék kitérni, hogy hogyan is indul és működik a két projektben maga a játék. Mint már többször is említettem, a Lua-ban nem lehet többszálúságot megvalósítani, így ott egyszerűen a 'játékloop'-ot elindító függvényt meghívva már futtatjuk is az alkalmazást:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+require("FrameMaker").getInstance().createFrame():simulate()
+\end{lstlisting}
+\normalsize
+Érdemes azért megfigyelni, hogy mennyire kompaktul tudjuk azt megtenni. A 'require' függvény visszaadja az előbb említett váz csináló modult, amin rögtön meghívjuk a 'createFrame' függvényt, ami már a 'Frame'-et visszaadja. Majd ezen elindítjuk a játék loop-ot.
+
+Kotlin-ban a többszálúság miatt a gameloop kezelését egy osztályra bíztam:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+class Game(private val frame: Frame) {
+
+	private val gameLoop = Thread(frame)
+	private val inputWatcher = Thread(ManualInputHandler(frame))
+	
+	fun start(){
+	
+		frame.printResult()
+		inputWatcher.start()
+		gameLoop.start()
+	
+	}
+}
+\end{lstlisting}
+\normalsize
+Ennek tényleg csak az a felelőssége, hogy létrehozza, majd elindítja a szálakat. És ezzel együtt a gameloop-ot. A main itt is csak egy sorból áll:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+fun main(args: Array<String>) {
+	Game(FrameMaker.createFrame()).start()
+}
+\end{lstlisting}
+\normalsize
+Ez már kicsit jobban hasonlít a Lua-s megoldásra. Valójában a plusz dolog csak a szálas megoldás. Ennek hiányában tényleg megegyezne a két játékindítás.
+
+\subsection{Összegzés}
+\label{subsec:p_summL}
+
+A projektek készítése során alapvetően a Kotlin tűnt egyszerűbbnek és kényelmesebbnek. Ez persze nem meglepő, hiszen eddig csak OO nyelvekkel foglalkoztam, így egy viszonylag ismerős környezetben kellett újra alkotnom és emiatt könnyebb volt megcsinálni ezt a projektet. 
+
+Ugyanakkor mindenképp kiemelném, hogy az enyhe többletkód ellenére a Lua projekt írása is viszonylag kényelmesen és gyorsan haladt. Nagyon intuitív és könnyen tanulható nyelv. Egyszerűen kigondoltam, hogy hogyan kellene működnie Lua-ban az egyes elemeknek és már készen is volt. Persze ez több időt vett igénybe, hiszen meg kellett szokni egy teljesen más látásmódot. Ami viszont a Lua rovására írható, az egyértelműen a szkriptnyelvek tipikus hátránya. Mégpedig, hogy nincs fordítási idejő ellenőrzés. Rengetegszer estem abba a hibába, hogy egyszerűen elgépeltem egy szót, amit persze nem jelez hibának, így csak futás közben jöttek elő a kellemetlenségek. Valamint a teljes projektet át kellett látnom, hogy tudjam használni az egyes függvényeket. Ez persze így elég értelmetlenül hangzik, mert hát csak én dolgoztam vele, nekem kellene mindent tudnom. És ez teljesen igaz. De például, ha megkérném egy kollégámat, hogy egészítse ki 1-2 függvénnyel a kódom, akkor eléggé meg lenne lőve és jó ideig kellene bujkálni a kódban, hogy rájöjjön pl. ''itt most mit is ad vissza?'' vagy ''van ilyen attribútuma?''. És én is ugyanígy lennék vele. Tehát Lua-ban nagyon meg kell tervezni, hogy hogyan nézzen ki egy projekt, mert a ''kiegészítem itt\dots kicsit írok még ide\dots nagyban rontják az átláthatóságot. Kotlin-ban azért erre kisebb az esély. Ez talán leginkább a ''dynamic type''-nak köszönhető. Persze ez inkább annak okoz problémát, aki kevés Lua projektet látott. Tipikusan nem szoktak bonyolultak lenni és kis utánajárás után gyorsan meg lehet érteni mi mit csinál.
+
+Nem mellesleg a Lua szkriptek mind ''open source''-ok, szóval bárminek a kódját bármikor megnézheti az ember, így könnyen megértheti a működését és tanulhat is belőle. Összességében a kisebb projektek megvalósítására a Lua teljesen alkalmas, de egy komplexebb alkalmazást már nem igazán lenne célszerű ebben írni. És ezzel előreutalok a BlackJack projektek konklúziójára, mert ezt a meglátást ott is megtehetném.
+
+
+
+\section{BlackJack}
+\label{sec:p_blackjack}
+
+\subsection{A játékról}
+
+A BlackJack-nek rengeteg változata van, amiket a mia kaszinókban lehet játszani: klasszikus, Atlantic city, európai, prémium, stb\dots~Az én alkalmazásomban a klasszikus póker szabályait használtam fel. Ezt egy-két helyen kiegészítettem vagy egy kicsit eltértem, de csupán azért, hogy megmutassam, hogy ezek alig pár sor megváltoztatását jelentik a kódban. A jelenlegi szabályok a következők:
+
+\bigskip
+
+A klasszikus blackjackben több, 52 lapos paklit használnak. A paklikat együtt keverik meg, mielőtt minden kezet kiosztanának, és az osztó nem kap zárt kártyát. Az osztóknak húzniuk kell, ha a lap összesített értéke 16 vagy kevesebb és ha blackjacked van, az 3:2 oddsszal fizet.
+A játékos lapja blackjackkel szemben 3:2 oddsszal veszít, viszont nem tud negatív összegbe menni a pénze.
+
+A játékban a lapok értéke a számoknál megegyezik a szám értékével (tehát kilences = 9, kettes = 2), a figurák értéke mindig 11. Az ász kivételes eset, ugyanis tud egyként és tizenegyként is viselkedni. Alap esetben 11 az értéke, de dinamikusan megváltozik 1-re (ekkor mondjuk, hogy puha a kéz), ha a lapok összértéke meghaladja a 21-et. Amennyiben több ász van egy kézben és a lapok értéke több, mint 21, akkor addig váltanak az ászok 11-ről 1 értékűre, amíg 21 alá tudnak menni. 21 alatt az ász értéke 11 marad.
+
+A játékosnak minden körben lehetősége van emelni. Maximum emelési lehetősége mindig az adott pénzösszege. Lehet tét nélkül is játszani. A játékosnak lehetősége van húzni, amíg a kezében a kártyáinak az értéke el nem éri a 21-et. Ezután nincs lehetősége további lapkérésre. A játékos mindig duplázhat minden kéznél, ami azt jelenti, hogy megduplázhatod az eredeti tétedet. Amennyiben elfogy a pénze a duplázás miatt, akkor nem keletkezik plusz összeg, hanem all-in szerűen mindenét felteszi a játékos. 
+
+A játékos ketté is oszthatja a két kártyát, ha azok párt alkotnak. Tehát ha kilences-kilences, király-király vagy hetes-hetes kerül hozzád, két külön kezet csinálhatsz belőlük és az eddigi tétet megfelezve a két kéz külön játszhat. A játékosok kétszer oszthatják ketté a lapjukat, összesen három kezet létrehozva. A játékosok bármilyen kéznél duplázhatnak. 
+
+A játékosok nem „adhatják fel” a klasszikus blackjack asztaloknál. Csak megállni tudnak.
+
+\bigskip
+
+A játék maga kétszemélyes (a bank és a játékos), de a Kotlin projektben még gondoltam a bővíthetőségre, illetve, hogy ha esetleg nem csak klasszikus blackjack-et szeretnének játszani, hanem más változatot, akkor erre legyen felkészülve a modell (nagy figyelmet fordítva az OCP elvre). A Lua projekt kicsit egyszerűbb ebben a témában. Ott leginkább csak a klasszikus változatra összpontosítottam. Ennek elsődleges oka inkább az, hogy az OO tervezési elveket már nem olyan egyszerűen tudja megvalósítani. Másrészt viszont annak hátrányaival sem kell foglalkoznia (ezt majd a későbbi példák során jobban kifejtem). 
+
+\subsection{A classic viselkedés}
+
+A klasszikus blackjack szabályait ún. 'behavior' szerűen valósítottam meg. Ez a \textbf{Strategy} tervezési mintát követi Kotlin-ban. Ezt egy behavior interfész implementációval értem el, amlyet jelen esetben egy 'classic' behavoir osztály valósít meg. 
+
+Kotlinban ezt nagyon szépen lehet megvalósítani:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+interface Behavior {
+	fun hit(cards: ArrayList<Card>) : Boolean
+	fun double(cards: ArrayList<Card>) : Boolean
+	fun split(cards: ArrayList<Card>, numberOfDecks: Int) : Boolean
+	fun getMaximumNumberOfDecks() : Int
+}
+
+abstract class Classic : Behavior{
+	override fun getMaximumNumberOfDecks(): Int = 1
+	override fun hit(cards: ArrayList<Card>): Boolean = true
+	override fun double(cards: ArrayList<Card>): Boolean = true
+	override fun split(cards: ArrayList<Card>, numberOfDecks: Int): Boolean = true
+}
+\end{lstlisting}
+\normalsize
+Definiáltam egy alapértelmezést a klasszikus viselkedésnek és ha szükséges, a leszármazottak ezeket felül tudják írni, ha más viselkedést szeretnének. Igazából itt látszik, amit korábban említettem, hogy csupán 1-2 sort kell átírni és máris kicsit tudunk módosítani a szabályokon.
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+class ClassicBank : Classic(){
+	override fun hit(cards: ArrayList<Card>): Boolean = Calculator.evaluate(cards) <= 16
+	override fun double(cards: ArrayList<Card>): Boolean = false
+	override fun split(cards: ArrayList<Card>, numberOfDecks: Int): Boolean = false
+}
+\end{lstlisting}
+\normalsize
+Ezzel a 'strategy' megoldással csupán a bővíthetőség lehetőségét akartam illusztrálni, hogy ha valaki más változatot játszana, akkor ennyire egyszerűen kiegészítheti a kódot.
+
+\newpage
+
+Ugyanakkor a Lua-ban ezt a ''pattern''-t nem lehet ilyen szépen megvalósítani, habár nem lehetetlen. Csupán annyi a különbség, hogy nem tudjuk kikényszeríteni sem az interfész, sem az absztrakt osztály fogalmát. Egyszerűen, ehelyett csak definiáljuk az alap klasszikus viselkedést:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+local ClassicBehavior = {}
+...
+function ClassicBehavior:getMaximumNumberOfDecks()
+	return 1
+end
+
+function ClassicBehavior:hit()
+	return true
+end
+
+function ClassicBehavior:double()
+	return true
+end
+
+function ClassicBehavior:split()
+	return true
+end
+\end{lstlisting}
+\normalsize
+Látható, hogy lényegén teljesen megegyezik a Kotlin-os megfelelőjének, csupán nem absztrakt, így létre lehet hozni. De ez csak alkalmazás kérdése. Ezt az osztályt ugyanis csak közös ősnek lett megírva, hogy aki akarja, azt felhasználhatja. Illetve, hogy ezt a négy függvényt használja minden 'behavior'.
+
+A felhasznált viselkedések már jóval kifejezőbbek:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+local ClassicBank = {}
+setmetatable(ClassicBank, {
+	__index = ClassicBehavior,
+	__call = function(class, ...)
+	return class:new(...)
+	end
+})
+function ClassicBank:hit(cards)
+	return Calculator.evaluate(cards) <= 16
+end
+
+return ClassicBank
+\end{lstlisting}
+\normalsize
+Jól látszik az öröklés lehetősége. De ugyanakkor nem muszáj alkalmazni. Ha tudjuk, hogy csupán egy függvényt használunk majd az 'alap viselkedés'-ből, akkor azt egyszerűen megírhatjuk. Hiszen nincs Lua-ban function overload. Ha létezik a prototípusban a használandó függvény, akkor az ősben már nem keres és, ha más függvény nem is kell, akkor nincs is rá szükség. Vegyük észre, hogy ez mennyire kényelmes tud lenni. Hiszen csak a szükséges függvényeket definiáljuk, ami a Kotlin-os verzió esetén akár kényelmetlen 'override'-ok írásával jár. Lua-ban ''ha nincs ré szükség, akkor nem írom meg\dots'' módszert lehet alkalmazni.
+
+\newpage
+
+\subsection{Definiált típusok és enum-ok}
+\label{subsec:p_enum}
+Kotlin-ban ad a nyelv lehetőséget enum-ok létrehozására:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+enum class CardType {
+	TWO,
+	THREE,
+	FOUR,
+	FIVE,
+	SIX,
+	SEVEN,
+	EIGHT,
+	NINE,
+	TEN,
+	JACK,
+	QUEEN,
+	KING,
+	ACE;
+	fun number() =
+	when(ordinal){
+		in JACK.ordinal..ACE.ordinal -> 11
+		else -> ordinal + 2
+	}
+}
+\end{lstlisting}
+\normalsize
+Sőt, akár enum osztályokat is tudunk használni és így akár még függvényeket is írhatunk. Lua-ben erre egyszerűen egy table-t alkalmazhatunk:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+local CardType = {
+	TWO = 2,
+	THREE = 3,
+	FOUR = 4,
+	FIVE = 5,
+	SIX = 6,
+	SEVEN = 7,
+	EIGHT = 8,
+	NINE = 9,
+	TEN = 10,
+	JACK = 11,
+	QUEEN = 11,
+	KING = 11,
+	ACE = 11;
+}
+return CardType
+\end{lstlisting}
+\normalsize
+Függvény írásának lehetősége fennáll, de nem olyan könnyű elérni vele azt az eredményt, amit szeretnénk. Ezért egyszerűen inkább kihasználjuk a kulcs-érték páros megoldást. A többi definiált típus esetében a is hasonló megoldásokat alkalmaztam.
+
+\newpage
+
+\subsection{Inputkezelés}
+Ahogy az életjátékos projektben is már láthattuk, a Lua a szöveg beolvasását és számmá alakítását sokkal egyszerűbben meg tudja valósítani. 
+\scriptsize
+\begin{lstlisting}[style=Lua]
+local readNumber = function()
+	return tonumber(read())
+end
+\end{lstlisting}
+\normalsize
+Kotlin-ban ezt az eredményt csak egy alapos ellenőrző függvény után tudjuk elérni:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+override fun readNumber(): Double? {
+	val line = readLine()
+	var isNumber = true
+	
+	if(line == null || line == "") return null
+	
+	val numberOfDots = line.count { it == '.' }
+	line.forEach {
+	when {
+		it == '.' && numberOfDots > 1 -> isNumber = false
+		it == '.' && numberOfDots <= 1 -> isNumber = true
+		!it.isDigit() -> isNumber = false
+		}
+	}
+	
+	if(isNumber){
+		return line.toDouble()
+	}
+	return null
+}
+\end{lstlisting}
+\normalsize
+Persze adottak a kompakt megoldások, mint például a beépített 'count' függvény, de még így is láthatóan hosszabb a megoldás. A Kotlin projektben még muszáj kitérnem egy szükséges kiegészítésre. Láthatjuk, hogy az inputkezelést is interfészekkel oldottam meg, mivel a későbbiekben láthatjuk majd, hogy a két résztvevőnk ugyanúgy rendelkezik egy input olvasóval, de a banknak erre nincs szüksége ár igazából. Így számára külön definiáltam egy olyan olvasót, amely egy nagyon egyszerű implementációt valósít meg:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+class NoInputHandler : InputHandler{
+	override fun readNumber(): Double? = null
+	override fun readKey(): ActionType = ActionType.ERROR
+}
+\end{lstlisting}
+\normalsize
+Ezt a Lua projektben teljesen kihagyhattam, mert ott nem köt a típusosságból származó kötelező viselkedés. Ezt úgy értem, hogy a banknak nem számít milyen input olvasót kap, hiszen nem ellenőriz típust és mivel nem is foglalkozik vele, így egyszerűen nem kap értelmes változót (ezt majd egy későbbi példában szemléltetem).
+
+\newpage
+
+\subsection{Kártya}
+A kártya tulajdonképpen nem tartalmaz mást, mint adatokat. Az ilyen típusú osztályok megvalósítására pedig igen kellemes megoldást nyújt a Kotlin:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+data class Card(val value: CardType, val color: CardColor, var hidden: Boolean = false)
+\end{lstlisting}
+\normalsize
+Csupán egy sor és az egész osztály kész. Nincs semmilyen 'boiler plate'. Lua-ban annak ellenére, hogy minimális a kód, ezt semmiféleképpen sem tudja utánozni:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+local Card = {}
+setmetatable(Card, {
+	__call = function(class,...)
+	return class:new(...)
+	end
+})
+function Card:new(value, color, number, hidden)
+	local newCard = setmetatable({}, self)
+	self.__index = self
+	newCard.value = value
+	newCard.color = color
+	newCard.number = number
+	newCard.hidden = hidden or false
+	return newCard
+end
+return Card
+\end{lstlisting}
+\normalsize
+\subsection{Pakli}
+A pakli esetében it teljesen hasonló az eset. A Kotlin ugyanúgy egy egyszerű data class-al megoldja, míg a Lua-ban hasonló módon írnánk meg az osztály prototípusát, mint a kártyánál.
+
+\subsection{Osztó}
+Az osztó szerepe lényegében a kártyalapok biztosítása. Egy asztalnak egy osztója van és az összes résztvevő ezt használja. A megvalósítása a két projektben szinte teljesen azonos:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+function Dealer:new(numberOfUsedDecks, observer)
+	local newDealer = setmetatable({}, self)
+	self.__index = self
+	newDealer.numberOfUsedDecks = numberOfUsedDecks or 1
+	newDealer.observer = observer
+	newDealer.maxCardNumber = newDealer.numberOfUsedDecks * 52
+	newDealer.deckPool = newDealer:createDeck()
+	newDealer:shuffle()
+	return newDealer
+end
+\end{lstlisting}
+\normalsize
+Kotlin-ban:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+open class Dealer(val numberOfDecksUsed: Int, val observer: DealerObserver) {
+
+	private val maxCardNumber = 52 * numberOfDecksUsed
+	protected var deckPool: ArrayList<Card> = createDeck()
+	
+	init{
+		deckPool.shuffle()
+	}
+...
+\end{lstlisting}
+\normalsize
+Amire viszont ki kell térnem, az az input beolvasásnál előjött probléma egy másik oldala. Ez bár egy összetettebb probléma, sajnos az OO nyelvek gyakori hátránya. A \textbf{dependancy injection} fogalma mindig is együtt járt az OO szemlélettel. Ugyanis jól látszik a Kotlin kódból, hogy egy 'DealerObserver' objektum szükséges a rendes működéshez, ami nem lesz más, mint maga az asztal. És emiatt az asztalnak már léteznie kell, mikor az osztót létre szeretnénk hozni. Hogy ez miért is probléma. Az OO egyik szépsége, hogy egy osztály elrejti az adattagjait, hogy kívülről ne lehessen módosítani (ezáltal elrontani a belső állapotát). 
+
+\newpage
+
+Ez pedig a tesztelésnél igen kellemetlen problémákat eredményez. Ugyanis létre kellett hoznom már most egy segédosztályt a helyes működés tesztelésére, aminek a célja, hogy a kártyákat és sorrendjüket előre meg tudjam határozni:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+class TesterDealer(numberOfDecksUsed: Int, observer: DealerObserver)
+: Dealer(numberOfDecksUsed, observer){
+
+	override fun giveCard(): Card = deckPool.removeAt(0)
+	fun createNewDeck(cards: ArrayList<Card>) { deckPool = cards }
+}
+\end{lstlisting}
+\normalsize
+Ez mind plusz kódolást jelentett, de nem csak itt, hanem a unit tesztek írása közben is. A Lua ennél sokkal egyszerűbb megoldást ad. Mivel ott a prototípus nem zárt a változtatásra, így egyszerűen definiáltam egy új osztót, amely azt a 'giveCard' függvényt megvalósítja, amit szintén tudok manipulálni. 
+\scriptsize
+\begin{lstlisting}[style=Lua]
+local testDealer = {
+	deckPool = {}
+}
+function testDealer:giveCard()
+	return table.remove(self.deckPool, 1)
+end
+...
+function testGameWithWinByBlackJackAndStopAndQuit()
+
+	local table = Table( 5, ConsoleInputHandler)
+	table.dealer = testDealer
+...
+\end{lstlisting}
+\normalsize
+Ez sokkal kényelmesebb és egyszerűbb megoldás és itt látszik meg, hogy az OO szemléletnek is vannak hátulütői.
+\subsection{A ''játékban résztvevő''}
+
+Ez az osztály felel az egységes kezelésért. A közös ősosztály a résztvevők számára. Ebben definiáljuk, hogy mik az alapvető viselkedései az egyes résztvevőnek az asztalnál. Ez szintén a bővíthetőség az OO szemlélet miatt lett így létrehozva (akárcsak a viselkedésnél, a minta lényege teljesen hasonló). A Lua projektben is is megjelenik és a lényege itt is az, hogy egy alap prototípust biztosít (egy példát), hogy ha valaki bővítené a kódot, akkor ezekre a függvényekre és attribútumokra szüksége lesz.
+
+\subsection{A játékos}
+
+A játékos modelljét először Kotlinban írtam meg és ennek mintájára készült a Lua projekt is. Nem meglepő, hogy a megoldások rendkívül hasonlóak. Sőt, a szintaxistól eltekintve szinte semmilyen nagyobb különbséget nem lehet felhozni. Nagyon szépen lehet látni, hogy alapvetően a logikát ugyanúgy meg lehet valósítani mind a két nyelvben, ami alatt inkább azt értem, hogy az egyik nyelvben megírt gondolatokat szinte egy az egyben átültetve a mások kódba (a szintaxis persze változik), ugyanazt az eredményt kapjuk. És itt most nem a 'copy -- paste'-re szeretnék utalni, hanem a két nyelv nem igényel ilyen szinten teljesen más gondolkodási módot.
+
+\newpage
+
+\subsection{A bank}
+
+Akárcsak a játékosnál, itt is lényegében teljesen megegyezik a két kód. Csupán a Kotlin kompakt használatának alkalmazásával tudunk 1-2 sort nyerni.
+\scriptsize
+\begin{lstlisting}[style=Lua]
+function Bank:showDeck()
+	return self.deck
+end
+
+function Bank:preparation()
+	self.deck.cards = {}
+end
+\end{lstlisting}
+\normalsize
+Míg kotlinban:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+override fun showDeck(): Deck = deck
+
+override fun preparation() { deck.cards.clear() }
+\end{lstlisting}
+\normalsize
+Bár azért érdemes megfigyelni a sajátos megoldást a Lua-ban a kártya pakli törlésének. Míg Kotlin-ban a meglévő listát töröljük, de maga a váz megmarad, addig  Lua-ban egyszerűen kap egy újat. Persze azért még mindig lényeges különbség, hogy a Kotlin-os megoldásban a lista saját függvényei nem vesznek el, de ha csak tényleg adattárolásra használjuk, akkor mind a két eset teljesen jó.
+
+\subsection{Az asztal}
+
+Az asztal maga a játéktér, hiszen ez valósítja meg azt az állapotgépet, ami által az alkalmazás működik. Ami viszont érdekes, hogy itt is szinte teljesen megegyezik a két projekt megoldása. Azonban egy dologra mindenképpen ki kell térni, mert lényegi különbség nagyjából csak itt jelenik meg. Ez pedig a konstruktor:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+function Table:new(numberOfDecks, inputHandler)
+	local newTable = setmetatable({}, self)
+	self.__index = self
+	newTable.inputHandler = inputHandler
+	newTable.dealer = Dealer(numberOfDecks, self)
+	newTable.player = Player(0, newTable.dealer, ClassicPlayer(), inputHandler, newTable)
+	newTable.bank = Bank(0, newTable.dealer, ClassicBank(), nil, newTable)
+	newTable.state = GameState.NEW
+	newTable.isLowDeck = false
+	newTable.tableView = ClassicTableView(newTable.player, newTable.bank)
+	newTable.wincount = 0
+	newTable.loseCount = 0
+return newTable
+end
+\end{lstlisting}
+\normalsize
+Míg kotlinban:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+class Table(numberOfDecks: Int, private val inputHandler: InputHandler, testing: Boolean = false) 
+	: DealerObserver, PlayerObserver {
+
+	val dealer = if(!testing) Dealer(numberOfDecks, this) else TesterDealer(numberOfDecks, this)
+	
+	private val player = Player(0.0, dealer, ClassicPlayer(), inputHandler, this)
+	
+	private val bank = Bank(0.0, dealer, ClassicBank(), this)
+	
+	private var state = GameState.NEW
+	
+	private var isLowDeck = false
+	
+	private val tableView = ClassicTableView(player, bank)
+	
+	var winCount = 0
+	private set
+	var loseCount = 0
+private set
+...
+\end{lstlisting}
+\normalsize
+Azt érdemes előtte tudni, hogy mind a Player, mind a Bank konstruktora ugyanazokat a paramétereket várja, ugyanabban a sorrendben. Leginkább a bank létrehozásában van lényegi eltérés. Itt láthatjuk ugyanis azokat a szemléletes ''több kód''-nak a hasznát. 
+
+\newpage
+
+A bank ugyanis a Kotlin projetben rendelkezik egy második konstruktorral: 
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+constructor( basicAmountOfMoney: Double,
+	dealer: Dealer,
+	behavior: Behavior,
+	observer: PlayerObserver)
+	: this(basicAmountOfMoney, dealer, behavior, NoInputHandler(), observer)
+\end{lstlisting}
+\normalsize
+Ezen látszik, hogy hol van szerepe a különleges inputkezelésnek. 
+
+A másik szembetűnő részlet az osztó létrehozása. Mint ahogy említettem ennek az oka, hogy a tesztelést lehetségessé tegyem. Ezzel a Lua projektben nem kell külön foglalkozni és ezért érdekes módon szebb OO megvalósítást tesz lehetővé (leszámítva persze, hogy a Lua-s Table minden attribútumát kívülről el lehet érni és megváltoztatni).
+
+\subsection{A játékmenet ''figyelő''}
+\label{subsec:p_observer}
+Ami még talán feltűnt az előző példában, hogy a Kotlin projektben a Table megvalósít két interfész implementációt. Erre azért van szükség, hogy a kirajzolást \textbf{MVC}~modell szerűen tudjuk megvalósítani, amellyel megint csak az OO felfogást erősítem. Hiszen így a logikát és a kirajzolást különválasztom és más-más osztály felelőssége lesz.
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+interface PlayerObserver {
+	fun noticeNewGame()
+	fun noticeEndGame()
+	fun noticeUpdate()
+}
+
+Table{
+...
+    override fun noticeUpdate() { tableView.update() }
+	override fun noticeNewGame() {state = GameState.NEW }
+	override fun noticeEndGame() { state = GameState.END }
+...
+
+}
+\end{lstlisting}
+\normalsize
+Valamint az \textbf{TDA} elvet követve létrehoztam egy 'DealerObserver' interfészt is, amely segítségével az osztó tud jelezni, hogy kevés a lapja, az asztalnak, aki erre tud reagálni:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+interface DealerObserver {
+	fun noticeLowDeck()
+}
+Dealer{
+...
+	open fun giveCard() : Card {
+		if(deckPool.count() < maxCardNumber / 2) observer.noticeLowDeck()
+		return deckPool.removeAt(0)
+	}
+...
+}
+Table{
+...
+	override fun noticeLowDeck() { isLowDeck = true }
+...
+	private fun play(){
+	
+		if(isLowDeck){
+			dealer.createNewDeck()
+			isLowDeck = false
+	
+		}
+	...
+	}
+...
+}
+\end{lstlisting}
+\normalsize
+
+\newpage
+
+Ez a megvalósítás megjelenik a Lua projektben is. Itt viszont nem tudjuk jelezni, hogy ezek interfész függvények (maximum kommentek segítségével).
+\scriptsize
+\begin{lstlisting}[style=Lua]
+Table = {}
+...
+-- Interface functions
+
+function Table:noticeUpdate()
+	self.tableView:update()
+end
+
+function Table:noticeNewGame()
+	self.state = GameState.NEW
+end
+
+function Table:noticeEndGame()
+	self.state = GameState.END
+end
+
+function Table:noticeLowDeck()
+	self.isLowDeck = true
+end
+\end{lstlisting}
+\normalsize
+Ezek ugyanúgy viselkednek, mint a Kotlin-os megfelelőjük. Csak itt mind a résztvevők, mind a az osztó magát az egész Table objektumot látja, minden más adattagjával, hiszen nem interfészként van értelmezve. Itt akkor a példában bemutattam egy korábbi megjegyzésem (\ref{comment1}) értelmezését. 
+
+\subsection{Az eredményszámító}
+
+Ez az osztály felel a kártyák kiértékeléséért, illetve az eredmény meghatározását is ide szerveztem ki. Itt érvényesül a szabályzat másik része, ami a kártyákra vonatkozik.
+
+A két megoldás itt is hasonló, azonban a definiált típusok használatában vannak eltérések.
+\scriptsize
+\begin{lstlisting}[style=Lua]
+local evaluate = function(cards)
+	local sum = 0
+	
+	for _, card in ipairs(cards) do
+		sum = sum + card.number
+	end
+...
+\end{lstlisting}
+\normalsize
+Míg kotlinban:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+fun evaluate(cards: ArrayList<Card>) : Int{
+	var sum = 0
+	cards.forEach { sum += it.value.number() }
+...
+\end{lstlisting}
+\normalsize
+Alapból már az feltűnik, hogy Lua-ban nincs \textbf{+=} operátor, emiatt a basic megoldás. A másik, az enum-ok használata. Visszaemlékezve, hogy hogyan voltak definiálva külön-külön (\ref{subsec:p_enum}) egyből látszik, hogy hogyan is működik. Mégis azért egy nagy különbség, hogy a Kotlin-ban maga az enum osztály lehetőséget nyújt, hogy a típus és az értéke együtt használható legyen (és ezért csak egy attribútum felel), addig a Lua projektben a 'value' és a 'number' változó oldja meg ugyanazt a 'Card' osztálynál. Erre külön oda kell figyelni, ami a kényelmes használatot rontja és billenti az előnyt a Kotlin oldalára.
+
+Az eremény kiszámolását végző függvény lényegében ugyanaz mind a két projektben, azonban szokás szerint a Kotlin sokkal kompaktabb módon tudja leírni a többszörös elágazást. Ez ismét csak egy pozitívum. 
+
+\subsection{Kirajzolás}
+
+A kirajzolás igazából két részre tudjuk osztani. Egy kisebb és egy nagyobb egységre. A kisebb egység maga az egyes kártyák kirajzolása, amelyért mindkét projektben egy osztály a felelős: 'UnicodeMaker' illetve 'CardMaker'. Érdemes már a nevükben rejlő különbséget is megfigyelni. A Kotlin 'UnicodeMaker' osztály ugyanis a kártya unicode-ját adja vissza és a kirajzolást azt az arra specializálódott, kirajzolásért felelős osztály majd megoldja. Mig a Lua-s megoldásban már maga a 'CardMaker' osztály felelős a kirajzolásért. 
+
+Ennek oka, hogy Lua-ban sokkal dinamikusabban lehet létrehozni unicode értéket:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+ io.write(utf8.char(tonumber(cardUnicodeString,16)))
+\end{lstlisting}
+\normalsize
+Itt látszik, hogy egy string-ből alakít unicode-ot. Míg Kotlin-ban ez nem ilyen egyszerű. Ugyanis az escape karaktereket nem lehet csak úgy dinamikusan összefűzni. A megoldás eléggé összetett, bár szerencsére a Kotlin még segít nekünk ebben:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+fun Char.or(other: Char?): Char = this.toInt().or(other?.toInt()!!).toChar()
+...
+	val firstChar = '\uD83C'
+	val secondChar = colorChar.or(list[card.value])
+	
+	return "$firstChar$secondChar"
+...
+\end{lstlisting}
+\normalsize
+Itt lényegében bitműveletekkel összeszerkesztjük a kívánt unicode karaktert. Erre a Kotlin 'extension function' nyelvi elemmel nyújt segítséget. Ezáltal plusz viselkedést definiálhatunk a 'Char' típusnak, amely segítségével a kívánt hatást elérhetjük.
+
+\bigskip
+
+A kirajzolás másik nagyobb egysége, az egyes résztvevők megjelenítéséért felelős osztályok. A Kotlin itt is az MVC modellt követi, azaz rendelkezik egy 'updatable' interfésszel, amit a résztvevők nézetei implementálnak:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+interface Updatable {
+	fun update()
+}
+
+class ClassicBankView(private val bank: Bank) : ClassicView() {
+	override fun update() {
+		val deck =  bank.showDeck()
+		deck.cards.forEach { print(UnicodeMaker.cardToUnicode(it)) }
+	}
+}
+...
+
+\end{lstlisting}
+\normalsize
+Ezekért azonban nem az egyes játékosok tartalmazzák, hanem a Table objektum és a 'PlyerObserver' segítségével jeleznek, hogy megváltozott az állapotuk. A table pedig erre kirajzoltatja az új állapotot:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+class ClassicTableView(player: Player, bank: Bank) : ClassicView() {
+
+	private val playerView = ClassicPlayerView(player)
+	private val bankView = ClassicBankView(bank)
+	
+	override fun update() {
+	
+		bankView.update()
+		println("\n")
+		playerView.update()
+	}
+}
+
+\end{lstlisting}
+\normalsize
+\newpage
+Ez teljesen hasonlóan van megvalósítva a Lua projektben is:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+local ClassicBankView = {}
+
+setmetatable(ClassicBankView, {
+	__call = function(class, ...)
+		return class:new(...)
+	end
+})
+
+function ClassicBankView:new(bank)
+	local newView = setmetatable({}, self)
+	self.__index = self
+	newView.bank = bank
+	return newView
+end
+
+function ClassicBankView:update()
+	for _, card in ipairs(self.bank:showDeck().cards) do
+		CardMaker.printCard(card)
+	end
+	print("\n")
+end
+
+return ClassicBankView
+
+...
+
+local ClassicTableView = {}
+
+setmetatable(ClassicTableView, {
+	__call = function(class, ...)
+		return class:new(...)
+	end
+})
+
+function ClassicTableView:new(player, bank)
+	local newView = setmetatable({}, self)
+	self.__index = self
+	newView.player = PlayerView(player)
+	newView.bank = BankView(bank)
+	return newView
+end
+
+function ClassicTableView:update()
+	self.bank:update()
+	self.player:update()
+end
+
+return ClassicTableView
+\end{lstlisting}
+\normalsize
+
+\subsection{A játékmag}
+
+Utoljára még magáról a játék indításáról szeretnék beszélni egy kicsit. A megoldás is itt hasonló, akárcsak az életjátéknál:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+fun main(args: Array<String>) {
+
+	Table(numberOfDecks =  8, inputHandler = ConsoleInputHandler()).startGame()
+
+}
+\end{lstlisting}
+\normalsize
+A Lua projektben:
+\scriptsize
+\begin{lstlisting}[style=Lua]
+local InputHandler = require "input.ConsoleInputHandler":getInstance()
+
+local Table = require "entity.Table"
+
+Table(6, InputHandler):startGame()
+\end{lstlisting}
+\normalsize
+\newpage
+Ugye itt nem kell szálakkal foglalkozni, így mind a kettő megoldás egy állapotgépet használ a játék magjaként.
+\scriptsize
+\begin{lstlisting}[style=Lua]
+function Table:startGame()
+print("\nWelcome to the table! Do not forget, the house always wins!")
+	
+	while(self.state ~= GameState.QUIT) do
+		if(self.state == GameState.RUNNING) then self:play()
+		elseif(self.state == GameState.NEW) then self:settings()
+		elseif(self.state == GameState.END) then self:showStatistics()
+		elseif(self.state == GameState.QUIT) then
+		end
+	end
+	
+	print("Thank you for choosing our BlackJack game!")
+end
+\end{lstlisting}
+\normalsize
+És a Kotlin projektben is teljesen hasonló a megoldás.
+\subsection{Összegzés}
+
+Összegzésként ugyanazokat a megfigyeléseket és tapasztalatokat szereztem, mint az életjáték projekt kapcsán\ref{subsec:p_summL}. Azonban itt szeretnék egy kicsit kitérni a unit tesztek írására. Ugyanis ez egy kicsit komplexebb játék volt az életjátékhoz képest és az OO megoldás megmutatta, hogy néhány hátránya hol tud nagyon kijönni. Alap esetben a Lua projekt unit tesztjeinek írása kényelmesebb volt, mint a Kotlin-é, annak ellenére, hogy az IDE is ad támogatást és a 'JUnit' használata is kényelmesebb, mint a Lua-s \textbf{luaunit} használata.
+
+\section{Vélemények}
+
+Így mind a négy projekt összehasonlítása után elmondhatom, hogy a Lua igazán figyelemreméltó nyelv, hiszen, bár alapból nem OO szemléletű nyelv, akkor is meg lehet benne valósítani szinte minden OO lehetőséget (kisebb-nagyobb eltérések híján). Persze az OO séma megvalósítása elég erős szabályokat és elveket takar, amiket nyilván nem tud betartani mindig a Lua (legalábbis nagy nehézségek árán), de kinézetre meg lehet valósítani, és ha valaki ezzel a hozzáállással használja, akkor a projektekből is látszik, hogy szinte ugyanaz a végeredmény.
+
+Mégis konklúzióként az mondanám, hogy jobb volt Kotlin-ban dolgozni. Nemcsak az OO szemlélet, hanem az IDE támogatása és a szélesebb lehetőségek tárháza is nagy szerepet játszik ilyenkor. És ebben a Lua sajnos hátrébb szorul.  
+
+
+
+
+
+
+

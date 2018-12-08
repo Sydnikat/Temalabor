@@ -1,0 +1,82 @@
+\select@language {magyar} \contentsline {chapter}{\numberline {1}Bevezet\IeC {\'e}s}{3}{chapter.1}
+\select@language {magyar} \contentsline {section}{\numberline {1.1}T\IeC {\'e}ma le\IeC {\'\i }r\IeC {\'a}sa}{3}{section..section.1.1}
+\select@language {magyar} \contentsline {section}{\numberline {1.2}A projekt c\IeC {\'e}lja}{3}{section..section.1.2}
+\select@language {magyar} \contentsline {section}{\numberline {1.3}V\IeC {\'a}lasztott nyelvek}{4}{section..section.1.3}
+\select@language {magyar} \contentsline {section}{\numberline {1.4}A projektek bemumtat\IeC {\'a}sa}{4}{section..section.1.4}
+\select@language {magyar} \contentsline {chapter}{\numberline {2}A Lua nyelv \IeC {\'e}s saj\IeC {\'a}toss\IeC {\'a}gai}{5}{chapter.2}
+\select@language {magyar} \contentsline {section}{\numberline {2.1}Kicsit a Lua-r\IeC {\'o}l}{5}{section..section.2.1}
+\select@language {magyar} \contentsline {section}{\numberline {2.2}Adatt\IeC {\'\i }pusok \IeC {\'e}s v\IeC {\'a}ltoz\IeC {\'o}k}{5}{section..section.2.2}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.2.1}V\IeC {\'a}ltoz\IeC {\'o}k}{5}{subsection..section.2.2.1}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.2.2}T\IeC {\'\i }pusok}{6}{subsection..section.2.2.2}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.2.3}\IeC {\"O}sszegz\IeC {\'e}s}{9}{subsection..section.2.2.3}
+\select@language {magyar} \contentsline {section}{\numberline {2.3}Kifejez\IeC {\'e}sek}{9}{section..section.2.3}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.3.1}Aritmetikai oper\IeC {\'a}torok}{10}{subsection..section.2.3.1}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.3.2}Rel\IeC {\'a}ci\IeC {\'o}s oper\IeC {\'a}torok}{10}{subsection..section.2.3.2}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.3.3}Logikai oper\IeC {\'a}torok}{10}{subsection..section.2.3.3}
+\select@language {magyar} \contentsline {section}{\numberline {2.4}Vez\IeC {\'e}rl\IeC {\H o} strukt\IeC {\'u}r\IeC {\'a}k}{11}{section..section.2.4}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.4.1}El\IeC {\'a}gaz\IeC {\'a}sok}{11}{subsection..section.2.4.1}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.4.2}Ciklusok}{12}{subsection..section.2.4.2}
+\select@language {magyar} \contentsline {section}{\numberline {2.5}\IeC {\'E}rt\IeC {\'e}kad\IeC {\'a}s \IeC {\'e}s visszat\IeC {\'e}r\IeC {\'e}si \IeC {\'e}rt\IeC {\'e}k}{13}{section..section.2.5}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.5.1}Ki\IeC {\'e}rt\IeC {\'e}kel\IeC {\'e}s sorrendje}{14}{subsection..section.2.5.1}
+\select@language {magyar} \contentsline {section}{\numberline {2.6}Lok\IeC {\'a}lis V\IeC {\'a}ltoz\IeC {\'o}k}{15}{section..section.2.6}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.6.1}V\IeC {\'a}ltoz\IeC {\'o}k list\IeC {\'a}ja}{16}{subsection..section.2.6.1}
+\select@language {magyar} \contentsline {section}{\numberline {2.7}Lua standard k\IeC {\"o}nyvt\IeC {\'a}rai}{16}{section..section.2.7}
+\select@language {magyar} \contentsline {section}{\numberline {2.8}A f\IeC {\"u}ggv\IeC {\'e}nyek tov\IeC {\'a}bbi saj\IeC {\'a}toss\IeC {\'a}gai}{19}{section..section.2.8}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.8.1}Static scoping}{19}{subsection..section.2.8.1}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.8.2}Closure}{19}{subsection..section.2.8.2}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.8.3}Hooking}{20}{subsection..section.2.8.3}
+\select@language {magyar} \contentsline {section}{\numberline {2.9}Meta-t\IeC {\'a}bl\IeC {\'a}k \IeC {\'e}s meta-met\IeC {\'o}dusok}{20}{section..section.2.9}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.9.1}Alap\IeC {\'e}rtelmezett meta-met\IeC {\'o}dusok}{22}{subsection..section.2.9.1}
+\select@language {magyar} \contentsline {section}{\numberline {2.10}Objektum-orient\IeC {\'a}lts\IeC {\'a}g}{23}{section..section.2.10}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.10.1}Kett\IeC {\H o}spont oper\IeC {\'a}tor}{23}{subsection..section.2.10.1}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.10.2}Konstruktor}{23}{subsection..section.2.10.2}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.10.3}Protot\IeC {\'\i }pus \IeC {\'e}s objektum}{24}{subsection..section.2.10.3}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.10.4}\IeC {\"O}r\IeC {\"o}kl\IeC {\'e}s}{26}{subsection..section.2.10.4}
+\select@language {magyar} \contentsline {subsection}{\numberline {2.10.5}Modularit\IeC {\'a}s}{28}{subsection..section.2.10.5}
+\select@language {magyar} \contentsline {chapter}{\numberline {3}A Kotlin nyelv \IeC {\'e}s saj\IeC {\'a}toss\IeC {\'a}gai}{31}{chapter.3}
+\select@language {magyar} \contentsline {section}{\numberline {3.1}Kicsit a Kotlin-r\IeC {\'o}l}{31}{section..section.3.1}
+\select@language {magyar} \contentsline {section}{\numberline {3.2}Adatt\IeC {\'\i }pusok \IeC {\'e}s v\IeC {\'a}ltoz\IeC {\'o}k}{31}{section..section.3.2}
+\select@language {magyar} \contentsline {subsection}{\numberline {3.2.1}V\IeC {\'a}ltoz\IeC {\'o}k}{31}{subsection..section.3.2.1}
+\select@language {magyar} \contentsline {subsection}{\numberline {3.2.2}Adatt\IeC {\'\i }pusuk}{33}{subsection..section.3.2.2}
+\select@language {magyar} \contentsline {section}{\numberline {3.3}Vez\IeC {\'e}rl\IeC {\H o} strukt\IeC {\'u}r\IeC {\'a}k}{34}{section..section.3.3}
+\select@language {magyar} \contentsline {subsection}{\numberline {3.3.1}El\IeC {\'a}gaz\IeC {\'a}sok}{34}{subsection..section.3.3.1}
+\select@language {magyar} \contentsline {subsection}{\numberline {3.3.2}Ciklusok}{34}{subsection..section.3.3.2}
+\select@language {magyar} \contentsline {section}{\numberline {3.4}Kollekci\IeC {\'o}k}{35}{section..section.3.4}
+\select@language {magyar} \contentsline {section}{\numberline {3.5}F\IeC {\"u}ggv\IeC {\'e}nyek saj\IeC {\'a}toss\IeC {\'a}gai}{35}{section..section.3.5}
+\select@language {magyar} \contentsline {subsection}{\numberline {3.5.1}Lambda kifejez\IeC {\'e}sek}{36}{subsection..section.3.5.1}
+\select@language {magyar} \contentsline {section}{\numberline {3.6}Objektum-orient\IeC {\'a}lts\IeC {\'a}g}{38}{section..section.3.6}
+\select@language {magyar} \contentsline {subsection}{\numberline {3.6.1}Oszt\IeC {\'a}lyok l\IeC {\'e}trehoz\IeC {\'a}sa}{38}{subsection..section.3.6.1}
+\select@language {magyar} \contentsline {subsection}{\numberline {3.6.2}Data klasszok}{38}{subsection..section.3.6.2}
+\select@language {magyar} \contentsline {subsection}{\numberline {3.6.3}Object-ek}{39}{subsection..section.3.6.3}
+\select@language {magyar} \contentsline {subsection}{\numberline {3.6.4}Modularit\IeC {\'a}s}{39}{subsection..section.3.6.4}
+\select@language {magyar} \contentsline {section}{\numberline {3.7}T\IeC {\"o}bbsz\IeC {\'a}l\IeC {\'u}s\IeC {\'a}g}{40}{section..section.3.7}
+\select@language {magyar} \contentsline {section}{\numberline {3.8}\IeC {\"O}sszegz\IeC {\'e}s}{40}{section..section.3.8}
+\select@language {magyar} \contentsline {chapter}{\numberline {4}Projektek \IeC {\"o}sszehasonl\IeC {\'\i }t\IeC {\'a}sa}{42}{chapter.4}
+\select@language {magyar} \contentsline {section}{\numberline {4.1}Kicsit a projektekr\IeC {\H o}l}{42}{section..section.4.1}
+\select@language {magyar} \contentsline {section}{\numberline {4.2}\IeC {\'E}letj\IeC {\'a}t\IeC {\'e}k}{42}{section..section.4.2}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.2.1}A j\IeC {\'a}t\IeC {\'e}kr\IeC {\'o}l}{42}{subsection..section.4.2.1}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.2.2}Sejtek}{43}{subsection..section.4.2.2}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.2.3}V\IeC {\'a}z}{45}{subsection..section.4.2.3}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.2.4}F\IeC {\'a}jlb\IeC {\'o}l val\IeC {\'o} olvas\IeC {\'a}s}{46}{subsection..section.4.2.4}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.2.5}Input olvas\IeC {\'o}}{47}{subsection..section.4.2.5}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.2.6}P\IeC {\'a}lya (v\IeC {\'a}z) l\IeC {\'e}trehoz\IeC {\'a}sa}{48}{subsection..section.4.2.6}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.2.7}J\IeC {\'a}t\IeC {\'e}kmag}{49}{subsection..section.4.2.7}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.2.8}\IeC {\"O}sszegz\IeC {\'e}s}{50}{subsection..section.4.2.8}
+\select@language {magyar} \contentsline {section}{\numberline {4.3}BlackJack}{50}{section..section.4.3}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.1}A j\IeC {\'a}t\IeC {\'e}kr\IeC {\'o}l}{50}{subsection..section.4.3.1}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.2}A classic viselked\IeC {\'e}s}{51}{subsection..section.4.3.2}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.3}Defini\IeC {\'a}lt t\IeC {\'\i }pusok \IeC {\'e}s enum-ok}{53}{subsection..section.4.3.3}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.4}Inputkezel\IeC {\'e}s}{54}{subsection..section.4.3.4}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.5}K\IeC {\'a}rtya}{55}{subsection..section.4.3.5}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.6}Pakli}{55}{subsection..section.4.3.6}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.7}Oszt\IeC {\'o}}{55}{subsection..section.4.3.7}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.8}A ''j\IeC {\'a}t\IeC {\'e}kban r\IeC {\'e}sztvev\IeC {\H o}''}{56}{subsection..section.4.3.8}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.9}A j\IeC {\'a}t\IeC {\'e}kos}{56}{subsection..section.4.3.9}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.10}A bank}{57}{subsection..section.4.3.10}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.11}Az asztal}{57}{subsection..section.4.3.11}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.12}A j\IeC {\'a}t\IeC {\'e}kmenet ''figyel\IeC {\H o}''}{58}{subsection..section.4.3.12}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.13}Az eredm\IeC {\'e}nysz\IeC {\'a}m\IeC {\'\i }t\IeC {\'o}}{59}{subsection..section.4.3.13}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.14}Kirajzol\IeC {\'a}s}{59}{subsection..section.4.3.14}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.15}A j\IeC {\'a}t\IeC {\'e}kmag}{61}{subsection..section.4.3.15}
+\select@language {magyar} \contentsline {subsection}{\numberline {4.3.16}\IeC {\"O}sszegz\IeC {\'e}s}{62}{subsection..section.4.3.16}
+\select@language {magyar} \contentsline {section}{\numberline {4.4}V\IeC {\'e}lem\IeC {\'e}nyek}{62}{section..section.4.4}

@@ -1,0 +1,539 @@
+
+\lstdefinelanguage{Kotlin}{
+	keywords={package, as, typealias, lateinit, this, super, val, var, fun, for, null, true, false, is, in, throw, return, break, continue, object, if, try, else, while, do, when, yield, typeof, yield, typeof, class, interface, enum, object, override, public, private, get, set, import, abstract, },
+	keywordstyle=\color{NavyBlue}\bfseries,
+	ndkeywords={@Deprecated, Iterable, Int, Integer, Float, Double, String, Runnable, dynamic},
+	ndkeywordstyle=\color{BurntOrange}\bfseries,
+	emph={println, return@, forEach,},
+	emphstyle={\color{OrangeRed}},
+	identifierstyle=\color{black},
+	sensitive=true,
+	commentstyle=\color{gray}\ttfamily,
+	comment=[l]{//},
+	morecomment=[s]{/*}{*/},
+	stringstyle=\color{ForestGreen}\ttfamily,
+	morestring=[b]",
+	morestring=[s]{"""*}{*"""},
+}
+
+
+\chapter{A Kotlin nyelv és sajátosságai}
+\label{chap:03_kotlin}
+
+\section{Kicsit a Kotlin-ról}
+\label{sec:k_about}
+
+A Kotlin erősen típusos programozási nyelv, Java virtuális gépre és JavaScript kódra is lefordítható. A fő fejlesztői a Jetbrains szentpétervári csapata, a nyelv a Szentpétervár közelében található Kotlin-szigetről kapta a nevét. Bár a szintaxisa nem kompatibilis a Java programnyelvvel, a Kotlin együttműködik a Java-ban írt kóddal és épít a java programkönyvtár részeire, mint például a Collections keretrendszerre.
+
+A Kotlin programnyelvet 2011 júliusában hozták nyilvánoságra, amit akkor már egy éve fejlesztettek. A fordítót és a hozzá tartozó programokat 2012 februárjában adták ki nyílt forráskódú szoftverként Apache 2.0 licenc alatt. A Jetbrains bevallott motivációja az új nyelv fejlesztésében az, hogy az növelje az IDEA fejlesztőeszköz eladásait. Andrej Breslav vezető fejlesztő szerint a Kotlin egy a Java-nál jobb, de azzal még mindig teljesen kompatibilis nyelv, amely lehetővé teszi a fejlesztőknek, hogy a Kotlin felé mozduljanak.
+
+Azért használják egyre többen a Kotlin nyelvet, mert mindent meg lehet valósítani, amit Java-ban, viszont a rossz tulajdonságait kiküszöböli, egyszerűsíti. A továbbiakban leginkább ezeket az új és hasznos megoldásokat emelem ki a nyelv bemutatása során (feltételezve, hogy Java-ban vagy akár a C\verb|#|-ban megismert nyelvi elemek ismeretével rendelkezik az olvasó).
+
+\section{Adattípusok és változók}
+\label{sec:types}
+
+\subsection{Változók}
+\label{subsec:k_var}
+
+A Pascal-hoz és a Scala-hoz hasonlóan a Kotlin változó deklarációiban is a változó nevét követi a típus, a kettőt kettőspont választja el. Az utasítások végén a pontosvessző opcionális, általában egy új sor elegendő. Ellenben a Java-val, alapértelmezésben minden metódus publikus, a paramétereik pedig nem felülírhatóak a metódusból.
+
+A Kotlin igyekezett kijavítani a Java nyelvben egy elég gyakran előforduló hibát, mégpedig a \textbf{nullPointerException}-t. Ez a jelenség legtöbbször az előre nem definiált változók miatt alakult ki. Ezért a Kotlin speciális szintaxissal rendelkezik a null értékek kezelésére. Azok a változók, amelyek felvehetnek null értéket, ? tipus deklarációval kell ellátni. 
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	var str: String? = null
+	str = "text"
+	str = null  // null can be stored in it
+	var str2: String = null // error
+\end{lstlisting}
+\normalsize
+\newpage
+Ha az ún. \textbf{nullable} típusokkal dolgozunk, akkor jól látszik, hogy azok nem egyenlők az egyszerűbb típusokkal (nem tudjuk egyszerűen összehasonlítani vagy értékül adni). Erre egy külön ellenőrzés szükséges, amely leggyakrabban a jól megszokott 'nullcheck'. Ezután a fordító \textbf{smartcast}-olja nekünk a változót a 'nem-nullable' típusra és már használhatjuk a szokásos módon:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	val line = readLine()
+	var isNumber = true
+	
+	if(line == null || line == "") return null
+	
+	line.forEach {
+		if(!it.isDigit())  isNumber = false
+	}
+\end{lstlisting}
+\normalsize
+Emellett az beépített típusok alapértelmezett függvényeit nem használhatkák a nullable típusú változók mindenféle ellenőrzés nélkül.
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	var str: String? = null
+	str = "text"
+	val num = str?.toInt()
+\end{lstlisting}
+\normalsize
+Ez a \textbf{?.} operátor jól ismert a C\verb|#| világából és a jelentése is ugyanaz: ha az érték 'null', akkor nem engedi meghívni a függvényt, hanem kivételt dob. Ha azonban szeretnénk jelezni a fordítónak, hogy a változó itt ''biztos nem null'', akkor erre is van lehetőségünk a \textbf{!!} operátor segítségével, ami viszont eltér a C\verb|#|-tól:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	var str: String? = null
+	str = "text"
+	val num = str!!.toInt()
+\end{lstlisting}
+\normalsize
+Így már ismét úgy viselkedik, mint egy egyszerű típus.
+
+De nem csak ez az egyik módja, hogy megpróbálják elkerülni a 'nullPointerException'-t. A kotlin-ban ugyanis minden változónak a létrehozása pillanatában értéket kell adni. Ezt általában kétféle módon tudjuk megtenni. Erre való a \textbf{val} és \textbf{var} kulcsszó. A 'val' jelentése, hogy, ha értéket adsz egy változónak, azt többé nem változtathatod meg (ez a 'const' kulcsszóra hasonlít legjobban). A másik a 'var', amely annyiban tér el a párjától, hogy ennek az értékét meg lehet változtatni. A példán láthatjuk a 'var' használatát.
+
+Azért van egy kivétel, amely segítségével nem kell egyből értéket adni a változónak:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	lateinit var str: String
+	// some code
+	str = "text"
+\end{lstlisting}
+\normalsize
+Ezzel lehetőségünk lesz arra, hogy ne egyből definiáljuk az értéket. Ekkor persze csak a 'var' féle típus értelmezett. Leggyakrabban akkor használjuk, ha az osztály egy objektuménak létrehozásánál még nem tudunk értéket adni, hanem majd egy függvényében tudunk először. Bár megjegyezném, hogy minél kevesebbszer fordul elő ennek a típusnak a használata, annál biztonságosabb a kód. És ez vonatkozik a 'var' használatára. A Kotlin ösztönözi a programozókat, hogy használják a lehető legtöbbször a 'val' kulcsszót. Ekkor ugyanis a legbiztonságosabb a program.
+
+Még utoljára ki szeretnék térni a változók láthatóságára. Ezt azért itt taglalom, és nem az OO részben, mert a nyelv is maga objektum-orientált (azaz ''mindent osztályokkal írunk le''). És itt még az egész változó koncepció ismert. 
+
+Ahogy már korábban is említettem, alapértelmezetten minden metódus publikus, és ez igaz a változókra. A Kotlin-ban  a változók igazából \textbf{Property}-ként viselkednek (akárcsak a c\verb|#|-ban), ezért publikusak. Azonban, ha szeretnénk, hogy privátok legyenek, egyszerűen azzá tehetjük őket:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	private var isLowDeck = false
+\end{lstlisting}
+\normalsize
+\newpage
+Igazából a háttérben a változó elérése továbbra is 'getter/setter' metódusokkal valósul meg (ha Java kódra fordítjuk ez látszik). De ezzel lehetőségünk van a sok ún. \textbf{boilerplate} kód elhagyására, ami szintén a Java egyik rossz tulajdonsága. Property-ket használva sokkal egyszerűbb és átláthatóbb lesz a kód. Azonban lehetőségünk van letiltani a publikus módosítást és ennek még egyszerűbb a módja, mint a C\verb|#|-os megfelelője:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	var winCount = 0
+	private set
+	
+	var loseCount = 0
+	private set
+\end{lstlisting}
+\normalsize
+
+\subsection{Adattípusuk}
+\label{subsec:k_tyes}
+
+Adattípusokra csak annyiban szeretnék kitérni, hogy mik a legfőbb eltérések a megszokottaktól (mivel nagyban épít a Java nyelvre, így az ott használtaktól való eltérésekre értem). A legszembetűnőbb talán már az előbbi példában is megfigyelhető volt, hogy a beépített típusokat nagybetűvel kezdjük. Nemcsak a 'String'-et (hisz az még Java-ban megszokott, de pl. C\verb|#|-ban már kisbetűs), de mind az 'Int', 'Double' és 'Boolean'-t is nagybetűvel kezdjük.
+
+Emellett a Kotlin-ban lehetőségünk van plusz funkciókkal ellátni az alapértelmezett típusokat, ha azt szeretnénk, hogy valami egyedi viselkedést meg tudjanak valósítani. Ezeket hívjuk \textbf{extension function}-nek. 
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	fun Char.or(other: Char?): Char = this.toInt().or(other?.toInt()!!).toChar()
+\end{lstlisting}
+\normalsize
+Itt például azt szeretnénk megvalósítani, hogy a 'Char' típusú változónak is legyen bitenkénti 'vagy' művelete. Alapvetően nincs a Char típusnak beépített 'or' függvénye, ezért ezzel a módszerrel lehetőségünk van írni. Látható, hogy működik a 'this' kulcsszó, amely azt a változót takarja, amin az 'or' függvényt meghívjuk (hasonló módszer ez, mint a C\verb|++|-ban oly gyakran használt operátor overload, mikor megírjuk pl. a saját 'String' osztályunkat). A függvény szintaxisra a későbbiekben kitérünk \ref{sec:k_func}.
+
+\newpage
+\section{Vezérlő struktúrák}
+\label{sec:k_control}
+
+Ebben a részben két dolgra szeretnék leginkább kitérni: az első, hogy megmutassam, hogy a Kotlin-ban mennyivel kompaktabb módon lehet pl. elágazásokat írni, illetve, hogy az elágazások Kotlin-ban kifejezések, így képesek értékkel visszatérni.
+
+\subsection{Elágazások}
+\label{subsec:k_stat}
+
+A két legismertebb elágazás az \textbf{if} és a \textbf{switch--case}. utóbbira azonban a Kotlin egy sajátos kulcsszót vezetett be: a \textbf{when}-t. A példánkban ezeknek a tipikus használatát mutatom be:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+fun calculateResult(player: Deck, bank: Deck) : ResultType {
+
+	val playerValue = evaluate(player.cards)
+	val bankValue = evaluate(bank.cards)
+	
+	...
+	
+	when {
+		playerValue > 21 -> return ResultType.LOSE
+		playerValue == 21 -> {
+			return if (bankValue == 21) ResultType.TIE
+			else ResultType.WIN
+		}
+		else -> return when {
+			bankValue == 21 -> ResultType.LOSE
+			bankValue > 21 -> ResultType.WIN
+			else -> {
+				when {
+					bankValue < playerValue -> ResultType.WIN
+					bankValue == playerValue -> ResultType.TIE
+					else -> ResultType.LOSE
+				}
+			}
+		}
+	}
+}
+\end{lstlisting}
+\normalsize
+Ezen a komplex példán minden látható, amit az elágazásokkal lehet csinálni. Mint ahogy említettem, az elágazások kifejezések, így lehet visszatérési értékük, ami azt is jelenti, hogy függvény visszatérési értékének is megadhatjuk. 
+
+Mindemellett azt is láthatjuk, hogy a 'when' kulcsszót nemcsak a 'switch--case'-re lehet használni, hanem az 'elseif' többszörös elágazások helyettesítésére, ezáltal javítva az olvashatóságot és a kényelmesebb leírást (lehetőségünk van arra is, hogy először az 'elseif' módszert írjuk meg, majd az IDE átalakítja nekünk 'when' stílusú kódra, ami nagyon hasznos). 
+
+\subsection{Ciklusok}
+\label{subsec:k_loop}
+
+A ciklusok szintaxisa és használata a Koltinban szinte teljesen hasonlóan működik, mint ahogy a Java-ban megszokhattuk. Azonban van egy-két sajátossága a 'for' ciklusnak Kotlinban. Alapvetően a 'for' ciklus képes végig iterálni minden olyan objektumon, aminek van 'iterátora'. Ezeken az ún. 'kollekciókon' való végigiterálás nagyon hasonlít a C\verb|#|-ban használt \textbf{ForEach} ciklushoz:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	for (item in collection) print(item)
+	
+	...
+	
+	for (item: Int in ints) {
+	 ...
+	}
+\end{lstlisting}
+\normalsize
+Amit még érdemes megfigyelni, hogy pl. az első esetben nem kellett megadni, hogy milyen típust tartalmaz a kollekció, ugyanis ezt nekünk kitalálja a fordító. Persze megadhatjuk a típust, ahogy a második példán is látszik, de ezt majd \textsl{késő}bb látjuk, hogy ez szintén felesleges kódolás (még a C\verb|#|-nál is egyszerűbb, hiszen ott a 'var' kulcsszót oda kell írni).
+
+\section{Kollekciók}
+\label{sec:k_collection}
+
+Még egy fontos dolog, amire ki kell térnem, hogy a Kotlin-ban könnyen tudunk létrehozni kollekciókat, amiken végigiterálhatunk és akár használhatunk lambda kifejezéseket is (\ref{subsec:k_lambda}-ben visszatérünk erre).
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+val cells = ArrayList<ArrayList<Cell>>()
+
+(0..height-1).forEach { _ ->
+	cells.add(ArrayList())
+}
+
+cells.forEach {
+	(0 until width).forEach { _ ->
+		it.add(Cell( if(random % chanceGen == 0) StateType.ALIVE else StateType.DEAD ))
+	}
+}
+\end{lstlisting}
+\normalsize
+Láthatjuk, hogy kétféle módon is létre tudjuk hozni a kollekciónkat: a \textbf{..}, illetve az \textbf{until} kulcsszó felhasználásával. Az előbbi használata a kezdőértéktől a végértékig hoz létre egy kollekciót (integereket tartalmazó lista), míg az utóbbi annyiban különbözik, hogy az utolsó elemet nem veszi már bele (azaz, ha a width pl. 4, akkor a kollekció a {0,1,2,3} listának felel meg). Tipikusan az utóbbit gyakrabban használjuk. Akár 'for' ciklus-ba is beleágyazva:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+for(j in 0 until width){
+	val upperRow = if(i - 1 < 0) height - 1 else i - 1
+	val lowerRow = if(i + 1 == height) 0 else i + 1
+	val upperColumn = if(j - 1 < 0) width - 1 else j - 1
+	val lowerColumn = if(j + 1 == width) 0 else j + 1
+	
+	cells[i][j].neighbors.addAll(arrayListOf(
+		cells[upperRow][upperColumn],
+		cells[upperRow][j],
+		cells[upperRow][lowerColumn],
+		cells[i]       [upperColumn],
+		cells[i]       [lowerColumn],
+		cells[lowerRow][upperColumn],
+		cells[lowerRow][j],
+		cells[lowerRow][lowerColumn]
+	))
+}
+\end{lstlisting}
+\normalsize
+Emellett ebben a példában azt is szerettem volna megmutatni, hogy kollekciók létrehozására a Kotlin is nyújt nekünk lehetőségeket. Erre az egyik legjobb példa az \textbf{arrayListOf} függvény, ami segítségével egy felsorolásból készít nekünk egy kollekciót. Annyira dinamikus, hogy felismeri az elemek típusát, amiket felsorolunk benne, így egy annak megfelelő kollekciót hoz létre. Úgy vélem, ez is egy nagyon szép, kompakt megoldás, ami szintén csökkenti a boilerplate mennyiségét és növeli az átláthatóságát a kódnak.
+
+\section{Függvények sajátosságai}
+\label{sec:k_func}
+
+A függvényekkel kapcsolatban már elmondtam egy pár jellemzőt, mint például, hogy alapértelmezetten publikusak Kotlin-ban, illetve fontos megjegyezni, hogy ún. \textbf{first-class} jellegűek. Ez annyit jelent, hogy el tudjuk őket tárolni változókban, illetve át tudjuk adni őket függvény paramétereként is valamint más \textbf{higher-order function} (olyan függvény, amely paraméterként vár függvényeket vagy függvénnyel tér vissza) visszatérési értékekeként is kaphatunk függvényt.
+
+Mivel a Ktolin ún. \textbf{statically typed} nyelv, ezért a függvényeknek van egy elvárt szintaktikája. Ez teljesen hasonlóan kell elképzelni, mint a Java-ban megszokott függvény megadásának módját:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	(Int) -> String
+\end{lstlisting}
+\normalsize
+Látható, hogy egy függvényt két dolog azonosít: a bemenő paraméterei és a visszatérési értéke. 
+
+\newpage
+
+Kotlin-ban azonban, ha egy függvénynek nincs visszatérési értéke, azt nem a 'void' kulcsszóval jelezzük, hanem a \textbf{Unit} típussal (Unit típusnak csak egyféle paramétere lehet: a Unit. Hasonlóan a 'nil' típushoz Lua-ban\ref{subsec:l_types}).
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	(Int) -> Unit = ...
+\end{lstlisting}
+\normalsize
+Persze, ahogy Java-ban is lehetséges, a paramétereket opcionális el lehet nevezni, ami segíti az értelmezést és a használatot is egyaránt.
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	(x: Int, y: Int) -> Point
+\end{lstlisting}
+\normalsize
+Kotlin-ban minden függvényt a \textbf{fun} kulcsszóval deklarálunk és ugyanolyan módon tudjuk használni, mint más programozási nyelvekben. Emellett a Kotlin támogatja a default paramétereket is:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	fun foo(bar: Int = 0, baz: Int) { ... }
+	
+	foo(baz = 1) // The default value bar = 0 is used
+\end{lstlisting}
+\normalsize
+Azonban, ha egy default paraméter megelőz egy olyan paramétert, aminek nincs alapértelmezett értéke, akkor csak úgy hívhatjuk meg a függvényt, hogy ha használjuk az ún. \textbf{named argument} opciót. Ezt persze nem csak ebben az esetben használhatjuk. Ha nem abban a sorrendben akarjuk megadni a paramétereket, ahogy eredetileg a függvény várná, akkor az argumentum megnevezés segítségével szinte bármilyen sorrendben meg tudjuk adni őket (viszont ekkor minden nem alapértelmezett paramétert meg kell nevezni).
+
+Érdekesség, ha egy lambda kifejezést szeretnénk átadni egy függvénynek utolsó paraméterként, akkor azt megadhatjuk a függvény fejlécén kívül is:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	fun foo(bar: Int = 0, baz: Int = 1, qux: () -> Unit) { ... }
+	
+	foo(1) { println("hello") } // Uses the default value baz = 1 
+	foo { println("hello") }    // Uses both default values bar = 0 and baz = 1
+\end{lstlisting}
+\normalsize
+
+Mivel függvény visszatérési értéke bármilyen típus vagy akár kifejezés lehet, így Kotlin-ban van egy egyszerűbb mód, annak megadására, hogy ha egy szimpla kifejezést ad vissza a függvény. Ekkor akár a visszatérés típusa is elhagyható.
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	override fun showDeck(): Deck = deck
+	//or like this:
+	override fun hit(cards: ArrayList<Card>): Boolean = Calculator.evaluate(cards) <= 21
+	//or like this
+	override fun showDeck() = decks[currentDeckIndex]
+\end{lstlisting}
+\normalsize
+Még utoljára kitérnék arra, hogy Kotlin-ban is lehetséges generikus függvényeket létrehozni és használni (teljesen hasonló módon, mint ahogy Java-ban megszokhattuk, csupán a létrehozás eltérő):
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	fun <T> singletonList(item: T): List<T> { ... }
+\end{lstlisting}
+\normalsize
+
+\subsection{Lambda kifejezések}
+\label{subsec:k_lambda}
+
+Még mielőtt belekezdenék abba, hogy mi is az lambda, előtte elmagyaráznám, hogy miért is jó létrehozni egyszer használatos függvényimplementációkat. Talán a legegyszerűbb indok, hogy egy nagyon speciális függvényt szeretnénk megvalósítani, amire csak abban a pillanatban van szükségünk. Ezért feleslegesnek érezhetjük külön kiszervezni. Valójában talán ezért használják a legtöbbször őket.
+
+Hogy létrehozzunk egy függvénypéldányt, arra a Kotlin sok módszert biztosít: lambda kifejezések, anonymous functions, vagy akár létező deklarációkra is hivatkozhatunk:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	//lambda
+	val foo = { a, b -> a + b }
+	// anonymous fun.
+	val bar = fun(s: String): Int { return s.toIntOrNull() ?: 0 }
+	//ref.
+	val baz = String::toInt
+\end{lstlisting}
+\normalsize
+Akár létrehozhatjuk \textbf{inline}-ként is őket, amely azt jelenti, hogy amikor meghívjuk őket, akkor a függvény törzse bekerül a hívó metódusba, így nem jön létre új objektum és megspórolható annak minden költsége (metódushívás, stack létrehozás, memória foglalás stb).
+
+Akkor térjünk rá arra, hogy mik is azok a lambda kifejezések és miért is olyan hasznosak. Lényegében a lambda kifejezések anonymous függvények (absztrakt metódussal rendelkező interfész névtelen implementációja), amiket kezelhetünk értékként (át tudjuk adni függvény paramétereként, és vissza is térhetünk velük). Az a nagy eltérése a megszokott függvényektől, hogy nem lehet őket deklarálni. 
+
+A lambda kifejezéseket mindig kapcsos zárójelek között adjuk meg (így hozva létre a névtelen implementációt). Ezután következnek az opcionális bementeti paraméterek, majd  a \textbf{->} jel. Ezt követi a függvény jelképes törzse. Ha a visszatérési érték nem 'Unit', akkor a lambda törzsében az utolsó kifejezést tekintjük a visszatérési értékként. De akár megadhatjuk specifikusan is a visszatérési értéket a 'return' kulcsszó segítségével.
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	val sum: (Int, Int) -> Int = { x, y -> x + y }
+	
+	val sumSub2nd: (Int, Int) -> Int = { x, y -> 
+				             val s = sum(x,y) - y
+				             ...
+					     return  s }
+\end{lstlisting}
+\normalsize
+Ahogy már korábban is említettem, ha egy függvény utolsó paraméterként egy lambda-t vár, akkor azt írhatjuk a zárójeleken kívül is:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	max(strings) { a, b -> a.length < b.length }
+\end{lstlisting}
+\normalsize
+Pár gyakran használt módszer a lambda kifejezések paraméterezésével: ha csak egy paramétert vár a lambda függvény, akkor használhatjuk az alapértelmezett nevét: az \textbf{it}-et.
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+(0 until decks.count()).forEach {
+	decks[it].cards.clear()
+	decks[it].money = 0.0
+}
+\end{lstlisting}
+\normalsize
+Valamint, ha nem akarjuk használni a megadott paramétereket, akkor adhatunk egy jelzést a fordítónak:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+  (1..behavior.getMaximumNumberOfDecks()).forEach { _ -> decks.add(Deck(ArrayList(), 0.0)) }
+\end{lstlisting}
+\normalsize
+Látható, hogy a '\textbf{\_}' jel arra szolgál, hogy ha nincs szükségünk a paraméter(ek)re, akkor így tudjuk ezt jelezni.
+
+
+Talán az utóbbi példákból már látható, hogy hol is van a lambda kifejezéseknek haszna. Az a példa, hogy egy predikátum függvényt írunk és adjuk át a kiértékelő vagy filter függvénynek, már megszokott. Viszont a másik gyakori használati példa a kollekciókon való iterálás. Látható, hogy a \textbf{forEach} függvény vár egy lambdát, aminek segítségével végig mehetünk a kollekció egyes elemein és közben megmondhatjuk, hogy mit szeretnénk csinálni velük:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	private fun cellsBirth() {
+		cells.forEach { i ->
+			i.forEach {
+				it.birth()
+			}
+		}
+	}
+	
+	fun livingCount(): Int{
+		var counter = 0
+			cells.forEach { i ->
+				i.forEach {
+				if(it.state == StateType.ALIVE) counter++
+			}
+		}
+		return counter
+	}
+\end{lstlisting}
+\normalsize
+Akár a 'for' ciklust is meg tudjuk ezzel valósítani (ami bár szép, de teljesítményben lassabb, hiszen létre kell hozni egy kollekciót, amin végigiterálunk):
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+	(0 until decks.count()).forEach {
+		decks[it].cards.clear()
+		decks[it].money = 0.0
+	}
+\end{lstlisting}
+\normalsize
+Persze, ha nem lényeges a sebesség, akkor ez ugyanannyira olvasható, mint a 'for ciklus', azonban talán kicsit gyorsabb leírni.
+
+Végezetül még annyit, hogy bár szintaktikailag hasonlítanak, a Kotlin és Java lambda-k teljesen különbözőek. Azaz, ha át akarjuk formázni java kódra, akkor a Kotlin-nak muszáj átalakítani a lambdáit olyan struktúrává, amit fel tudnak majd használni a JVM-en belül.
+
+\section{Objektum-orientáltság}
+\label{sec:k_OO}
+
+A Kotlin alapvetően egy OO nyelv, tehát minden feladatot osztályok segítségével oldunk meg. Az OO világába tartozik pl a Java vagy a C\verb|#| is, így ebben a részben csak azokat a nyelvi eltéréseket szeretném kiemelni, amelyek a Kotlin sajátosságait mutatják be.
+
+\subsection{Osztályok létrehozása}
+\label{subsec:k_classes}
+
+Egy osztály létrehozása Kotlin-ban lényegében a a Java és C\verb|#| különböző megoldásainak ötvözése:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+class Frame (
+	val height: Int,
+	val width: Int,
+	val timeBetweenGens: Long = 250,
+	val fillWithRandom: Boolean = true,
+	val chance: Int = 4) 
+	: Runnable, GameObserver {}
+\end{lstlisting}
+\normalsize
+Láthatjuk, hogy a C\verb|#|-hoz (C nyelvekhez) megszokottan az öröklést és az interfészek implementációját a kettősponttal jelzi (a Java-ban az 'extends', 'implements' kulcsszóktól eltérően). Valamint az érdekesség még, hogy egyből az osztály nevének leírása után kell írni a konstruktort. Ez a legtöbb eddig referenciaként felhozott nyelvtől elérő sajátosság. 
+
+Lehetőség van másodlagos konstruktorok megadására is, ami a 'funtion overolad'-ot ''próbálja'' helyettesíteni:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+class Bank (
+	basicAmountOfMoney: Double,
+	dealer: Dealer,
+	behavior: Behavior,
+	inputHandler: InputHandler,
+	observer: PlayerObserver)
+	: Participant(basicAmountOfMoney, dealer, behavior, inputHandler, observer){
+
+
+constructor( 
+	basicAmountOfMoney: Double,
+	dealer: Dealer,
+	behavior: Behavior,
+	observer: PlayerObserver)
+	: this(basicAmountOfMoney, dealer, behavior, NoInputHandler(), observer)
+
+}
+\end{lstlisting}
+\normalsize
+Viszont az érdekesség, hogy ekkor is meg kell hívni az elsődleges konstruktort. Ezért emeltem ki, hogy csak próbálja helyettesíteni. Valójában nem váltja ki, csak lehetőségünk van alapértelmezett értékekkel meghívni az eredetit (ezt a megoldást Java-ban gyakran használják, mivel ott nincs default értékadás).
+
+Amit még érdemes megfigyelni, hogy a 'Frame' konstruktorában használtam a 'val' kulcsszót. Ez azért hasznos sajátossága a Kotlin-nak, mert egyúttal az osztálynak is definiáltam ezen változóit (nincs szükség létrehozásra, majd a konstruktorban az ismétlődő értékadásra). Ez egyrészt ismét a boilerplate-et csökkenti, valamint biztosítja, hogy a változóknak ne lehessenek 'null'-ak, hiszen rögtön értéket kapnak. 
+
+\subsection{Data klasszok}
+\label{subsec:k_dataC}
+
+Gyakran kell olyan osztályokat definiálnunk, amelyek igazából csak adatok tárolására szolgálnak (tipikusan adatbázis entitások leképezést objektumokra). Ezeknek az adatoknak az elérése/módosítása tipikusan egyszerűnek kell hogy legyen. Java-ban ez rendkívül sok boilerplate-tel járt, hiszen a konstruktor írás, illetve a getter/setter metódusok írása sok kódolást vett igénybe. Persze az IDE lehetőséget biztosít függvénygenerálás segítségével, de igazából a kód létezik és felesleges sorokat kell akkor is megírni. 
+
+Erre találta ki a Kotlin az ún. \textbf{data class} fogalmát. Az előbbi példánkban látott osztály létrehozását annyival egészíti ki, hogy egy \textbf{data} kulcsszót használ az osztálydefiníció előtt:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+data class Card(val value: CardType, val color: CardColor, var hidden: Boolean = false)
+\end{lstlisting}
+\normalsize
+Ezzel jelezve az osztály feladatát. Függvényt nem tudunk így írni, de a fordításánál segíti az optimalizációt.
+
+\subsection{Object-ek}
+\label{subsec:k_obj}
+
+A másik nagyobb eltérés az osztály típusokkal kapcsolatban, hogy a Kotlin felvette külön nyelvi elemként a 'singleton' osztályt. Erre szolgálnak az ún. \textbf{object} osztályok:
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+object InputReader {
+
+	val database = createDatabase("url")
+
+	fun readNumber(): Int? {
+	
+		val line = readLine()
+		var isNumber = true
+		
+		if(line == null || line == "") return null
+		
+		line.forEach {
+		if(!it.isDigit())  isNumber = false
+		}
+		
+		if(isNumber){
+		return line.toInt()
+		}
+		
+		return null
+	}
+
+}
+\end{lstlisting}
+\normalsize
+Az a jellemzőjük, hogy nincs konstruktoruk, illetve az 'object' kulcsszót használjuk 'class' helyett. Ez a nyelvi sajátosság is szintén azért jött létre, hogy csökkentsük a fölösleges kódolást (Java-ban a konstruktor priváttá tétele, illetve a getInstance függvény egyszerűsítése). 
+
+\subsection{Modularitás}
+\label{subsec:k_mod}
+
+Az OO témakör végén szeretnék kitérni még egy kicsit a modularitásra, illetve a Koltin projektek struktúrájára, ugyanis itt is van egy kis eltérés az eddigi OO nyelvekhez képest. Java-ban az egyes modulok mindig egy osztályt definiáltak. Nem lehetett egy fájlban több osztályt létrehozni (persze a belső osztályt nem értem ide). Kotlin-ban erre viszont lehetőségünk van. Alapesetben egy Kotlin fájl egy class leírásából áll, de ha létrehozunk újabb class-okat egy fájlon belül, akkor egy ún. \textbf{.kt} kiterjesztésű fájlt kapunk, ami jelzi, hogy ebben több osztály van definiálva. Ez megint csak hasznos lehet, hiszen így az egybe tartozó osztályokat egyként tudjuk kezelni és jelezni is.
+
+Utoljára még az alkalmazás belépési pontjára térnék ki, azaz a \textbf{main} függvényre. Java-ban és C\verb|#|-ban egy külön osztály kell neki létrehozni, amelyben van egy tipikusan 'static public Main' függvény. Ezzel ellentétben a Kotlin-ban nem kell külön belépési osztályt írni, ugyanis elég csak egy \textbf{main} függvény megírása, akár az egyik modulban is (ez kicsit hasonlít a C-ben megszokott 'int main' függvényhez, hiszen a fordító ott is egy ilyen függvényt keres). Ezzel akár több belépési pontot is definiálni tudunk, majd megmondjuk a fordítónak, hogy melyiket használja.
+
+\section{Többszálúság}
+\label{sec:k_thread}
+
+A többszálúságra csupán csak azért szeretnék kitérni, mivel az életjáték projektben kihasználtam, hogy Kotlin-ban lehetőség van több szálat futtatni egyszerre. Így képes voltam a játékmenetet és a felhasználói inputot külön szálakon kezelni. A szálkezelés megvalósítása teljesen hasonló módon működik, mint a Java-ban megszokott módon.
+\scriptsize
+\begin{lstlisting}[language = Kotlin]
+class ManualInputHandler(private val observer: GameObserver) : Runnable {
+
+	override fun run() {
+		var done = false
+		while (!done){
+		
+			val command = readLine()
+			
+			when (command) {
+				"" -> {
+					observer.noticePause()
+					println("c - continue\t s - stop")
+				}
+				"c" -> observer.noticeContinue()
+				"s" -> {
+					observer.noticeStop()
+					done = true
+				}
+			}
+		}
+	}
+
+}
+
+...
+
+class Game(private val frame: Frame) {
+
+	private val gameLoop = Thread(frame)
+	private val inputWatcher = Thread(ManualInputHandler(frame))
+	
+	fun start(){
+		frame.printResult()
+		inputWatcher.start()
+		gameLoop.start()
+	}
+}
+\end{lstlisting}
+\normalsize
+Implementálnunk kell a 'Runnable' interfész 'run' függvényét, hogy megadjuk, hogy egy szál mit végezzen. Ezután a 'Thread' könyvtár segítségével létrehozzuk a szálainkat, majd elindítjuk őket. Innentől kezdve pár a processzor ütemezője lesz értük a felelős. Látható, hogy a megvalósítás egy az egyben a Java-s megvalósítás megfelelője. Ez tulajdonképpen nem véletlen. Többször is hangsúlyoztam, hogy a Kotlin nagyban épít a Java-ra. A legtöbb nyelvi sajátosság csupán egy egy kompaktabb leírás, amit meg lehet mind valósítani java-ban is, csupán ezt a Kotlin elrejti előlünk.
+
+Azonban vannak olyan elemek, amelyeket Kotlin-ban sem tudunk egyszerűbben leírni (talán már alapból egy egyszerű szintaxis), ezért a használata szinte teljesen megegyezik a a Java-ban megszokottakhoz. 
+
+\section{Összegzés}
+\label{sec:k_summ}
+
+Összegzésként még egyszer kiemelném, hogy a Kotlin-t azért tartom egy nagyszerű OO nyelvnek, mert mindent, amit Java-ban meg lehet balósítani, azt itt is, de legtöbbször sokkal kompaktabb és egyszerűbb módon. Emellett e C\verb|#|-ból merített hasznos sajátosságokat is remekül adaptálja. Viszonylag friss nyelvről van szó, ezért nem meglepő, hogy folyamatosan bővítik. 
+
+Viszont ami érdekes és szeretném megjegyezni, hogy a Kotlin alkotói törekszenek egy bizonyos 'Kotlin native' nyelven, amely célja, hogy versenyképes legyen a C, C\verb|++| nyelvek gyorsaságával, viszont sokkal kényelemesebb lenne a használata. Mindemellett már az elején is megjegyeztem, hogy a Kotlin 'open source' és remek a dokumentációja, ezáltal egy nagyon könnyen elsajátítható nyelv. Nem véletlen, hogy a \textbf{Google} is felfigyelt rá. Illetve az android világában is egyre elterjedtebb és lassan kezdi kiszorítani a Java-t.
