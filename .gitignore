@@ -102,3 +102,4 @@ fabric.properties
 
 #Lua unit testing
 .out
+/Lua/GameOfLife/GameOfLife/luacov.stats.out
