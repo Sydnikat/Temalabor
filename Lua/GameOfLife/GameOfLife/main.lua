@@ -1,7 +1,7 @@
 
 
-require "luacov"
+--require "luacov"
 
-require "test.unitTests"
+--require "test.unitTests"
 
---require("FrameMaker").getInstance().createFrame():simulate()
+require("FrameMaker").getInstance().createFrame():simulate()

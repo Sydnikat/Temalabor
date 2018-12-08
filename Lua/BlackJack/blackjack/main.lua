@@ -1,12 +1,12 @@
 
 
-require "luacov"
+--require "luacov"
 
-require "test.unitTests"
+--require "test.unitTests"
 
+local InputHandler = require "input.ConsoleInputHandler":getInstance()
 
---local InputHandler = require("input.ConsoleInputHandler"):getInstance()
---local Table = require "entity.Table"
+local Table = require "entity.Table"
 
---Table(6, InputHandler):startGame()
+Table(6, InputHandler):startGame()
 
