@@ -1,7 +1,6 @@
 
 local Participant = require "entity.Participant"
 local Deck = require "entity.Deck"
-local ConsoleInputHandler = require("input.ConsoleInputHandler"):getInstance()
 local ActionType = require "type.ActionType"
 
 local Player = {}
@@ -17,7 +16,6 @@ setmetatable(Player, {
     end,
     __index = Participant
 })
-
 
 function Player:createDecks(player)
     local decks = {}
@@ -49,7 +47,7 @@ function Player:play()
 
             while(done == false) do
 
-                local key = ConsoleInputHandler.readKey()
+                local key = self.inputHandler:readKey()
 
                 if(key == ActionType.HIT) then self:hit(deck)
                 elseif(key == ActionType.STAND) then done = true
@@ -132,7 +130,7 @@ function Player:raise()
 
     while (valid == false) do
 
-        local newAmount = ConsoleInputHandler.readNumber()
+        local newAmount = self.inputHandler:readNumber()
 
         if(type(newAmount) == "number") then
 

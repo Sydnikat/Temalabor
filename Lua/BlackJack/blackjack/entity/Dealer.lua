@@ -44,6 +44,7 @@ end
 
 function Dealer:createNewDeck()
     self.deckPool = self:createDeck()
+    self:shuffle()
 end
 
 function Dealer:giveCard()

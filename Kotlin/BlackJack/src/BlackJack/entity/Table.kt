@@ -30,7 +30,6 @@ class Table(numberOfDecks: Int, private val inputHandler: InputHandler, testing:
     var loseCount = 0
     private set
 
-
     fun startGame(){
 
         println("\nKöszöntjük a BlackJack asztalnál! Ne feledje, a bank mindig nyer :)\n")

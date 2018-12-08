@@ -8,6 +8,8 @@ class Cell(var state: StateType){
     var change = ChangeType.NOTHING
     private set
 
+    val neighbors = ArrayList<Cell>()
+
     fun checkState() {
         val livingNeighbors = neighbors.count { it.state == StateType.ALIVE }
 
@@ -34,5 +36,5 @@ class Cell(var state: StateType){
             state = StateType.ALIVE
     }
 
-    val neighbors = ArrayList<Cell>()
+
 }
