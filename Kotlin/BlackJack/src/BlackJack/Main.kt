@@ -7,4 +7,5 @@ fun main(args: Array<String>) {
 
     Table(numberOfDecks =  8, inputHandler = ConsoleInputHandler()).startGame()
 
+    //lkjlkj
 }
